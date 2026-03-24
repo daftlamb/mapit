@@ -224,6 +224,46 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div style="margin-top:8px;font-size:10px;color:var(--muted)">Drag to move · right-click or Del to remove</div>
     </div>
 
+    <div class="panel-section">
+      <div class="section-title">Export Style</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn size-btn active" data-export-style="normal">Normal</button>
+        <button class="btn size-btn" data-export-style="dither">Dither</button>
+        <button class="btn size-btn" data-export-style="duotone">Duotone</button>
+      </div>
+      <div id="dither-options" style="display:none">
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Algorithm</span>
+          <select class="vig-select" id="dither-algo">
+            <option value="floyd">Floyd-Steinberg</option>
+            <option value="atkinson">Atkinson</option>
+            <option value="ordered">Ordered 4×4</option>
+            <option value="ordered8">Ordered 8×8</option>
+          </select>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Palette</span>
+          <select class="vig-select" id="dither-palette">
+            <option value="bw">Black &amp; White</option>
+            <option value="warm">Warm Sepia</option>
+            <option value="ink">Blue Ink</option>
+            <option value="sage">Sage Green</option>
+            <option value="rose">Rose</option>
+          </select>
+        </div>
+      </div>
+      <div id="duotone-options" style="display:none">
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Shadow color</span>
+          <input type="color" id="duotone-dark" value="#2b1d11" />
+        </div>
+        <div class="color-row">
+          <span class="color-label">Highlight color</span>
+          <input type="color" id="duotone-light" value="#f8f0dc" />
+        </div>
+      </div>
+    </div>
+
     <div id="panel-export">
       <button class="btn btn-wide" id="btn-export">⬇ export png</button>
     </div>
@@ -718,6 +758,106 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     selectCaption(capObj);
   });
 
+  // Export style
+  var exportStyle = 'normal';
+  document.querySelectorAll('[data-export-style]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      exportStyle = btn.dataset.exportStyle;
+      document.querySelectorAll('[data-export-style]').forEach(function(b){b.classList.remove('active');});
+      btn.classList.add('active');
+      document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
+      document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
+    });
+  });
+
+  // Dither palettes [dark, light]
+  var DITHER_PALETTES = {
+    bw:   ['#000000','#ffffff'],
+    warm: ['#2b1d11','#f5e6c8'],
+    ink:  ['#1a2744','#dce8f5'],
+    sage: ['#1a2e1e','#dff0e0'],
+    rose: ['#3a1020','#fce8ee']
+  };
+
+  function hexToRgb(h) {
+    return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  }
+
+  function applyDither(imageData, algo, palette) {
+    var d = imageData.data;
+    var w = imageData.width, h = imageData.height;
+    var dark = hexToRgb(palette[0]);
+    var light = hexToRgb(palette[1]);
+    var gray = new Float32Array(w*h);
+    for (var i=0; i<w*h; i++) {
+      gray[i] = (d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114) / 255;
+    }
+    if (algo==='ordered' || algo==='ordered8') {
+      var m4 = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+      var m8 = [
+        [0,32,8,40,2,34,10,42],[48,16,56,24,50,18,58,26],
+        [12,44,4,36,14,46,6,38],[60,28,52,20,62,30,54,22],
+        [3,35,11,43,1,33,9,41],[51,19,59,27,49,17,57,25],
+        [15,47,7,39,13,45,5,37],[63,31,55,23,61,29,53,21]
+      ];
+      var mat = algo==='ordered8' ? m8 : m4;
+      var sz = algo==='ordered8' ? 8 : 4;
+      var div = algo==='ordered8' ? 64 : 16;
+      for (var y=0; y<h; y++) {
+        for (var x=0; x<w; x++) {
+          var idx = y*w+x;
+          var threshold = (mat[y%sz][x%sz]+0.5)/div;
+          var col = gray[idx]>threshold ? light : dark;
+          d[idx*4]=col[0]; d[idx*4+1]=col[1]; d[idx*4+2]=col[2];
+        }
+      }
+    } else {
+      var err = new Float32Array(w*h);
+      for (var yi=0; yi<h; yi++) {
+        for (var xi=0; xi<w; xi++) {
+          var pi = yi*w+xi;
+          var old = gray[pi]+err[pi];
+          var on = old>0.5?1:0;
+          var e = old-on;
+          var col2 = on ? light : dark;
+          d[pi*4]=col2[0]; d[pi*4+1]=col2[1]; d[pi*4+2]=col2[2];
+          if (algo==='floyd') {
+            if (xi+1<w) err[pi+1]+=e*7/16;
+            if (yi+1<h) {
+              if (xi>0) err[pi+w-1]+=e*3/16;
+              err[pi+w]+=e*5/16;
+              if (xi+1<w) err[pi+w+1]+=e/16;
+            }
+          } else {
+            var ae=e/8;
+            if (xi+1<w) err[pi+1]+=ae;
+            if (xi+2<w) err[pi+2]+=ae;
+            if (yi+1<h) {
+              if (xi>0) err[pi+w-1]+=ae;
+              err[pi+w]+=ae;
+              if (xi+1<w) err[pi+w+1]+=ae;
+            }
+            if (yi+2<h) err[pi+2*w]+=ae;
+          }
+        }
+      }
+    }
+    return imageData;
+  }
+
+  function applyDuotone(imageData, darkHex, lightHex) {
+    var d = imageData.data;
+    var dk = hexToRgb(darkHex);
+    var lt = hexToRgb(lightHex);
+    for (var i=0; i<d.length; i+=4) {
+      var g=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)/255;
+      d[i]  =Math.round(dk[0]*(1-g)+lt[0]*g);
+      d[i+1]=Math.round(dk[1]*(1-g)+lt[1]*g);
+      d[i+2]=Math.round(dk[2]*(1-g)+lt[2]*g);
+    }
+    return imageData;
+  }
+
   // Export — bakes map + gradient + captions
   function doExport() {
     var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
@@ -777,6 +917,21 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       });
       ctx.restore();
     });
+    // Apply dither or duotone post-processing
+    if (exportStyle==='dither') {
+      var algo = document.getElementById('dither-algo').value;
+      var palKey = document.getElementById('dither-palette').value;
+      var pal = DITHER_PALETTES[palKey]||DITHER_PALETTES.bw;
+      var imgData = ctx.getImageData(0,0,out.width,out.height);
+      applyDither(imgData, algo, pal);
+      ctx.putImageData(imgData,0,0);
+    } else if (exportStyle==='duotone') {
+      var dtDark = document.getElementById('duotone-dark').value;
+      var dtLight = document.getElementById('duotone-light').value;
+      var imgData2 = ctx.getImageData(0,0,out.width,out.height);
+      applyDuotone(imgData2, dtDark, dtLight);
+      ctx.putImageData(imgData2,0,0);
+    }
     var a=document.createElement('a');
     a.href=out.toDataURL('image/png');
     a.download='mapit-export.png';
