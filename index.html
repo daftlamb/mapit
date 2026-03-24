@@ -576,63 +576,15 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       frameOverlay.appendChild(right);
       frameOverlay.appendChild(top);
       frameOverlay.appendChild(bottom);
-      // Coord stamp inside the bottom white strip
-      renderCoordInStrip(bottom, bottomH, sideW, r.width);
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
       frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
-      // Coord stamp: just below the crop box bottom edge (outside border)
-      renderCoordBelowBox(r, bw);
     }
+    renderCoordStampDOM(r);
   }
 
   var coordStampEl = document.getElementById('coord-stamp-el');
-
-  // Polaroid: coord inside bottom strip
-  function renderCoordInStrip(bottomEl, bottomH, sideW, totalW) {
-    var pos = document.getElementById('coord-pos').value;
-    if (pos === 'none') return;
-    var c = map.getCenter();
-    var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
-    var color = document.getElementById('coord-color').value;
-    var fs = Math.max(9, bottomH * 0.19);
-    var el = document.createElement('span');
-    el.style.cssText = 'position:absolute;font-family:Outfit,sans-serif;font-size:'+fs+'px;font-weight:300;letter-spacing:.1em;color:'+color+';white-space:nowrap;bottom:'+Math.round(bottomH*0.18)+'px';
-    if (pos === 'left') { el.style.left = sideW+8+'px'; }
-    else if (pos === 'right') { el.style.right = sideW+8+'px'; }
-    else { el.style.left='50%'; el.style.transform='translateX(-50%)'; }
-    el.textContent = coordStr;
-    bottomEl.style.position = 'absolute'; // ensure absolute for child
-    bottomEl.appendChild(el);
-  }
-
-  // Border: coord just below crop bottom edge, outside the box
-  function renderCoordBelowBox(r, bw) {
-    var pos = document.getElementById('coord-pos').value;
-    if (pos === 'none') return;
-    var c = map.getCenter();
-    var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
-    var color = document.getElementById('coord-color').value;
-    coordStampEl.textContent = coordStr;
-    coordStampEl.style.color = color;
-    coordStampEl.style.display = 'block';
-    var gap = 6;
-    coordStampEl.style.top = (r.top + r.height + gap) + 'px';
-    if (pos === 'left') {
-      coordStampEl.style.left = r.left + bw + 'px';
-      coordStampEl.style.right = 'auto';
-      coordStampEl.style.transform = 'none';
-    } else if (pos === 'right') {
-      coordStampEl.style.right = (mapArea.clientWidth - r.left - r.width + bw) + 'px';
-      coordStampEl.style.left = 'auto';
-      coordStampEl.style.transform = 'none';
-    } else {
-      coordStampEl.style.left = (r.left + r.width/2) + 'px';
-      coordStampEl.style.right = 'auto';
-      coordStampEl.style.transform = 'translateX(-50%)';
-    }
-  }
 
   function renderCoordStampDOM(r) {
     var pos = document.getElementById('coord-pos').value;
@@ -643,10 +595,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     coordStampEl.textContent = coordStr;
     coordStampEl.style.color = color;
     coordStampEl.style.display = 'block';
-    // Position just outside the crop box bottom edge
-    var gap = 6; // px gap between box bottom and text
-    var top = r.top + r.height + gap;
-    coordStampEl.style.top = top + 'px';
+    // Always outside the frame bottom edge, 6px gap
+    coordStampEl.style.top = (r.top + r.height + 6) + 'px';
     if (pos === 'left') {
       coordStampEl.style.left = r.left + 'px';
       coordStampEl.style.right = 'auto';
@@ -1212,11 +1162,20 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var cw,ch;
     if(mw/mh>ratio){ch=mh*.9;cw=ch*ratio;}else{cw=mw*.9;ch=cw/ratio;}
     var cx=(mw-cw)/2,cy=(mh-ch)/2;
+    // Coord strip: if frame active and coord pos != none, add extra height below
+    var coordPos = document.getElementById('coord-pos').value;
+    var coordStripH = (frameStyle!=='none' && coordPos!=='none') ? Math.round(cw*0.035) : 0;
     var out=document.createElement('canvas');
-    out.width=Math.round(cw);out.height=Math.round(ch);
+    out.width=Math.round(cw); out.height=Math.round(ch)+coordStripH;
     var ctx=out.getContext('2d');
+    // Fill coord strip with white/dark bg matching frame color
+    if (coordStripH > 0) {
+      var frameColor = frameStyle==='polaroid' ? document.getElementById('frame-color').value : '#ffffff';
+      ctx.fillStyle = frameColor;
+      ctx.fillRect(0, Math.round(ch), out.width, coordStripH);
+    }
     // 1. Map
-    ctx.drawImage(mapCanvas,cx,cy,cw,ch,0,0,out.width,out.height);
+    ctx.drawImage(mapCanvas,cx,cy,cw,ch,0,0,out.width,Math.round(ch));
     // 2. Gradient overlay
     var dir=document.getElementById('vig-dir').value;
     if(dir!=='none'){
@@ -1278,8 +1237,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       applyDuotone(imgData2, dtDark, dtLight);
       ctx.putImageData(imgData2,0,0);
     }
-    // Bake frame
-    bakeFrame(ctx, out.width, out.height);
+    // Bake frame (pass map-only height, bakeCoordOnMap uses it to position below)
+    var mapH = out.height - (coordStripH || 0);
+    bakeFrame(ctx, out.width, mapH);
     return out;
   }
 
@@ -1319,33 +1279,25 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   }
 
   function bakeCoordOnMap(ctx, fw, fh) {
+    // fh here is the map-only height (before coord strip)
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
     var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
     var color = document.getElementById('coord-color').value;
-    var fs = 12 * (fw / 600);
+    var coordStripH = Math.round(fw*0.035);
+    var fs = Math.round(coordStripH * 0.45);
     fs = Math.max(10, Math.min(fs, 18));
+    // y is in the coord strip below the map frame
+    var y = fh + coordStripH*0.72;
     ctx.save();
     ctx.font = '300 '+fs+'px Outfit,sans-serif';
     ctx.fillStyle = color;
     ctx.textBaseline = 'bottom';
-    if (frameStyle === 'polaroid') {
-      // Inside bottom white strip, near bottom of strip
-      var bottomH = Math.max(48, fh*0.14);
-      var sideW = Math.max(10, fw*0.04);
-      var y = fh - bottomH*0.18;
-      if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, sideW+8, y); }
-      else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-sideW-8, y); }
-      else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y); }
-    } else if (frameStyle === 'border') {
-      // Just inside bottom border edge
-      var borderW = Math.round((parseInt(document.getElementById('border-width').value)||16) * fw / 400);
-      var y2 = fh - borderW - fs*0.3;
-      if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, borderW+8, y2); }
-      else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-borderW-8, y2); }
-      else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y2); }
-    }
+    var pad = fw * 0.015;
+    if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, pad, y); }
+    else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-pad, y); }
+    else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y); }
     ctx.restore();
   }
 
