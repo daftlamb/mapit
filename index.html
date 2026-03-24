@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Map It — Make Map Posters</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet" />
+<link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet" />
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f5; --panel-bg: #fff; --border: #e0e0e0;
+    --text: #1a1a1a; --muted: #888; --accent: #39ff14;
+    --header-bg: #fff; --canvas-bg: #eee;
+    --header-h: 44px;
+  }
+  [data-theme="dark"] {
+    --bg: #141414; --panel-bg: #1e1e1e; --border: #2a2a2a;
+    --text: #f0f0f0; --muted: #666; --accent: #39ff14;
+    --header-bg: #0e0e0e; --canvas-bg: #1a1a1a;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: 'Outfit', 'Noto Sans SC', sans-serif; font-size: 13px; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+
+  /* Header */
+  header { height: var(--header-h); background: var(--header-bg); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 10px; flex-shrink: 0; z-index: 100; }
+  .brand { font-size: 16px; font-weight: 500; letter-spacing: -0.3px; }
+  .brand-it { color: var(--accent); }
+  .header-spacer { flex: 1; }
+  .btn-icon { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 6px; height: 28px; cursor: pointer; font-family: inherit; font-size: 12px; padding: 0 8px; transition: border-color .15s, color .15s; }
+  .btn-icon:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* App body */
+  #app { display: flex; flex: 1; min-height: 0; }
+
+  /* Panel */
+  #panel { width: 300px; flex-shrink: 0; background: var(--panel-bg); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+  .panel-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .section-title { font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+  /* Buttons */
+  .btn { background: none; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 12px; font-family: inherit; font-size: 12px; cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.active { border-color: var(--accent); color: var(--accent); background: rgba(57,255,20,.07); }
+  .btn-wide { width: 100%; padding: 9px; font-size: 12px; }
+  .btn-muted { border-color: var(--border); color: var(--muted); }
+
+  /* Search */
+  .search-row { display: flex; gap: 6px; }
+  #search-input { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 6px 10px; font-family: inherit; font-size: 12px; outline: none; }
+  #search-input:focus { border-color: var(--accent); }
+  #search-results { margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; display: none; }
+  .search-result-item { padding: 8px 10px; cursor: pointer; font-size: 11px; line-height: 1.4; border-bottom: 1px solid var(--border); transition: background .1s; }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: var(--bg); }
+
+  /* Style grid */
+  .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .style-card { border: 2px solid var(--border); border-radius: 8px; padding: 8px; cursor: pointer; transition: border-color .15s; }
+  .style-card:hover { border-color: var(--muted); }
+  .style-card.active { border-color: var(--accent); }
+  .style-swatch { width: 100%; height: 36px; border-radius: 4px; margin-bottom: 6px; display: flex; overflow: hidden; }
+  .style-swatch-seg { flex: 1; }
+  .style-name { font-size: 11px; text-align: center; color: var(--text); }
+
+  /* Color pickers */
+  .color-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .color-row:last-child { margin-bottom: 0; }
+  .color-label { font-size: 11px; color: var(--muted); }
+  input[type="color"] { width: 36px; height: 24px; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 2px; background: none; }
+
+  /* Size buttons */
+  .size-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .size-btn { padding: 5px 10px; font-size: 11px; }
+
+  /* Markers */
+  .marker-item { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); }
+  .marker-item:last-child { border-bottom: none; }
+  .marker-coords { flex: 1; }
+  .marker-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; padding: 0 2px; }
+  .marker-del:hover { color: #e05050; }
+  #btn-add-marker.adding { border-color: var(--accent); color: var(--accent); }
+
+  /* Map area */
+  #map-area { flex: 1; position: relative; overflow: hidden; background: var(--canvas-bg); }
+  #map { position: absolute; inset: 0; }
+  #crop-overlay { position: absolute; pointer-events: none; z-index: 10; }
+
+  /* Modals */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-box { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; max-width: 340px; width: 90%; position: relative; }
+  .modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; }
+  .modal-close:hover { color: var(--text); }
+  .modal-box h3 { font-size: 15px; font-weight: 500; margin-bottom: 10px; }
+  .modal-box p { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
+  .modal-box a { color: var(--text); }
+  .modal-box a:hover { color: var(--accent); }
+
+  /* Export bottom */
+  #panel-export { padding: 14px 16px; margin-top: auto; border-top: 1px solid var(--border); }
+
+  /* Mobile */
+  @media (max-width: 700px) {
+    #app { flex-direction: column-reverse; }
+    #panel { width: 100%; height: 45vh; border-right: none; border-top: 1px solid var(--border); }
+    #map-area { flex: 1; min-height: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Map<span class="brand-it">It</span></div>
+  <button class="btn-icon" id="btn-darkmode" title="Toggle dark mode">◐</button>
+  <div class="header-spacer"></div>
+  <button class="btn-icon" id="btn-coffee" style="color:#e07820;border-color:#e07820">☕ support</button>
+  <button class="btn-icon" id="btn-about">i</button>
+</header>
+
+<div id="app">
+  <div id="panel">
+
+    <div class="panel-section">
+      <div class="section-title">Search</div>
+      <div class="search-row">
+        <input id="search-input" type="text" placeholder="City, address, place…" autocomplete="off" />
+        <button class="btn" id="search-btn">go</button>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Style</div>
+      <div class="style-grid" id="style-grid"></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Colors</div>
+      <div class="color-row">
+        <span class="color-label">Water</span>
+        <input type="color" id="color-water" />
+      </div>
+      <div class="color-row">
+        <span class="color-label">Land</span>
+        <input type="color" id="color-land" />
+      </div>
+      <div class="color-row">
+        <span class="color-label">Road</span>
+        <input type="color" id="color-road" />
+      </div>
+      <div class="color-row">
+        <span class="color-label">Label</span>
+        <input type="color" id="color-label" />
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Size</div>
+      <div class="size-btns">
+        <button class="btn size-btn active" data-ratio="1:1">Square</button>
+        <button class="btn size-btn" data-ratio="3:4">Portrait</button>
+        <button class="btn size-btn" data-ratio="9:16">Phone</button>
+        <button class="btn size-btn" data-ratio="16:9">Wide</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Markers</div>
+      <button class="btn btn-wide" id="btn-add-marker" style="margin-bottom:10px">+ add marker</button>
+      <div id="marker-list"></div>
+    </div>
+
+    <div id="panel-export">
+      <button class="btn btn-wide" id="btn-export">⬇ export png</button>
+    </div>
+
+  </div><!-- /panel -->
+
+  <div id="map-area">
+    <div id="map"></div>
+    <div id="crop-overlay"></div>
+  </div>
+</div>
+
+<!-- Coffee modal -->
+<div class="modal-backdrop" id="coffee-modal">
+  <div class="modal-box" style="text-align:center">
+    <button class="modal-close" id="coffee-close">&#10005;</button>
+    <h3>Buy me a coffee / 请我喝杯咖啡</h3>
+    <p style="margin-bottom:12px">Map It 完全免费 · 如果觉得有用，请扫码支持一下<br>Map It is free · A coffee keeps it alive ☕</p>
+    <div id="wechat-qr-placeholder" style="width:200px;height:200px;background:#eee;display:flex;align-items:center;justify-content:center;border-radius:8px;margin:0 auto;color:#888;font-size:12px">WeChat QR</div>
+    <div style="margin-top:16px">
+      <button class="btn btn-wide" id="btn-export-skip" style="font-size:10px;border-color:var(--border);color:var(--muted)">skip · 直接下载</button>
+    </div>
+  </div>
+</div>
+
+<!-- About modal -->
+<div class="modal-backdrop" id="about-modal">
+  <div class="modal-box">
+    <button class="modal-close" id="about-close">&#10005;</button>
+    <h3>Map<span style="color:var(--accent)">It</span></h3>
+    <p>Generate beautiful map posters for any location. Perfect for journals, travel records, and wallpapers.</p>
+    <p>为任意地点生成精美地图海报，适合手账、旅行记录和壁纸。</p>
+    <p>contact: <a href="mailto:hello@mapitapp.com">hello@mapitapp.com</a></p>
+    <p style="margin-top:10px;font-size:11px">Also try:<br>
+      <a href="https://badgeitapp.com" target="_blank">Badge It</a> ·
+      <a href="https://griditapp.com" target="_blank">Grid It</a> ·
+      <a href="https://ditheritapp.com" target="_blank">Dither It</a>
+    </p>
+    <p style="margin-top:10px;font-size:10px;color:var(--muted)">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · Tiles by <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  // ── Presets ──────────────────────────────────────────────────────────────
+  var PRESETS = [
+    { name: 'Cream',  colors: { land:'#f8f4ec', water:'#d4e8f0', road:'#e8dcc8', building:'#ede4d6', label:'#6b5b45' } },
+    { name: 'Blush',  colors: { land:'#fdf0f0', water:'#d4e0f5', road:'#f5d8d8', building:'#f5e0e0', label:'#8b5b5b' } },
+    { name: 'Sage',   colors: { land:'#f0f4ee', water:'#c8dfd8', road:'#d8e4d0', building:'#dde8d8', label:'#4a6b50' } },
+    { name: 'Dusk',   colors: { land:'#f0ece8', water:'#c8d4e0', road:'#e0d8cc', building:'#e4dcd4', label:'#5b5048' } },
+    { name: 'Ink',    colors: { land:'#f5f5f5', water:'#d0d8e4', road:'#e0e0e0', building:'#e8e8e8', label:'#333333' } }
+  ];
+
+  var currentColors = Object.assign({}, PRESETS[0].colors);
+  var currentRatio = '1:1';
+  var addingMarker = false;
+  var markers = [];
+  var map = null;
+  var pendingExport = false;
+
+  // ── Build MapLibre style ──────────────────────────────────────────────────
+  function buildStyle(c) {
+    return {
+      version: 8,
+      glyphs: 'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
+      sprite: 'https://tiles.openfreemap.org/sprites/liberty/sprite',
+      sources: {
+        ofm: { type: 'vector', url: 'https://tiles.openfreemap.org/planet' }
+      },
+      layers: [
+        { id: 'background', type: 'background', paint: { 'background-color': c.land } },
+        { id: 'water', type: 'fill', source: 'ofm', 'source-layer': 'water', paint: { 'fill-color': c.water } },
+        { id: 'waterway', type: 'line', source: 'ofm', 'source-layer': 'waterway', paint: { 'line-color': c.water, 'line-width': 1 } },
+        { id: 'landcover', type: 'fill', source: 'ofm', 'source-layer': 'landcover', paint: { 'fill-color': c.land, 'fill-opacity': 0.6 } },
+        { id: 'landuse', type: 'fill', source: 'ofm', 'source-layer': 'landuse', paint: { 'fill-color': c.land, 'fill-opacity': 0.5 } },
+        { id: 'building', type: 'fill', source: 'ofm', 'source-layer': 'building', minzoom: 13, paint: { 'fill-color': c.building, 'fill-outline-color': c.road } },
+        { id: 'road-minor', type: 'line', source: 'ofm', 'source-layer': 'transportation',
+          filter: ['in', 'class', 'minor', 'service', 'track'],
+          paint: { 'line-color': c.road, 'line-width': ['interpolate',['linear'],['zoom'],12,0.5,16,2] } },
+        { id: 'road-major', type: 'line', source: 'ofm', 'source-layer': 'transportation',
+          filter: ['in', 'class', 'primary', 'secondary', 'tertiary'],
+          paint: { 'line-color': c.road, 'line-width': ['interpolate',['linear'],['zoom'],10,1,16,5] } },
+        { id: 'road-motorway', type: 'line', source: 'ofm', 'source-layer': 'transportation',
+          filter: ['in', 'class', 'motorway', 'trunk'],
+          paint: { 'line-color': c.road, 'line-width': ['interpolate',['linear'],['zoom'],8,1,16,8] } },
+        { id: 'boundary', type: 'line', source: 'ofm', 'source-layer': 'boundary',
+          filter: ['==', 'admin_level', 2],
+          paint: { 'line-color': c.label, 'line-opacity': 0.25, 'line-width': 1 } },
+        { id: 'place-village', type: 'symbol', source: 'ofm', 'source-layer': 'place',
+          filter: ['in', 'class', 'village', 'suburb', 'neighbourhood'], minzoom: 12,
+          layout: { 'text-field': ['get','name'], 'text-font': ['Noto Sans Regular'], 'text-size': 10, 'text-max-width': 8 },
+          paint: { 'text-color': c.label, 'text-halo-color': c.land, 'text-halo-width': 1 } },
+        { id: 'place-town', type: 'symbol', source: 'ofm', 'source-layer': 'place',
+          filter: ['in', 'class', 'town'], minzoom: 10,
+          layout: { 'text-field': ['get','name'], 'text-font': ['Noto Sans Regular'], 'text-size': 12, 'text-max-width': 8 },
+          paint: { 'text-color': c.label, 'text-halo-color': c.land, 'text-halo-width': 1.5 } },
+        { id: 'place-city', type: 'symbol', source: 'ofm', 'source-layer': 'place',
+          filter: ['in', 'class', 'city'], minzoom: 6,
+          layout: { 'text-field': ['get','name'], 'text-font': ['Noto Sans Bold'], 'text-size': 14, 'text-max-width': 8 },
+          paint: { 'text-color': c.label, 'text-halo-color': c.land, 'text-halo-width': 2 } },
+        { id: 'road-label', type: 'symbol', source: 'ofm', 'source-layer': 'transportation_name', minzoom: 13,
+          layout: { 'text-field': ['get','name'], 'text-font': ['Noto Sans Regular'], 'text-size': 9, 'symbol-placement': 'line' },
+          paint: { 'text-color': c.label, 'text-halo-color': c.land, 'text-halo-width': 1 } }
+      ]
+    };
+  }
+
+  // ── Crop overlay ─────────────────────────────────────────────────────────
+  var mapArea = document.getElementById('map-area');
+  var cropOverlay = document.getElementById('crop-overlay');
+
+  function updateCropOverlay() {
+    var ratioMap = { '1:1': 1, '3:4': 0.75, '9:16': 9/16, '16:9': 16/9 };
+    var ratio = ratioMap[currentRatio] || 1;
+    var areaW = mapArea.clientWidth;
+    var areaH = mapArea.clientHeight;
+    var w, h;
+    if (areaW / areaH > ratio) { h = areaH * 0.9; w = h * ratio; }
+    else { w = areaW * 0.9; h = w / ratio; }
+    cropOverlay.style.width = w + 'px';
+    cropOverlay.style.height = h + 'px';
+    cropOverlay.style.left = ((areaW - w) / 2) + 'px';
+    cropOverlay.style.top = ((areaH - h) / 2) + 'px';
+    cropOverlay.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.38)';
+    cropOverlay.style.border = '2px solid rgba(255,255,255,0.6)';
+    cropOverlay.style.borderRadius = '2px';
+    cropOverlay.style.pointerEvents = 'none';
+  }
+
+  window.addEventListener('resize', updateCropOverlay);
+
+  // ── Map init ──────────────────────────────────────────────────────────────
+  map = new maplibregl.Map({
+    container: 'map',
+    style: buildStyle(currentColors),
+    center: [121.47, 31.23],
+    zoom: 12,
+    preserveDrawingBuffer: true
+  });
+  map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+  map.on('load', function() { updateCropOverlay(); });
+
+  // ── Style grid ────────────────────────────────────────────────────────────
+  var styleGrid = document.getElementById('style-grid');
+  PRESETS.forEach(function(p, i) {
+    var card = document.createElement('div');
+    card.className = 'style-card' + (i === 0 ? ' active' : '');
+    card.innerHTML =
+      '<div class="style-swatch">' +
+        '<div class="style-swatch-seg" style="background:' + p.colors.land + '"></div>' +
+        '<div class="style-swatch-seg" style="background:' + p.colors.water + '"></div>' +
+        '<div class="style-swatch-seg" style="background:' + p.colors.road + '"></div>' +
+      '</div>' +
+      '<div class="style-name">' + p.name + '</div>';
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.style-card').forEach(function(c) { c.classList.remove('active'); });
+      card.classList.add('active');
+      currentColors = Object.assign({}, p.colors);
+      map.setStyle(buildStyle(currentColors));
+      syncColorPickers();
+    });
+    styleGrid.appendChild(card);
+  });
+
+  // ── Color pickers ─────────────────────────────────────────────────────────
+  function syncColorPickers() {
+    document.getElementById('color-water').value = currentColors.water;
+    document.getElementById('color-land').value = currentColors.land;
+    document.getElementById('color-road').value = currentColors.road;
+    document.getElementById('color-label').value = currentColors.label;
+  }
+  syncColorPickers();
+
+  function onColorChange() {
+    currentColors.water = document.getElementById('color-water').value;
+    currentColors.land = document.getElementById('color-land').value;
+    currentColors.road = document.getElementById('color-road').value;
+    currentColors.label = document.getElementById('color-label').value;
+    map.setStyle(buildStyle(currentColors));
+  }
+  ['color-water','color-land','color-road','color-label'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', onColorChange);
+  });
+
+  // ── Size buttons ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.size-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.size-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentRatio = btn.dataset.ratio;
+      updateCropOverlay();
+    });
+  });
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  var searchResults = document.getElementById('search-results');
+  var searchInput = document.getElementById('search-input');
+  var searchDebounce = null;
+
+  function doSearch(q) {
+    if (!q.trim()) { searchResults.style.display = 'none'; return; }
+    fetch('https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(q) + '&format=json&limit=5', {
+      headers: { 'User-Agent': 'MapItApp/1.0' }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      searchResults.innerHTML = '';
+      if (!data.length) { searchResults.style.display = 'none'; return; }
+      data.forEach(function(item) {
+        var el = document.createElement('div');
+        el.className = 'search-result-item';
+        el.textContent = item.display_name;
+        el.addEventListener('click', function() {
+          map.flyTo({ center: [parseFloat(item.lon), parseFloat(item.lat)], zoom: 13 });
+          searchResults.style.display = 'none';
+          searchInput.value = item.display_name.split(',')[0];
+        });
+        searchResults.appendChild(el);
+      });
+      searchResults.style.display = 'block';
+    }).catch(function() { searchResults.style.display = 'none'; });
+  }
+
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(function() { doSearch(searchInput.value); }, 300);
+  });
+  searchInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { clearTimeout(searchDebounce); doSearch(searchInput.value); }
+  });
+  document.getElementById('search-btn').addEventListener('click', function() {
+    clearTimeout(searchDebounce); doSearch(searchInput.value);
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#search-results') && e.target !== searchInput) {
+      searchResults.style.display = 'none';
+    }
+  });
+
+  // ── Markers ───────────────────────────────────────────────────────────────
+  var markerList = document.getElementById('marker-list');
+  var btnAddMarker = document.getElementById('btn-add-marker');
+
+  btnAddMarker.addEventListener('click', function() {
+    if (markers.length >= 10) { alert('Max 10 markers'); return; }
+    addingMarker = !addingMarker;
+    btnAddMarker.classList.toggle('adding', addingMarker);
+    btnAddMarker.textContent = addingMarker ? '✕ cancel' : '+ add marker';
+    map.getCanvas().style.cursor = addingMarker ? 'crosshair' : '';
+  });
+
+  map.on('click', function(e) {
+    if (!addingMarker) return;
+    var lng = e.lngLat.lng, lat = e.lngLat.lat;
+    var el = document.createElement('div');
+    el.style.cssText = 'width:14px;height:14px;border-radius:50%;background:#e07820;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.3);cursor:pointer';
+    var m = new maplibregl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map);
+    var idx = markers.length;
+    markers.push(m);
+    renderMarkerList();
+    addingMarker = false;
+    btnAddMarker.classList.remove('adding');
+    btnAddMarker.textContent = '+ add marker';
+    map.getCanvas().style.cursor = '';
+  });
+
+  function renderMarkerList() {    markerList.innerHTML = '';
+    markers.forEach(function(m, i) {
+      var lnglat = m.getLngLat();
+      var row = document.createElement('div');
+      row.className = 'marker-item';
+      row.innerHTML =
+        '<div class="marker-coords">' +
+          '<span style="color:#e07820">●</span> ' +
+          lnglat.lat.toFixed(4) + ', ' + lnglat.lng.toFixed(4) +
+        '</div>' +
+        '<button class="marker-del" data-idx="' + i + '">✕</button>';
+      markerList.appendChild(row);
+    });
+    markerList.querySelectorAll('.marker-del').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(btn.dataset.idx);
+        markers[idx].remove();
+        markers.splice(idx, 1);
+        renderMarkerList();
+      });
+    });
+  }
+
+  // ── Export ────────────────────────────────────────────────────────────────
+  function doExport() {
+    var ratioMap = { '1:1': 1, '3:4': 0.75, '9:16': 9/16, '16:9': 16/9 };
+    var ratio = ratioMap[currentRatio] || 1;
+    var mapCanvas = map.getCanvas();
+    var mw = mapCanvas.width, mh = mapCanvas.height;
+    var cw, ch;
+    if (mw / mh > ratio) { ch = mh * 0.9; cw = ch * ratio; }
+    else { cw = mw * 0.9; ch = cw / ratio; }
+    var cx = (mw - cw) / 2, cy = (mh - ch) / 2;
+    var out = document.createElement('canvas');
+    out.width = Math.round(cw);
+    out.height = Math.round(ch);
+    var ctx = out.getContext('2d');
+    ctx.drawImage(mapCanvas, cx, cy, cw, ch, 0, 0, out.width, out.height);
+    var a = document.createElement('a');
+    a.href = out.toDataURL('image/png');
+    a.download = 'mapit-export.png';
+    a.click();
+  }
+
+  document.getElementById('btn-export').addEventListener('click', function() {
+    pendingExport = true;
+    document.getElementById('coffee-modal').style.display = 'flex';
+  });
+  document.getElementById('btn-export-skip').addEventListener('click', function() {
+    document.getElementById('coffee-modal').style.display = 'none';
+    if (pendingExport) { pendingExport = false; doExport(); }
+  });
+  document.getElementById('coffee-close').addEventListener('click', function() {
+    document.getElementById('coffee-modal').style.display = 'none';
+    if (pendingExport) { pendingExport = false; doExport(); }
+  });
+
+  // ── About modal ───────────────────────────────────────────────────────────
+  document.getElementById('btn-about').addEventListener('click', function() {
+    document.getElementById('about-modal').style.display = 'flex';
+  });
+  document.getElementById('about-close').addEventListener('click', function() {
+    document.getElementById('about-modal').style.display = 'none';
+  });
+  document.getElementById('about-modal').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('about-modal')) {
+      document.getElementById('about-modal').style.display = 'none';
+    }
+  });
+  document.getElementById('coffee-modal').addEventListener('click', function(e) {
+    if (e.target === document.getElementById('coffee-modal')) {
+      document.getElementById('coffee-modal').style.display = 'none';
+      if (pendingExport) { pendingExport = false; doExport(); }
+    }
+  });
+
+  // ── Support button ────────────────────────────────────────────────────────
+  document.getElementById('btn-coffee').addEventListener('click', function() {
+    pendingExport = false;
+    document.getElementById('coffee-modal').style.display = 'flex';
+  });
+
+  // ── Dark mode ─────────────────────────────────────────────────────────────
+  var darkMode = false;
+  document.getElementById('btn-darkmode').addEventListener('click', function() {
+    darkMode = !darkMode;
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : '');
+  });
+
+  // ── ESC closes modals ─────────────────────────────────────────────────────
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('about-modal').style.display = 'none';
+      var coffeeVisible = document.getElementById('coffee-modal').style.display === 'flex';
+      if (coffeeVisible) {
+        document.getElementById('coffee-modal').style.display = 'none';
+        if (pendingExport) { pendingExport = false; doExport(); }
+      }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
