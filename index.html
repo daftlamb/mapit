@@ -304,7 +304,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       </div>
       <!-- Coord stamp — shown when frame != none -->
       <div id="coord-stamp-options" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <div class="vignette-row">
+        <div class="vignette-row" style="margin-bottom:8px">
           <span style="font-size:11px;color:var(--muted)">Coordinates</span>
           <select class="vig-select" id="coord-pos">
             <option value="none">off</option>
@@ -312,6 +312,21 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="center" selected>center</option>
             <option value="right">right</option>
           </select>
+        </div>
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Color</span>
+          <input type="color" id="coord-color" value="#888888" />
+        </div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Size</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="coord-size" min="8" max="24" value="11" style="width:80px">
+            <span id="coord-size-val" style="font-size:11px;color:var(--muted);width:22px">11</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Shadow</span>
+          <input type="checkbox" id="coord-shadow" checked style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         </div>
       </div>
     </div>
@@ -512,6 +527,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     updateFrameOverlay();
   });
 
+  // Coord size slider
+  document.getElementById('coord-size').addEventListener('input', function() {
+    document.getElementById('coord-size-val').textContent = this.value;
+    updateFrameOverlay();
+  });
+
   // Frame system
   var frameStyle = 'none';
   var frameOverlay = document.getElementById('frame-overlay');
@@ -528,7 +549,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateFrameOverlay);
   });
@@ -581,23 +602,25 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   }
 
   function renderCoordStampDOM(r) {
-    // Remove old coord stamp if any
     var old = frameOverlay.querySelector('.coord-stamp');
     if (old) old.parentNode.removeChild(old);
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
     var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
+    var color = document.getElementById('coord-color').value;
+    var fs = parseInt(document.getElementById('coord-size').value) || 11;
+    var shadow = document.getElementById('coord-shadow').checked;
     var el = document.createElement('div');
     el.className = 'coord-stamp';
     var pad = 10;
-    // Polaroid: inside the image area (above bottom strip)
     var bottomH = frameStyle==='polaroid' ? Math.max(48, r.height*0.14) : 0;
     var borderW = frameStyle==='border' ? (parseInt(document.getElementById('border-width').value)||16) : 0;
     var bottomInset = bottomH + borderW + pad;
     var sideInset = (frameStyle==='polaroid' ? Math.max(10, r.width*0.04) : borderW) + pad;
     var align = pos==='left' ? 'left:'+sideInset+'px' : pos==='right' ? 'right:'+sideInset+'px' : 'left:50%;transform:translateX(-50%)';
-    el.style.cssText = 'position:absolute;bottom:'+bottomInset+'px;'+align+';font-family:Outfit,sans-serif;font-size:12px;font-weight:300;letter-spacing:.1em;color:rgba(255,255,255,0.88);text-shadow:0 1px 4px rgba(0,0,0,0.5);pointer-events:none;white-space:nowrap';
+    var textShadow = shadow ? '0 1px 4px rgba(0,0,0,0.55)' : 'none';
+    el.style.cssText = 'position:absolute;bottom:'+bottomInset+'px;'+align+';font-family:Outfit,sans-serif;font-size:'+fs+'px;font-weight:300;letter-spacing:.1em;color:'+color+';text-shadow:'+textShadow+';pointer-events:none;white-space:nowrap';
     el.textContent = coordStr;
     frameOverlay.appendChild(el);
   }
@@ -1267,29 +1290,25 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if (pos === 'none') return;
     var c = map.getCenter();
     var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
-    var fs = 12 * (fw / 600); // scale with output size, base 12px at 600px wide
-    fs = Math.max(10, Math.min(fs, 18));
-    var pad = fs * 1.2;
+    var color = document.getElementById('coord-color').value;
+    var baseFontSize = parseInt(document.getElementById('coord-size').value) || 11;
+    var shadow = document.getElementById('coord-shadow').checked;
+    // Scale font size with output canvas width
+    var fs = baseFontSize * (fw / 600);
+    fs = Math.max(8, Math.min(fs, 32));
+    var pad = Math.max(8, fs * 1.0);
     var bottomH = frameStyle==='polaroid' ? Math.max(48, fh*0.14) : 0;
     var borderW = frameStyle==='border' ? Math.round((parseInt(document.getElementById('border-width').value)||16) * fw / 400) : 0;
     var y = fh - bottomH - borderW - pad;
+    var sideInset = (frameStyle==='polaroid' ? Math.max(10, fw*0.04) : borderW) + pad;
     ctx.save();
     ctx.font = '300 '+fs+'px Outfit,sans-serif';
     ctx.textBaseline = 'bottom';
-    ctx.fillStyle = 'rgba(255,255,255,0.88)';
-    ctx.shadowColor = 'rgba(0,0,0,0.55)';
-    ctx.shadowBlur = fs * 0.5;
-    var sideInset = (frameStyle==='polaroid' ? Math.max(10, fw*0.04) : borderW) + pad;
-    if (pos === 'left') {
-      ctx.textAlign = 'left';
-      ctx.fillText(coordStr, sideInset, y);
-    } else if (pos === 'right') {
-      ctx.textAlign = 'right';
-      ctx.fillText(coordStr, fw - sideInset, y);
-    } else {
-      ctx.textAlign = 'center';
-      ctx.fillText(coordStr, fw/2, y);
-    }
+    ctx.fillStyle = color;
+    if (shadow) { ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = fs * 0.5; }
+    if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, sideInset, y); }
+    else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-sideInset, y); }
+    else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y); }
     ctx.restore();
   }
 
