@@ -275,7 +275,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn active" data-frame="none">None</button>
         <button class="btn size-btn" data-frame="polaroid">Polaroid</button>
         <button class="btn size-btn" data-frame="border">Border</button>
-        <button class="btn size-btn" data-frame="filmstrip">Film</button>
       </div>
       <div id="frame-options-polaroid" style="display:none">
         <div class="color-row" style="margin-bottom:8px">
@@ -296,12 +295,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <span>Width</span>
           <input type="range" id="border-width" min="4" max="60" value="16" style="flex:1;accent-color:var(--accent)" />
           <span id="border-width-val" style="width:28px;text-align:right">16</span>
-        </div>
-      </div>
-      <div id="frame-options-filmstrip" style="display:none">
-        <div class="color-row">
-          <span class="color-label">Strip color</span>
-          <input type="color" id="film-color" value="#111111" />
         </div>
       </div>
     </div>
@@ -509,14 +502,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       frameStyle = btn.dataset.frame;
       document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
-      ['polaroid','border','filmstrip'].forEach(function(t){
+      ['polaroid','border'].forEach(function(t){
         document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
       });
       updateFrameOverlay();
     });
   });
 
-  ['frame-color','frame-caption','border-color','film-color'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateFrameOverlay);
   });
@@ -559,30 +552,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
       frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
-    } else if (frameStyle === 'filmstrip') {
-      var filmC = document.getElementById('film-color').value;
-      var stripW = Math.max(20, r.width * 0.06);
-      var holeH = Math.round(r.height * 0.028);
-      var holeW = Math.round(holeH * 1.5);
-      var holeGap = holeH * 1.6;
-      function makeStrip(side) {
-        var strip = document.createElement('div');
-        strip.style.cssText='position:absolute;top:0;'+side+':0;width:'+stripW+'px;height:100%;background:'+filmC+';overflow:hidden';
-        var count = Math.floor(r.height / (holeH + holeGap));
-        var totalH = count*(holeH+holeGap)-holeGap;
-        var startY = (r.height - totalH)/2;
-        for (var i=0; i<count; i++) {
-          var hole = document.createElement('div');
-          var hx = (stripW-holeW)/2;
-          var hy = startY + i*(holeH+holeGap);
-          hole.style.cssText='position:absolute;left:'+hx+'px;top:'+hy+'px;width:'+holeW+'px;height:'+holeH+'px;background:#fff;border-radius:2px;opacity:0.85';
-          strip.appendChild(hole);
         }
-        return strip;
-      }
-      frameOverlay.appendChild(makeStrip('left'));
-      frameOverlay.appendChild(makeStrip('right'));
-    }
   }
 
   // Map
@@ -1197,25 +1167,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       ctx.strokeStyle = bc;
       ctx.lineWidth = scaledBw*2;
       ctx.strokeRect(0,0,fw,fh);
-    } else if (frameStyle==='filmstrip') {
-      var filmC = document.getElementById('film-color').value;
-      var stripW = Math.max(20, fw*0.06);
-      var holeH = Math.round(fh*0.028);
-      var holeW = Math.round(holeH*1.5);
-      var holeGap = holeH*1.6;
-      ctx.fillStyle = filmC;
-      ctx.fillRect(0,0,stripW,fh);
-      ctx.fillRect(fw-stripW,0,stripW,fh);
-      var count = Math.floor(fh/(holeH+holeGap));
-      var totalH = count*(holeH+holeGap)-holeGap;
-      var startY = (fh-totalH)/2;
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      for (var fi=0; fi<count; fi++) {
-        var hy2 = startY+fi*(holeH+holeGap);
-        var hx2 = (stripW-holeW)/2;
-        ctx.fillRect(hx2,hy2,holeW,holeH);
-        ctx.fillRect(fw-stripW+hx2,hy2,holeW,holeH);
-      }
     }
   }
 
