@@ -138,6 +138,11 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn" id="search-btn">go</button>
       </div>
       <div id="search-results"></div>
+      <div id="wiki-box" style="display:none;margin-top:10px;padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase">About this place</div>
+        <div id="wiki-text" style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px"></div>
+        <button class="btn" id="btn-wiki-insert" style="padding:3px 8px;font-size:10px;color:var(--muted)">→ add as caption</button>
+      </div>
     </div>
 
     <div class="panel-section">
@@ -225,6 +230,29 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     </div>
 
     <div class="panel-section">
+      <div class="section-title">Coordinate Stamp</div>
+      <div class="layer-toggle">
+        <span>Show coordinates</span>
+        <label class="toggle-switch"><input type="checkbox" id="tog-coords" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div id="coord-options" style="display:none;margin-top:8px">
+        <div class="vignette-row" style="margin-bottom:6px">
+          <span style="font-size:11px;color:var(--muted)">Position</span>
+          <select class="vig-select" id="coord-pos">
+            <option value="bl">Bottom left</option>
+            <option value="br">Bottom right</option>
+            <option value="tl">Top left</option>
+            <option value="tr">Top right</option>
+          </select>
+        </div>
+        <div class="color-row">
+          <span class="color-label">Color</span>
+          <input type="color" id="coord-color" value="#6b5b45" />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-section">
       <div class="section-title">Export Style</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button class="btn size-btn active" data-export-style="normal">Normal</button>
@@ -253,8 +281,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         </div>
         <div class="vignette-row vig-opacity-row" style="margin-top:6px">
           <span>Density</span>
-          <input type="range" id="dither-density" min="-50" max="50" value="0" style="flex:1;accent-color:var(--accent)" />
-          <span id="dither-density-val" style="width:32px;text-align:right">0</span>
+          <input type="range" id="dither-density" min="-50" max="50" value="20" style="flex:1;accent-color:var(--accent)" />
+          <span id="dither-density-val" style="width:32px;text-align:right">20</span>
         </div>
       </div>
       <div id="duotone-options" style="display:none">
@@ -361,7 +389,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     {name:'Blush', colors:{land:'#fdf0f0',water:'#d4e0f5',road:'#f5d8d8',building:'#f5e0e0',label:'#8b5b5b'}},
     {name:'Sage',  colors:{land:'#f0f4ee',water:'#c8dfd8',road:'#d8e4d0',building:'#dde8d8',label:'#4a6b50'}},
     {name:'Dusk',  colors:{land:'#f0ece8',water:'#c8d4e0',road:'#e0d8cc',building:'#e4dcd4',label:'#5b5048'}},
-    {name:'Ink',   colors:{land:'#f5f5f5',water:'#d0d8e4',road:'#e0e0e0',building:'#e8e8e8',label:'#333333'}}
+    {name:'Ink',   colors:{land:'#f5f5f5',water:'#d0d8e4',road:'#e0e0e0',building:'#e8e8e8',label:'#333333'}},
+    {name:'Night', colors:{land:'#0d1117',water:'#0a1628',road:'#1c2a3a',building:'#151c28',label:'#c8a84b'}},
+    {name:'Dawn',  colors:{land:'#1a0e2e',water:'#0e1a3a',road:'#2d1a3a',building:'#221433',label:'#e8b86d'}}
   ];
   var EMOJIS = ['📍','⭐','❤️','🏠','☕','🍜','🌸','🎵','📸','🌿','🏔️','🌊','✈️','🎯','💫','🎪','🏛️','🌆','🐾','🎨'];
 
@@ -642,7 +672,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           el.addEventListener('click',function(){
             map.flyTo({center:[parseFloat(item.lon),parseFloat(item.lat)],zoom:13});
             searchResults.style.display='none';
-            searchInput.value=item.display_name.split(',')[0];
+            var placeName = item.display_name.split(',')[0];
+            searchInput.value = placeName;
+            fetchWiki(placeName);
           });
           searchResults.appendChild(el);
         });
@@ -665,7 +697,80 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if(!e.target.closest('#search-results')&&e.target!==searchInput)searchResults.style.display='none';
   });
 
-  // Emoji grid
+  // Wikipedia summary
+  var wikiBox = document.getElementById('wiki-box');
+  var wikiText = document.getElementById('wiki-text');
+  var lastWikiText = '';
+
+  function fetchWiki(placeName) {
+    wikiBox.style.display = 'none';
+    var url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(placeName);
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if (data.extract) {
+          var text = data.extract;
+          // Trim to ~120 chars at sentence boundary
+          if (text.length > 130) {
+            var cut = text.indexOf('. ', 60);
+            text = cut > 0 ? text.slice(0, cut+1) : text.slice(0,120)+'…';
+          }
+          lastWikiText = text;
+          wikiText.textContent = text;
+          wikiBox.style.display = 'block';
+        }
+      })
+      .catch(function(){});
+  }
+
+  document.getElementById('btn-wiki-insert').addEventListener('click', function() {
+    if (!lastWikiText) return;
+    document.getElementById('caption-text').value = lastWikiText;
+  });
+
+  // Coordinate stamp
+  var showCoords = false;
+  document.getElementById('tog-coords').addEventListener('change', function() {
+    showCoords = this.checked;
+    document.getElementById('coord-options').style.display = showCoords ? 'block' : 'none';
+  });
+
+  function bakeCoordStamp(ctx, fw, fh) {
+    if (!showCoords) return;
+    var center = map.getCenter();
+    var lat = center.lat, lng = center.lng;
+    var latStr = Math.abs(lat).toFixed(4)+'° '+(lat>=0?'N':'S');
+    var lngStr = Math.abs(lng).toFixed(4)+'° '+(lng>=0?'E':'W');
+    var coordStr = latStr+'  '+lngStr;
+    var pos = document.getElementById('coord-pos').value;
+    var color = document.getElementById('coord-color').value;
+    var fs = Math.max(10, fw * 0.022);
+    var pad = fs * 0.8;
+    ctx.save();
+    ctx.font = '300 '+fs+'px Outfit,sans-serif';
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.72;
+    ctx.textBaseline = 'bottom';
+    ctx.letterSpacing = '0.08em';
+    var tw = ctx.measureText(coordStr).width;
+    var x, y;
+    if (pos==='bl'){ x=pad; y=fh-pad; ctx.textAlign='left'; }
+    else if (pos==='br'){ x=fw-pad; y=fh-pad; ctx.textAlign='right'; }
+    else if (pos==='tl'){ x=pad; y=fs+pad; ctx.textAlign='left'; }
+    else { x=fw-pad; y=fs+pad; ctx.textAlign='right'; }
+    // subtle bg pill
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = (color==='#ffffff'||color==='#f0f0f0') ? '#000' : '#fff';
+    var bpad = fs*0.3;
+    ctx.beginPath();
+    if (pos==='tl'||pos==='bl') ctx.roundRect(x-bpad, y-fs-bpad*0.5, tw+bpad*2, fs+bpad, fs*0.3);
+    else ctx.roundRect(x-tw-bpad, y-fs-bpad*0.5, tw+bpad*2, fs+bpad, fs*0.3);
+    ctx.fill();
+    ctx.globalAlpha = 0.78;
+    ctx.fillStyle = color;
+    ctx.fillText(coordStr, x, y);
+    ctx.restore();
+  }
   var emojiGrid=document.getElementById('emoji-grid');
   EMOJIS.forEach(function(em){
     var btn=document.createElement('div');
@@ -987,8 +1092,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var w = imageData.width, h = imageData.height;
     var dark = hexToRgb(palette[0]);
     var light = hexToRgb(palette[1]);
-    // density: -50..50, converts to threshold bias -0.35..0.35
-    var bias = (density||0) / 143;
+    // density: -50..50, bias range ±0.15 (subtle, preserves dot texture)
+    var bias = (density||0) / 333;
     var gray = new Float32Array(w*h);
     for (var i=0; i<w*h; i++) {
       gray[i] = (d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114) / 255;
@@ -1137,6 +1242,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     }
     // Bake frame
     bakeFrame(ctx, out.width, out.height);
+    bakeCoordStamp(ctx, out.width, out.height);
     return out;
   }
 
