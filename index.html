@@ -528,15 +528,19 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     frameOverlay.style.width = r.width+'px';
     frameOverlay.style.height = r.height+'px';
     frameOverlay.innerHTML = '';
+    frameOverlay.style.boxShadow = '';
     if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
     frameOverlay.style.display = 'block';
+    var coordStr = map.getCenter ? (function(){var c=map.getCenter();return Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');})() : '';
     if (frameStyle === 'polaroid') {
       var fc = document.getElementById('frame-color').value;
       var capText = document.getElementById('frame-caption').value;
       var bottomH = Math.max(48, r.height * 0.14);
       var sideW = Math.max(10, r.width * 0.04);
       var topH = Math.max(10, r.height * 0.04);
-      // side bars
+      var frameIsLight = isLightColor(fc);
+      var textColor = frameIsLight ? '#444' : '#ddd';
+      var coordColor = frameIsLight ? '#777' : '#aaa';
       var left = document.createElement('div');
       left.style.cssText='position:absolute;top:0;left:0;width:'+sideW+'px;height:100%;background:'+fc;
       var right = document.createElement('div');
@@ -544,13 +548,17 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var top = document.createElement('div');
       top.style.cssText='position:absolute;top:0;left:0;width:100%;height:'+topH+'px;background:'+fc;
       var bottom = document.createElement('div');
-      bottom.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;background:'+fc+';display:flex;align-items:center;justify-content:center';
+      bottom.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;background:'+fc+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px';
       if (capText) {
         var span = document.createElement('span');
-        span.style.cssText='font-family:Outfit,sans-serif;font-size:'+Math.round(bottomH*0.32)+'px;color:#555;letter-spacing:.06em;font-weight:300';
+        span.style.cssText='font-family:Outfit,sans-serif;font-size:'+Math.round(bottomH*0.28)+'px;color:'+textColor+';letter-spacing:.05em;font-weight:300';
         span.textContent = capText;
         bottom.appendChild(span);
       }
+      var coordSpan = document.createElement('span');
+      coordSpan.style.cssText='font-family:Outfit,sans-serif;font-size:'+Math.round(bottomH*0.2)+'px;color:'+coordColor+';letter-spacing:.08em;font-weight:300';
+      coordSpan.textContent = coordStr;
+      bottom.appendChild(coordSpan);
       frameOverlay.appendChild(left);
       frameOverlay.appendChild(right);
       frameOverlay.appendChild(top);
@@ -559,7 +567,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
       frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
-        }
+      var borderIsLight = isLightColor(bc);
+      var coordEl = document.createElement('div');
+      var cfs = Math.max(9, bw * 0.55);
+      coordEl.style.cssText='position:absolute;bottom:'+Math.round(bw*0.6)+'px;right:'+Math.round(bw*0.8)+'px;font-family:Outfit,sans-serif;font-size:'+cfs+'px;color:'+(borderIsLight?'rgba(60,60,60,0.85)':'rgba(210,210,210,0.85)')+';font-weight:300;letter-spacing:.06em;pointer-events:none';
+      coordEl.textContent = coordStr;
+      frameOverlay.appendChild(coordEl);
+    }
   }
 
   // Map
@@ -574,6 +588,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   map.on('load',function(){updateCropOverlay();applyLayerVis();});
   map.on('style.load',function(){applyLayerVis();});
   map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(); });
+  map.on('moveend', function(){ if(frameStyle!=='none') updateFrameOverlay(); });
 
   // Style grid
   var styleGrid = document.getElementById('style-grid');
@@ -1201,8 +1216,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       ctx.fillRect(0,fh-bottomH,fw,bottomH);
       // Detect if frame is dark or light to set text color
       var frameIsLight = isLightColor(fc);
-      var textColor = frameIsLight ? '#555' : '#ccc';
-      var coordColor = frameIsLight ? '#999' : '#888';
+      var textColor = frameIsLight ? '#444' : '#ddd';
+      var coordColor = frameIsLight ? '#777' : '#aaa';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       var midY = fh - bottomH/2;
