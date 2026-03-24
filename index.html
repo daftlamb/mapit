@@ -172,6 +172,16 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="layer-toggle"><span>Buildings</span>
         <label class="toggle-switch"><input type="checkbox" id="tog-buildings" checked /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
+      <div class="layer-toggle"><span>3D Buildings</span>
+        <label class="toggle-switch"><input type="checkbox" id="tog-buildings-3d" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
+      <div class="vignette-row" style="margin-top:8px">
+        <span style="font-size:11px;color:var(--muted)">Tilt</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <input type="range" id="map-pitch" min="0" max="60" value="0" style="width:80px">
+          <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
+        </div>
+      </div>
     </div>
 
     <div class="panel-section">
@@ -408,13 +418,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   var selectedEmoji = '📍';
   var captions = [];
   var selectedCaption = null;
-  var layerVis = {labels:true,roadLabels:true,boundary:true,buildings:true};
+  var layerVis = {labels:true,roadLabels:true,boundary:true,buildings:true,buildings3d:false};
   var snapThreshold = 10;
 
   var LABEL_LAYERS    = ['place-village','place-town','place-city'];
   var ROADLBL_LAYERS  = ['road-label'];
   var BOUNDARY_LAYERS = ['boundary'];
   var BUILDING_LAYERS = ['building'];
+  var BUILDING3D_LAYERS = ['building-3d'];
 
   // Build MapLibre style
   function buildStyle(c) {
@@ -430,6 +441,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         {id:'landcover',type:'fill',source:'ofm','source-layer':'landcover',paint:{'fill-color':c.land,'fill-opacity':0.6}},
         {id:'landuse',type:'fill',source:'ofm','source-layer':'landuse',paint:{'fill-color':c.land,'fill-opacity':0.5}},
         {id:'building',type:'fill',source:'ofm','source-layer':'building',minzoom:13,paint:{'fill-color':c.building,'fill-outline-color':c.road}},
+        {id:'building-3d',type:'fill-extrusion',source:'ofm','source-layer':'building',minzoom:14,layout:{visibility:'none'},paint:{
+          'fill-extrusion-color':c.building,
+          'fill-extrusion-height':['coalesce',['get','height'],['*',['coalesce',['get','levels'],1],3.5],3.5],
+          'fill-extrusion-base':['coalesce',['get','min_height'],0],
+          'fill-extrusion-opacity':0.85
+        }},
         {id:'road-minor',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','minor','service','track'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],12,0.5,16,2]}},
         {id:'road-major',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','primary','secondary','tertiary'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],10,1,16,5]}},
         {id:'road-motorway',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','motorway','trunk'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],8,1,16,8]}},
@@ -448,6 +465,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     ROADLBL_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.roadLabels?'visible':'none');});
     BOUNDARY_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.boundary?'visible':'none');});
     BUILDING_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.buildings?'visible':'none');});
+    BUILDING3D_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.buildings3d?'visible':'none');});
   }
 
   // Crop overlay
@@ -682,6 +700,27 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   document.getElementById('tog-road-labels').addEventListener('change',function(){layerVis.roadLabels=this.checked;applyLayerVis();});
   document.getElementById('tog-boundary').addEventListener('change',function(){layerVis.boundary=this.checked;applyLayerVis();});
   document.getElementById('tog-buildings').addEventListener('change',function(){layerVis.buildings=this.checked;applyLayerVis();});
+  document.getElementById('tog-buildings-3d').addEventListener('change',function(){
+    layerVis.buildings3d=this.checked;
+    // Hide flat buildings when 3D is on to avoid overlap
+    if (this.checked) layerVis.buildings=false;
+    else layerVis.buildings=document.getElementById('tog-buildings').checked;
+    applyLayerVis();
+    if (this.checked && map.getPitch() < 10) {
+      map.easeTo({pitch:45,duration:600});
+      document.getElementById('map-pitch').value=45;
+      document.getElementById('map-pitch-val').textContent='45°';
+    } else if (!this.checked) {
+      map.easeTo({pitch:0,duration:400});
+      document.getElementById('map-pitch').value=0;
+      document.getElementById('map-pitch-val').textContent='0°';
+    }
+  });
+  document.getElementById('map-pitch').addEventListener('input',function(){
+    var v=parseInt(this.value);
+    document.getElementById('map-pitch-val').textContent=v+'°';
+    map.easeTo({pitch:v,duration:200});
+  });
 
   // Size buttons
   document.querySelectorAll('.size-btn').forEach(function(btn){
