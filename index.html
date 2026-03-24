@@ -817,8 +817,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       el.appendChild(tag);
     }
 
-    var m=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat(lnglat).addTo(map);
-    markers.push({mapMarker:m,name:name,emoji:emoji,lnglat:lnglat});
+    var m=new maplibregl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat(lnglat).addTo(map);
+    var markerObj={mapMarker:m,name:name,emoji:emoji,lnglat:lnglat};
+    markers.push(markerObj);
+    m.on('dragend',function(){
+      markerObj.lnglat=Object.values(m.getLngLat());
+    });
     renderMarkerList();
     hideMarkerPopup();
   });
