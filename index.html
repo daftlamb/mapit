@@ -546,9 +546,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     frameOverlay.style.height = r.height+'px';
     frameOverlay.innerHTML = '';
     frameOverlay.style.boxShadow = '';
-    // coord-stamp-options visibility
+    coordStampEl.style.display = 'none';
     document.getElementById('coord-stamp-options').style.display = frameStyle==='none' ? 'none' : 'block';
-    if (frameStyle === 'none') { frameOverlay.style.display='none'; coordStampEl.style.display='none'; return; }
+    if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
     frameOverlay.style.display = 'block';
     if (frameStyle === 'polaroid') {
       var fc = document.getElementById('frame-color').value;
@@ -576,16 +576,63 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       frameOverlay.appendChild(right);
       frameOverlay.appendChild(top);
       frameOverlay.appendChild(bottom);
+      // Coord stamp inside the bottom white strip
+      renderCoordInStrip(bottom, bottomH, sideW, r.width);
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
       frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
+      // Coord stamp: just below the crop box bottom edge (outside border)
+      renderCoordBelowBox(r, bw);
     }
-    // Coord stamp — overlaid on the map image, bottom edge, inside crop
-    renderCoordStampDOM(r);
   }
 
   var coordStampEl = document.getElementById('coord-stamp-el');
+
+  // Polaroid: coord inside bottom strip
+  function renderCoordInStrip(bottomEl, bottomH, sideW, totalW) {
+    var pos = document.getElementById('coord-pos').value;
+    if (pos === 'none') return;
+    var c = map.getCenter();
+    var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
+    var color = document.getElementById('coord-color').value;
+    var fs = Math.max(9, bottomH * 0.19);
+    var el = document.createElement('span');
+    el.style.cssText = 'position:absolute;font-family:Outfit,sans-serif;font-size:'+fs+'px;font-weight:300;letter-spacing:.1em;color:'+color+';white-space:nowrap;bottom:'+Math.round(bottomH*0.18)+'px';
+    if (pos === 'left') { el.style.left = sideW+8+'px'; }
+    else if (pos === 'right') { el.style.right = sideW+8+'px'; }
+    else { el.style.left='50%'; el.style.transform='translateX(-50%)'; }
+    el.textContent = coordStr;
+    bottomEl.style.position = 'absolute'; // ensure absolute for child
+    bottomEl.appendChild(el);
+  }
+
+  // Border: coord just below crop bottom edge, outside the box
+  function renderCoordBelowBox(r, bw) {
+    var pos = document.getElementById('coord-pos').value;
+    if (pos === 'none') return;
+    var c = map.getCenter();
+    var coordStr = Math.abs(c.lat).toFixed(4)+'° '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+'° '+(c.lng>=0?'E':'W');
+    var color = document.getElementById('coord-color').value;
+    coordStampEl.textContent = coordStr;
+    coordStampEl.style.color = color;
+    coordStampEl.style.display = 'block';
+    var gap = 6;
+    coordStampEl.style.top = (r.top + r.height + gap) + 'px';
+    if (pos === 'left') {
+      coordStampEl.style.left = r.left + bw + 'px';
+      coordStampEl.style.right = 'auto';
+      coordStampEl.style.transform = 'none';
+    } else if (pos === 'right') {
+      coordStampEl.style.right = (mapArea.clientWidth - r.left - r.width + bw) + 'px';
+      coordStampEl.style.left = 'auto';
+      coordStampEl.style.transform = 'none';
+    } else {
+      coordStampEl.style.left = (r.left + r.width/2) + 'px';
+      coordStampEl.style.right = 'auto';
+      coordStampEl.style.transform = 'translateX(-50%)';
+    }
+  }
 
   function renderCoordStampDOM(r) {
     var pos = document.getElementById('coord-pos').value;
@@ -1279,26 +1326,25 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var color = document.getElementById('coord-color').value;
     var fs = 12 * (fw / 600);
     fs = Math.max(10, Math.min(fs, 18));
-    var pad = fs * 0.7;
-    // bottomH: height of polaroid strip or border, offset coord above it
-    var bottomH = frameStyle==='polaroid' ? Math.max(48, fh*0.14) : 0;
-    var borderW = frameStyle==='border' ? Math.round((parseInt(document.getElementById('border-width').value)||16) * fw / 400) : 0;
-    // y: just below the frame bottom — i.e. at fh - bottomH - borderW - small pad
-    var y = fh - bottomH - borderW - pad;
-    var sideInset = (frameStyle==='polaroid' ? Math.max(10, fw*0.04) : borderW) + pad;
     ctx.save();
     ctx.font = '300 '+fs+'px Outfit,sans-serif';
-    ctx.textBaseline = 'bottom';
     ctx.fillStyle = color;
-    if (pos === 'left') {
-      ctx.textAlign = 'left';
-      ctx.fillText(coordStr, sideInset, y);
-    } else if (pos === 'right') {
-      ctx.textAlign = 'right';
-      ctx.fillText(coordStr, fw - sideInset, y);
-    } else {
-      ctx.textAlign = 'center';
-      ctx.fillText(coordStr, fw/2, y);
+    ctx.textBaseline = 'bottom';
+    if (frameStyle === 'polaroid') {
+      // Inside bottom white strip, near bottom of strip
+      var bottomH = Math.max(48, fh*0.14);
+      var sideW = Math.max(10, fw*0.04);
+      var y = fh - bottomH*0.18;
+      if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, sideW+8, y); }
+      else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-sideW-8, y); }
+      else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y); }
+    } else if (frameStyle === 'border') {
+      // Just inside bottom border edge
+      var borderW = Math.round((parseInt(document.getElementById('border-width').value)||16) * fw / 400);
+      var y2 = fh - borderW - fs*0.3;
+      if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, borderW+8, y2); }
+      else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-borderW-8, y2); }
+      else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y2); }
     }
     ctx.restore();
   }
