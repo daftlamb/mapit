@@ -186,7 +186,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Tilt</span>
           <div style="display:flex;align-items:center;gap:6px">
-            <input type="range" id="map-pitch" min="0" max="60" value="0" style="width:80px">
+            <input type="range" id="map-pitch" min="0" max="75" value="0" style="width:80px">
             <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
           </div>
         </div>
@@ -461,7 +461,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           'fill-extrusion-color':c.building,
           'fill-extrusion-height':['coalesce',['get','height'],
             ['*',['coalesce',['get','levels'],
-              ['+',3,['%',['to-number',['coalesce',['get','osm_id'],'0'],0],18]]
+              ['+',2,['%',['coalesce',['id'],1],22]]
             ],3.5]
           ],
           'fill-extrusion-base':['coalesce',['get','min_height'],0],
@@ -747,9 +747,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     document.getElementById('building-3d-options').style.display = this.checked ? 'flex' : 'none';
     if (this.checked) {
       // Axonometric-ish: 45° pitch + 45° bearing
-      map.easeTo({pitch:50,bearing:45,duration:700});
-      document.getElementById('map-pitch').value=50;
-      document.getElementById('map-pitch-val').textContent='50°';
+      map.easeTo({pitch:60,bearing:45,duration:700});
+      document.getElementById('map-pitch').value=60;
+      document.getElementById('map-pitch-val').textContent='60°';
       document.getElementById('map-bearing').value=45;
       document.getElementById('map-bearing-val').textContent='45°';
       update3dBuildingStyle();
