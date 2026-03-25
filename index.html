@@ -319,60 +319,108 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       </div>
 
       <div id="halftone-options" style="display:none;flex-direction:column;gap:8px">
-        <div class="vignette-row">
-          <span style="font-size:11px;color:var(--muted)">Palette</span>
-          <select class="vig-select" id="ht-palette">
-            <option value="bw">Black &amp; White</option>
-            <option value="warm">Warm Sepia</option>
-            <option value="ink">Blue Ink</option>
-            <option value="sage">Sage Green</option>
-            <option value="rose">Rose</option>
-            <option value="night">City Night</option>
-            <option value="riso-pink">Riso Pink</option>
-            <option value="riso-blue">Riso Blue</option>
-            <option value="blueprint">Blueprint</option>
-            <option value="gold">Gold</option>
-            <option value="custom">Custom…</option>
-          </select>
+        <!-- Mode toggle -->
+        <div class="size-btns" style="margin-bottom:2px">
+          <button class="btn size-btn active" id="ht-mode-single" data-ht-mode="single">Single</button>
+          <button class="btn size-btn" id="ht-mode-split" data-ht-mode="split">Split Ch.</button>
         </div>
-        <div id="ht-custom-colors" style="display:none;gap:8px;flex-direction:column">
-          <div class="color-row">
-            <span class="color-label">Dark</span>
-            <input type="color" id="ht-custom-dark" value="#1a1a2e" />
+
+        <!-- Single mode -->
+        <div id="ht-single" style="display:flex;flex-direction:column;gap:8px">
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Palette</span>
+            <select class="vig-select" id="ht-palette">
+              <option value="bw">Black &amp; White</option>
+              <option value="warm">Warm Sepia</option>
+              <option value="ink">Blue Ink</option>
+              <option value="sage">Sage Green</option>
+              <option value="rose">Rose</option>
+              <option value="night">City Night</option>
+              <option value="riso-pink">Riso Pink</option>
+              <option value="riso-blue">Riso Blue</option>
+              <option value="blueprint">Blueprint</option>
+              <option value="gold">Gold</option>
+              <option value="custom">Custom…</option>
+            </select>
           </div>
-          <div class="color-row">
-            <span class="color-label">Light</span>
-            <input type="color" id="ht-custom-light" value="#e8f0fe" />
-          </div>
-        </div>
-        <div class="vignette-row">
-          <span style="font-size:11px;color:var(--muted)">Cell size</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input type="range" id="ht-size" min="3" max="20" value="8" style="width:80px;accent-color:var(--accent)">
-            <span id="ht-size-val" style="font-size:11px;color:var(--muted);width:22px">8</span>
+          <div id="ht-custom-colors" style="display:none;gap:8px;flex-direction:column">
+            <div class="color-row"><span class="color-label">Dark</span><input type="color" id="ht-custom-dark" value="#1a1a2e" /></div>
+            <div class="color-row"><span class="color-label">Light</span><input type="color" id="ht-custom-light" value="#e8f0fe" /></div>
           </div>
         </div>
-        <div class="vignette-row">
-          <span style="font-size:11px;color:var(--muted)">Angle</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input type="range" id="ht-angle" min="0" max="90" value="45" style="width:80px;accent-color:var(--accent)">
-            <span id="ht-angle-val" style="font-size:11px;color:var(--muted);width:28px">45°</span>
+
+        <!-- Split channel mode -->
+        <div id="ht-split" style="display:none;flex-direction:column;gap:6px">
+          <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Background</div>
+          <div class="color-row" style="margin-bottom:4px"><span class="color-label">BG color</span><input type="color" id="ht-bg" value="#f5f0e8" /></div>
+          <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px">Channels</div>
+          <div id="ht-channels" style="display:flex;flex-direction:column;gap:6px">
+            <!-- Ch1 -->
+            <div class="ht-ch-row" style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="ht-ch1-color" value="#00a0cc" style="width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="ht-ch1-on" checked style="accent-color:var(--accent);flex-shrink:0">
+              <span style="font-size:10px;color:var(--muted);width:10px">C</span>
+              <input type="range" id="ht-ch1-angle" min="0" max="90" value="15" style="flex:1;accent-color:var(--accent)">
+              <span id="ht-ch1-angle-val" style="font-size:10px;color:var(--muted);width:24px">15°</span>
+            </div>
+            <!-- Ch2 -->
+            <div class="ht-ch-row" style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="ht-ch2-color" value="#e8004a" style="width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="ht-ch2-on" checked style="accent-color:var(--accent);flex-shrink:0">
+              <span style="font-size:10px;color:var(--muted);width:10px">M</span>
+              <input type="range" id="ht-ch2-angle" min="0" max="90" value="75" style="flex:1;accent-color:var(--accent)">
+              <span id="ht-ch2-angle-val" style="font-size:10px;color:var(--muted);width:24px">75°</span>
+            </div>
+            <!-- Ch3 -->
+            <div class="ht-ch-row" style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="ht-ch3-color" value="#ffe800" style="width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="ht-ch3-on" checked style="accent-color:var(--accent);flex-shrink:0">
+              <span style="font-size:10px;color:var(--muted);width:10px">Y</span>
+              <input type="range" id="ht-ch3-angle" min="0" max="90" value="0" style="flex:1;accent-color:var(--accent)">
+              <span id="ht-ch3-angle-val" style="font-size:10px;color:var(--muted);width:24px">0°</span>
+            </div>
+            <!-- Ch4 -->
+            <div class="ht-ch-row" style="display:flex;align-items:center;gap:6px">
+              <input type="color" id="ht-ch4-color" value="#1a1a1a" style="width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;flex-shrink:0">
+              <input type="checkbox" id="ht-ch4-on" checked style="accent-color:var(--accent);flex-shrink:0">
+              <span style="font-size:10px;color:var(--muted);width:10px">K</span>
+              <input type="range" id="ht-ch4-angle" min="0" max="90" value="45" style="flex:1;accent-color:var(--accent)">
+              <span id="ht-ch4-angle-val" style="font-size:10px;color:var(--muted);width:24px">45°</span>
+            </div>
           </div>
         </div>
-        <div class="vignette-row">
-          <span style="font-size:11px;color:var(--muted)">Density</span>
-          <div style="display:flex;align-items:center;gap:6px">
-            <input type="range" id="ht-density" min="-50" max="200" value="20" style="width:80px;accent-color:var(--accent)">
-            <span id="ht-density-val" style="font-size:11px;color:var(--muted);width:32px">20</span>
+
+        <!-- Shared controls -->
+        <div style="padding-top:6px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;margin-top:2px">
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Cell size</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="ht-size" min="3" max="20" value="8" style="width:80px;accent-color:var(--accent)">
+              <span id="ht-size-val" style="font-size:11px;color:var(--muted);width:22px">8</span>
+            </div>
           </div>
-        </div>
-        <div class="vignette-row">
-          <span style="font-size:11px;color:var(--muted)">Shape</span>
-          <select class="vig-select" id="ht-shape">
-            <option value="circle">Circle</option>
-            <option value="square">Square</option>
-            <option value="diamond">Diamond</option>
-          </select>
+          <div class="vignette-row" id="ht-angle-row">
+            <span style="font-size:11px;color:var(--muted)">Angle</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="ht-angle" min="0" max="90" value="45" style="width:80px;accent-color:var(--accent)">
+              <span id="ht-angle-val" style="font-size:11px;color:var(--muted);width:28px">45°</span>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Density</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="ht-density" min="-50" max="200" value="20" style="width:80px;accent-color:var(--accent)">
+              <span id="ht-density-val" style="font-size:11px;color:var(--muted);width:32px">20</span>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Shape</span>
+            <select class="vig-select" id="ht-shape">
+              <option value="circle">Circle</option>
+              <option value="square">Square</option>
+              <option value="diamond">Diamond</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -1344,9 +1392,31 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
   // Trigger preview refresh on setting changes
   ['dither-algo','dither-palette','duotone-dark','duotone-light','dither-custom-dark','dither-custom-light',
-   'ht-size','ht-angle','ht-shape','ht-palette','ht-custom-dark','ht-custom-light','ht-density'].forEach(function(id) {
+   'ht-size','ht-angle','ht-shape','ht-palette','ht-custom-dark','ht-custom-light','ht-density',
+   'ht-bg','ht-ch1-color','ht-ch2-color','ht-ch3-color','ht-ch4-color',
+   'ht-ch1-on','ht-ch2-on','ht-ch3-on','ht-ch4-on'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', function(){ if(exportStyle!=='normal') schedulePreview(); });
     document.getElementById(id).addEventListener('input', function(){ if(exportStyle!=='normal') schedulePreview(); });
+  });
+  // Channel angle sliders
+  [1,2,3,4].forEach(function(i) {
+    document.getElementById('ht-ch'+i+'-angle').addEventListener('input', function() {
+      document.getElementById('ht-ch'+i+'-angle-val').textContent = this.value+'°';
+      if (exportStyle !== 'normal') schedulePreview();
+    });
+  });
+  // Mode toggle
+  var htMode = 'single';
+  document.querySelectorAll('[data-ht-mode]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      htMode = this.dataset.htMode;
+      document.querySelectorAll('[data-ht-mode]').forEach(function(b){b.classList.remove('active');});
+      this.classList.add('active');
+      document.getElementById('ht-single').style.display = htMode==='single' ? 'flex' : 'none';
+      document.getElementById('ht-split').style.display = htMode==='split' ? 'flex' : 'none';
+      document.getElementById('ht-angle-row').style.display = htMode==='split' ? 'none' : 'flex';
+      if (exportStyle !== 'normal') schedulePreview();
+    });
   });
   document.getElementById('ht-palette').addEventListener('change', function() {
     document.getElementById('ht-custom-colors').style.display = this.value==='custom' ? 'flex' : 'none';
@@ -1465,55 +1535,90 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   // Halftone: draw circles on canvas directly
   function applyHalftone(ctx, w, h, palette, density) {
     var cellSize = parseInt(document.getElementById('ht-size').value) || 8;
-    var angleDeg = parseInt(document.getElementById('ht-angle').value) || 0;
     var shape = document.getElementById('ht-shape').value || 'circle';
     var densityBoost = density > 0 ? (density/200)*0.45 : (density/50)*0.15;
-    var darkColor = palette[0];
-    var lightColor = palette[1];
-    // Snapshot pixels before modifying canvas
-    var imgData = ctx.getImageData(0,0,w,h);
-    var d = imgData.data;
-    // Fill background
-    ctx.fillStyle = lightColor;
-    ctx.fillRect(0,0,w,h);
-    ctx.fillStyle = darkColor;
-    // Build rotated grid: iterate over a larger grid, compute dot center in screen space
-    var rad = angleDeg * Math.PI / 180;
-    var cosA = Math.cos(rad), sinA = Math.sin(rad);
-    var diag = Math.ceil(Math.sqrt(w*w + h*h));
-    var cols = Math.ceil(diag / cellSize) + 2;
-    var rows = Math.ceil(diag / cellSize) + 2;
-    var offX = (diag - w) / 2, offY = (diag - h) / 2;
-    for (var row = 0; row < rows; row++) {
-      for (var col = 0; col < cols; col++) {
-        // Grid dot center in rotated space (centered on canvas)
-        var lx = col * cellSize + cellSize/2 - diag/2;
-        var ly = row * cellSize + cellSize/2 - diag/2;
-        // Rotate back to screen space
-        var sx = lx * cosA - ly * sinA + w/2;
-        var sy = lx * sinA + ly * cosA + h/2;
-        // Sample original pixel at this screen position
-        var px = Math.round(sx), py = Math.round(sy);
-        if (px < 0 || px >= w || py < 0 || py >= h) continue;
-        var idx = (py * w + px) * 4;
-        var lum = (d[idx]*0.299 + d[idx+1]*0.587 + d[idx+2]*0.114) / 255;
-        var r = (1 - lum + densityBoost) * (cellSize/2) * 0.92;
-        r = Math.max(0, Math.min(r, cellSize/2));
-        if (r < 0.4) continue;
-        // Draw dot at screen position (no ctx rotation — shape stays axis-aligned)
-        ctx.beginPath();
-        if (shape === 'circle') {
-          ctx.arc(sx, sy, r, 0, Math.PI*2);
-        } else if (shape === 'square') {
-          ctx.rect(sx - r, sy - r, r*2, r*2);
-        } else { // diamond
-          ctx.moveTo(sx, sy - r);
-          ctx.lineTo(sx + r, sy);
-          ctx.lineTo(sx, sy + r);
-          ctx.lineTo(sx - r, sy);
-          ctx.closePath();
+
+    if (typeof htMode !== 'undefined' && htMode === 'split') {
+      // --- Split channel mode ---
+      var bgColor = document.getElementById('ht-bg').value;
+      // Fill background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0,0,w,h);
+      var imgData = ctx.getImageData(0,0,w,h);
+      var d = imgData.data;
+      var channels = [
+        {id:1, rW:0, gW:0, bW:1},   // C  ← cyan: from blue channel
+        {id:2, rW:1, gW:0, bW:0},   // M  ← magenta: from red channel
+        {id:3, rW:0, gW:1, bW:0},   // Y  ← yellow: from green channel
+        {id:4, rW:0.33,gW:0.33,bW:0.33} // K ← luminance
+      ];
+      channels.forEach(function(ch) {
+        if (!document.getElementById('ht-ch'+ch.id+'-on').checked) return;
+        var color = document.getElementById('ht-ch'+ch.id+'-color').value;
+        var angleDeg = parseInt(document.getElementById('ht-ch'+ch.id+'-angle').value) || 0;
+        var rad = angleDeg * Math.PI / 180;
+        var cosA = Math.cos(rad), sinA = Math.sin(rad);
+        var diag = Math.ceil(Math.sqrt(w*w + h*h));
+        var cols = Math.ceil(diag/cellSize)+2, rows = Math.ceil(diag/cellSize)+2;
+        ctx.save();
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = color;
+        for (var row=0; row<rows; row++) {
+          for (var col=0; col<cols; col++) {
+            var lx = col*cellSize+cellSize/2-diag/2;
+            var ly = row*cellSize+cellSize/2-diag/2;
+            var sx = lx*cosA - ly*sinA + w/2;
+            var sy = lx*sinA + ly*cosA + h/2;
+            var px = Math.round(sx), py = Math.round(sy);
+            if (px<0||px>=w||py<0||py>=h) continue;
+            var idx = (py*w+px)*4;
+            // Channel-specific luminance
+            var chLum = (d[idx]*ch.rW + d[idx+1]*ch.gW + d[idx+2]*ch.bW) / 255;
+            var r = (1 - chLum + densityBoost) * (cellSize/2) * 0.92;
+            r = Math.max(0, Math.min(r, cellSize/2));
+            if (r < 0.4) continue;
+            ctx.beginPath();
+            if (shape==='circle') { ctx.arc(sx,sy,r,0,Math.PI*2); }
+            else if (shape==='square') { ctx.rect(sx-r,sy-r,r*2,r*2); }
+            else { ctx.moveTo(sx,sy-r);ctx.lineTo(sx+r,sy);ctx.lineTo(sx,sy+r);ctx.lineTo(sx-r,sy);ctx.closePath(); }
+            ctx.fill();
+          }
         }
-        ctx.fill();
+        ctx.restore();
+      });
+    } else {
+      // --- Single mode ---
+      var angleDeg = parseInt(document.getElementById('ht-angle').value) || 0;
+      var darkColor = palette[0];
+      var lightColor = palette[1];
+      var imgData2 = ctx.getImageData(0,0,w,h);
+      var d2 = imgData2.data;
+      ctx.fillStyle = lightColor;
+      ctx.fillRect(0,0,w,h);
+      ctx.fillStyle = darkColor;
+      var rad2 = angleDeg * Math.PI / 180;
+      var cosA2 = Math.cos(rad2), sinA2 = Math.sin(rad2);
+      var diag2 = Math.ceil(Math.sqrt(w*w+h*h));
+      var cols2 = Math.ceil(diag2/cellSize)+2, rows2 = Math.ceil(diag2/cellSize)+2;
+      for (var row2=0; row2<rows2; row2++) {
+        for (var col2=0; col2<cols2; col2++) {
+          var lx2 = col2*cellSize+cellSize/2-diag2/2;
+          var ly2 = row2*cellSize+cellSize/2-diag2/2;
+          var sx2 = lx2*cosA2 - ly2*sinA2 + w/2;
+          var sy2 = lx2*sinA2 + ly2*cosA2 + h/2;
+          var px2 = Math.round(sx2), py2 = Math.round(sy2);
+          if (px2<0||px2>=w||py2<0||py2>=h) continue;
+          var idx2 = (py2*w+px2)*4;
+          var lum2 = (d2[idx2]*0.299+d2[idx2+1]*0.587+d2[idx2+2]*0.114)/255;
+          var r2 = (1-lum2+densityBoost)*(cellSize/2)*0.92;
+          r2 = Math.max(0,Math.min(r2,cellSize/2));
+          if (r2<0.4) continue;
+          ctx.beginPath();
+          if (shape==='circle') { ctx.arc(sx2,sy2,r2,0,Math.PI*2); }
+          else if (shape==='square') { ctx.rect(sx2-r2,sy2-r2,r2*2,r2*2); }
+          else { ctx.moveTo(sx2,sy2-r2);ctx.lineTo(sx2+r2,sy2);ctx.lineTo(sx2,sy2+r2);ctx.lineTo(sx2-r2,sy2);ctx.closePath(); }
+          ctx.fill();
+        }
       }
     }
   }
