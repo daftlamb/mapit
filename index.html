@@ -263,6 +263,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
         <button class="btn size-btn active" data-export-style="normal">Normal</button>
         <button class="btn size-btn" data-export-style="dither">Dither</button>
+        <button class="btn size-btn" data-export-style="halftone">Halftone</button>
         <button class="btn size-btn" data-export-style="duotone">Duotone</button>
       </div>
       <div id="dither-options" style="display:none">
@@ -273,7 +274,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="atkinson">Atkinson</option>
             <option value="ordered">Ordered 4×4</option>
             <option value="ordered8">Ordered 8×8</option>
-            <option value="halftone">Halftone</option>
           </select>
         </div>
         <div class="vignette-row">
@@ -307,31 +307,66 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <input type="range" id="dither-density" min="-50" max="200" value="20" style="flex:1;accent-color:var(--accent)" />
           <span id="dither-density-val" style="width:32px;text-align:right">20</span>
         </div>
-        <div id="halftone-options" style="display:none;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
-          <div class="vignette-row">
-            <span style="font-size:11px;color:var(--muted)">Cell size</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="range" id="ht-size" min="3" max="20" value="8" style="width:80px;accent-color:var(--accent)">
-              <span id="ht-size-val" style="font-size:11px;color:var(--muted);width:22px">8</span>
-            </div>
+      </div>
+
+      <div id="halftone-options" style="display:none;flex-direction:column;gap:8px">
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Palette</span>
+          <select class="vig-select" id="ht-palette">
+            <option value="bw">Black &amp; White</option>
+            <option value="warm">Warm Sepia</option>
+            <option value="ink">Blue Ink</option>
+            <option value="sage">Sage Green</option>
+            <option value="rose">Rose</option>
+            <option value="night">City Night</option>
+            <option value="riso-pink">Riso Pink</option>
+            <option value="riso-blue">Riso Blue</option>
+            <option value="blueprint">Blueprint</option>
+            <option value="gold">Gold</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+        <div id="ht-custom-colors" style="display:none;gap:8px;flex-direction:column">
+          <div class="color-row">
+            <span class="color-label">Dark</span>
+            <input type="color" id="ht-custom-dark" value="#1a1a2e" />
           </div>
-          <div class="vignette-row">
-            <span style="font-size:11px;color:var(--muted)">Angle</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="range" id="ht-angle" min="0" max="90" value="45" style="width:80px;accent-color:var(--accent)">
-              <span id="ht-angle-val" style="font-size:11px;color:var(--muted);width:28px">45°</span>
-            </div>
-          </div>
-          <div class="vignette-row">
-            <span style="font-size:11px;color:var(--muted)">Shape</span>
-            <select class="vig-select" id="ht-shape">
-              <option value="circle">Circle</option>
-              <option value="square">Square</option>
-              <option value="diamond">Diamond</option>
-            </select>
+          <div class="color-row">
+            <span class="color-label">Light</span>
+            <input type="color" id="ht-custom-light" value="#e8f0fe" />
           </div>
         </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Cell size</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="ht-size" min="3" max="20" value="8" style="width:80px;accent-color:var(--accent)">
+            <span id="ht-size-val" style="font-size:11px;color:var(--muted);width:22px">8</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Angle</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="ht-angle" min="0" max="90" value="45" style="width:80px;accent-color:var(--accent)">
+            <span id="ht-angle-val" style="font-size:11px;color:var(--muted);width:28px">45°</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Density</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="ht-density" min="-50" max="200" value="20" style="width:80px;accent-color:var(--accent)">
+            <span id="ht-density-val" style="font-size:11px;color:var(--muted);width:32px">20</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Shape</span>
+          <select class="vig-select" id="ht-shape">
+            <option value="circle">Circle</option>
+            <option value="square">Square</option>
+            <option value="diamond">Diamond</option>
+          </select>
+        </div>
       </div>
+
       <div id="duotone-options" style="display:none">
         <div class="color-row" style="margin-bottom:8px">
           <span class="color-label">Shadow color</span>
@@ -1209,17 +1244,16 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       previewCtx.fillStyle=grad;
       previewCtx.fillRect(0,0,sw,sh);
     }
-    // Apply dither or duotone
-    var density = parseInt(document.getElementById('dither-density').value)||0;
+    // Apply dither / halftone / duotone
     if (exportStyle === 'dither') {
+      var density = parseInt(document.getElementById('dither-density').value)||0;
       var algo = document.getElementById('dither-algo').value;
-      if (algo === 'halftone' || algo === 'halftone-fine') {
-        applyHalftone(previewCtx, sw, sh, getActivePalette(), density);
-      } else {
-        var imgData = previewCtx.getImageData(0,0,sw,sh);
-        applyDither(imgData, algo, getActivePalette(), density);
-        previewCtx.putImageData(imgData, 0, 0);
-      }
+      var imgData = previewCtx.getImageData(0,0,sw,sh);
+      applyDither(imgData, algo, getActivePalette(), density);
+      previewCtx.putImageData(imgData, 0, 0);
+    } else if (exportStyle === 'halftone') {
+      var htDensity = parseInt(document.getElementById('ht-density').value)||0;
+      applyHalftone(previewCtx, sw, sh, getActivePalette(), htDensity);
     } else if (exportStyle === 'duotone') {
       var imgData2 = previewCtx.getImageData(0,0,sw,sh);
       applyDuotone(imgData2, document.getElementById('duotone-dark').value, document.getElementById('duotone-light').value);
@@ -1233,6 +1267,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       document.querySelectorAll('[data-export-style]').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
       document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
+      document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
       document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
       if (exportStyle==='normal') { previewCanvas.style.display='none'; }
       else { schedulePreview(); }
@@ -1240,13 +1275,17 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   });
 
   // Trigger preview refresh on setting changes
-  ['dither-algo','dither-palette','duotone-dark','duotone-light','dither-custom-dark','dither-custom-light','ht-size','ht-angle','ht-shape'].forEach(function(id) {
-    document.getElementById(id).addEventListener('change', schedulePreview);
-    document.getElementById(id).addEventListener('input', schedulePreview);
+  ['dither-algo','dither-palette','duotone-dark','duotone-light','dither-custom-dark','dither-custom-light',
+   'ht-size','ht-angle','ht-shape','ht-palette','ht-custom-dark','ht-custom-light','ht-density'].forEach(function(id) {
+    document.getElementById(id).addEventListener('change', function(){ if(exportStyle!=='normal') schedulePreview(); });
+    document.getElementById(id).addEventListener('input', function(){ if(exportStyle!=='normal') schedulePreview(); });
   });
-  document.getElementById('dither-algo').addEventListener('change', function() {
-    var isHT = this.value === 'halftone';
-    document.getElementById('halftone-options').style.display = isHT ? 'flex' : 'none';
+  document.getElementById('ht-palette').addEventListener('change', function() {
+    document.getElementById('ht-custom-colors').style.display = this.value==='custom' ? 'flex' : 'none';
+    if (exportStyle !== 'normal') schedulePreview();
+  });
+  document.getElementById('ht-density').addEventListener('input', function() {
+    document.getElementById('ht-density-val').textContent = this.value;
     if (exportStyle !== 'normal') schedulePreview();
   });
   document.getElementById('dither-palette').addEventListener('change', function() {
@@ -1275,11 +1314,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   };
 
   function getActivePalette() {
-    var key = document.getElementById('dither-palette').value;
+    var isHT = exportStyle === 'halftone';
+    var key = document.getElementById(isHT ? 'ht-palette' : 'dither-palette').value;
     if (key === 'custom') {
       return [
-        document.getElementById('dither-custom-dark').value,
-        document.getElementById('dither-custom-light').value
+        document.getElementById(isHT ? 'ht-custom-dark' : 'dither-custom-dark').value,
+        document.getElementById(isHT ? 'ht-custom-light' : 'dither-custom-light').value
       ];
     }
     return DITHER_PALETTES[key] || DITHER_PALETTES.bw;
@@ -1484,17 +1524,16 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       });
       ctx.restore();
     });
-    // Apply dither or duotone post-processing
+    // Apply dither / halftone / duotone post-processing
     if (exportStyle==='dither') {
       var algo = document.getElementById('dither-algo').value;
       var density = parseInt(document.getElementById('dither-density').value)||0;
-      if (algo === 'halftone' || algo === 'halftone-fine') {
-        applyHalftone(ctx, out.width, out.height, getActivePalette(), density);
-      } else {
-        var imgData = ctx.getImageData(0,0,out.width,out.height);
-        applyDither(imgData, algo, getActivePalette(), density);
-        ctx.putImageData(imgData,0,0);
-      }
+      var imgData = ctx.getImageData(0,0,out.width,out.height);
+      applyDither(imgData, algo, getActivePalette(), density);
+      ctx.putImageData(imgData,0,0);
+    } else if (exportStyle==='halftone') {
+      var htDensity = parseInt(document.getElementById('ht-density').value)||0;
+      applyHalftone(ctx, out.width, out.height, getActivePalette(), htDensity);
     } else if (exportStyle==='duotone') {
       var dtDark = document.getElementById('duotone-dark').value;
       var dtLight = document.getElementById('duotone-light').value;
