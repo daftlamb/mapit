@@ -317,6 +317,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
               <option value="curve">Curve</option>
             </select>
           </div>
+          <div class="layer-toggle">
+            <span style="font-size:11px">Show distance</span>
+            <label class="toggle-switch"><input type="checkbox" id="route-show-dist" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+          </div>
         </div>
       </div>
     </div>
@@ -1129,7 +1133,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     document.getElementById('route-style-opts').style.display = this.checked ? 'flex' : 'none';
     updateRoute();
   });
-  ['route-color','route-width','route-dash','route-curve'].forEach(function(id) {
+  ['route-color','route-width','route-dash','route-curve','route-show-dist'].forEach(function(id) {
     var el = document.getElementById(id);
     el.addEventListener('change', updateRoute);
     el.addEventListener('input', updateRoute);
@@ -1364,7 +1368,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     routeOn = tog ? tog.checked : false;
     if (map.getLayer('route-line')) map.removeLayer('route-line');
     if (map.getLayer('route-line-case')) map.removeLayer('route-line-case');
+    if (map.getLayer('route-dist')) map.removeLayer('route-dist');
     if (map.getSource('route')) map.removeSource('route');
+    if (map.getSource('route-midpoints')) map.removeSource('route-midpoints');
     if (!routeOn || markers.length < 2) return;
     var pts = markers.map(function(m){ return m.lnglat; });
     var color = document.getElementById('route-color').value;
@@ -1372,56 +1378,68 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var dash = document.getElementById('route-dash').value;
     var dashArray = dash==='dashed' ? [4,3] : dash==='dotted' ? [1,2] : [1];
     var curveType = document.getElementById('route-curve').value;
+    var showDist = document.getElementById('route-show-dist') ? document.getElementById('route-show-dist').checked : false;
 
-    // Catmull-Rom spline interpolation
+    // Haversine distance in km
+    function haversine(a, b) {
+      var R = 6371;
+      var dLat = (b[1]-a[1]) * Math.PI/180;
+      var dLng = (b[0]-a[0]) * Math.PI/180;
+      var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+              Math.cos(a[1]*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*
+              Math.sin(dLng/2)*Math.sin(dLng/2);
+      return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+    }
+
+    // Catmull-Rom spline
     function catmullRom(pts, steps) {
       if (pts.length < 2) return pts;
       var result = [];
-      // Duplicate endpoints for tangents
       var p = [pts[0]].concat(pts).concat([pts[pts.length-1]]);
       for (var i=1; i<p.length-2; i++) {
         for (var t=0; t<steps; t++) {
-          var tt = t / steps;
-          var tt2 = tt*tt, tt3 = tt2*tt;
-          var lng = 0.5 * (
-            (2*p[i][0]) +
-            (-p[i-1][0]+p[i+1][0])*tt +
-            (2*p[i-1][0]-5*p[i][0]+4*p[i+1][0]-p[i+2][0])*tt2 +
-            (-p[i-1][0]+3*p[i][0]-3*p[i+1][0]+p[i+2][0])*tt3
-          );
-          var lat = 0.5 * (
-            (2*p[i][1]) +
-            (-p[i-1][1]+p[i+1][1])*tt +
-            (2*p[i-1][1]-5*p[i][1]+4*p[i+1][1]-p[i+2][1])*tt2 +
-            (-p[i-1][1]+3*p[i][1]-3*p[i+1][1]+p[i+2][1])*tt3
-          );
-          result.push([lng, lat]);
+          var tt=t/steps, tt2=tt*tt, tt3=tt2*tt;
+          var lng=0.5*((2*p[i][0])+(-p[i-1][0]+p[i+1][0])*tt+(2*p[i-1][0]-5*p[i][0]+4*p[i+1][0]-p[i+2][0])*tt2+(-p[i-1][0]+3*p[i][0]-3*p[i+1][0]+p[i+2][0])*tt3);
+          var lat=0.5*((2*p[i][1])+(-p[i-1][1]+p[i+1][1])*tt+(2*p[i-1][1]-5*p[i][1]+4*p[i+1][1]-p[i+2][1])*tt2+(-p[i-1][1]+3*p[i][1]-3*p[i+1][1]+p[i+2][1])*tt3);
+          result.push([lng,lat]);
         }
       }
       result.push(pts[pts.length-1]);
       return result;
     }
 
-    var coords = curveType === 'curve' ? catmullRom(pts, 32) : pts;
+    var coords = curveType==='curve' ? catmullRom(pts,32) : pts;
 
-    map.addSource('route', {
-      type:'geojson',
-      data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}
-    });
-    map.addLayer({
-      id:'route-line-case',
-      type:'line',
-      source:'route',
-      layout:{'line-join':'round','line-cap':'round'},
-      paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}
-    });
-    map.addLayer({
-      id:'route-line',
-      type:'line',
-      source:'route',
-      layout:{'line-join':'round','line-cap':'round'},
-      paint:{'line-color':color,'line-width':width,'line-dasharray':dashArray}
-    });
+    map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
+    map.addLayer({id:'route-line-case',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}});
+    map.addLayer({id:'route-line',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':color,'line-width':width,'line-dasharray':dashArray}});
+
+    // Distance labels at midpoints between consecutive markers
+    if (showDist) {
+      var features = [];
+      for (var i=0; i<pts.length-1; i++) {
+        var mid = [(pts[i][0]+pts[i+1][0])/2, (pts[i][1]+pts[i+1][1])/2];
+        var km = haversine(pts[i], pts[i+1]);
+        var label = km >= 10 ? Math.round(km)+'km' : km.toFixed(1)+'km';
+        features.push({type:'Feature',geometry:{type:'Point',coordinates:mid},properties:{dist:label}});
+      }
+      map.addSource('route-midpoints',{type:'geojson',data:{type:'FeatureCollection',features:features}});
+      map.addLayer({
+        id:'route-dist',type:'symbol',source:'route-midpoints',
+        layout:{
+          'text-field':['get','dist'],
+          'text-font':['Noto Sans Regular'],
+          'text-size':11,
+          'text-offset':[0,-0.8],
+          'text-anchor':'bottom'
+        },
+        paint:{
+          'text-color':color,
+          'text-halo-color':'#ffffff',
+          'text-halo-width':1.5
+        }
+      });
+    }
   }
 
   // Caption system with snap-to-center
