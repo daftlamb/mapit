@@ -459,6 +459,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         {id:'waterway',type:'line',source:'ofm','source-layer':'waterway',paint:{'line-color':c.water,'line-width':1}},
         {id:'landcover',type:'fill',source:'ofm','source-layer':'landcover',paint:{'fill-color':c.land,'fill-opacity':0.6}},
         {id:'landuse',type:'fill',source:'ofm','source-layer':'landuse',paint:{'fill-color':c.land,'fill-opacity':0.5}},
+        {id:'road-minor',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','minor','service','track'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],12,0.5,16,2]}},
+        {id:'road-major',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','primary','secondary','tertiary'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],10,1,16,5]}},
+        {id:'road-motorway',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','motorway','trunk'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],8,1,16,8]}},
         {id:'building',type:'fill',source:'ofm','source-layer':'building',minzoom:13,paint:{'fill-color':c.building,'fill-outline-color':c.road}},
         {id:'building-3d',type:'fill-extrusion',source:'ofm','source-layer':'building',minzoom:14,layout:{visibility:'none'},paint:{
           'fill-extrusion-color':c.building,
@@ -470,9 +473,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           'fill-extrusion-base':['coalesce',['get','min_height'],0],
           'fill-extrusion-opacity':0.85
         }},
-        {id:'road-minor',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','minor','service','track'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],12,0.5,16,2]}},
-        {id:'road-major',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','primary','secondary','tertiary'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],10,1,16,5]}},
-        {id:'road-motorway',type:'line',source:'ofm','source-layer':'transportation',filter:['in','class','motorway','trunk'],paint:{'line-color':c.road,'line-width':['interpolate',['linear'],['zoom'],8,1,16,8]}},
         {id:'boundary',type:'line',source:'ofm','source-layer':'boundary',filter:['==','admin_level',2],paint:{'line-color':c.label,'line-opacity':0.25,'line-width':1}},
         {id:'place-village',type:'symbol',source:'ofm','source-layer':'place',filter:['in','class','village','suburb','neighbourhood'],minzoom:12,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':10,'text-max-width':8},paint:{'text-color':c.label,'text-halo-color':c.land,'text-halo-width':1}},
         {id:'place-town',type:'symbol',source:'ofm','source-layer':'place',filter:['in','class','town'],minzoom:10,layout:{'text-field':['get','name'],'text-font':['Noto Sans Regular'],'text-size':12,'text-max-width':8},paint:{'text-color':c.label,'text-halo-color':c.land,'text-halo-width':1.5}},
@@ -722,7 +722,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   document.getElementById('tog-labels').addEventListener('change',function(){layerVis.labels=this.checked;applyLayerVis();});
   document.getElementById('tog-road-labels').addEventListener('change',function(){layerVis.roadLabels=this.checked;applyLayerVis();});
   document.getElementById('tog-boundary').addEventListener('change',function(){layerVis.boundary=this.checked;applyLayerVis();});
-  document.getElementById('tog-buildings').addEventListener('change',function(){layerVis.buildings=this.checked;applyLayerVis();});
+  document.getElementById('tog-buildings').addEventListener('change',function(){
+    layerVis.buildings=this.checked;
+    applyLayerVis();
+  });
   // 3D building helpers
   function update3dBuildingStyle() {
     if (!map.getLayer('building-3d')) return;
@@ -746,6 +749,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     layerVis.buildings3d=this.checked;
     if (this.checked) layerVis.buildings=false;
     else layerVis.buildings=document.getElementById('tog-buildings').checked;
+    document.getElementById('tog-buildings').disabled = this.checked;
     applyLayerVis();
     document.getElementById('building-3d-options').style.display = this.checked ? 'flex' : 'none';
     if (this.checked) {
