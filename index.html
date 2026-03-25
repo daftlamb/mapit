@@ -183,10 +183,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <div class="layer-toggle"><span style="font-size:11px">Sunset light</span>
           <label class="toggle-switch"><input type="checkbox" id="tog-sunset" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
         </div>
+        <div class="layer-toggle"><span style="font-size:11px">Wide angle</span>
+          <label class="toggle-switch"><input type="checkbox" id="tog-wideangle" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Tilt</span>
           <div style="display:flex;align-items:center;gap:6px">
-            <input type="range" id="map-pitch" min="0" max="75" value="0" style="width:80px">
+            <input type="range" id="map-pitch" min="0" max="85" value="0" style="width:80px">
             <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
           </div>
         </div>
@@ -747,9 +750,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     document.getElementById('building-3d-options').style.display = this.checked ? 'flex' : 'none';
     if (this.checked) {
       // Axonometric-ish: 45° pitch + 45° bearing
-      map.easeTo({pitch:60,bearing:45,duration:700});
-      document.getElementById('map-pitch').value=60;
-      document.getElementById('map-pitch-val').textContent='60°';
+      map.easeTo({pitch:70,bearing:45,duration:700});
+      document.getElementById('map-pitch').value=70;
+      document.getElementById('map-pitch-val').textContent='70°';
       document.getElementById('map-bearing').value=45;
       document.getElementById('map-bearing-val').textContent='45°';
       update3dBuildingStyle();
@@ -764,6 +767,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
   document.getElementById('building-3d-color').addEventListener('input', update3dBuildingStyle);
   document.getElementById('tog-sunset').addEventListener('change', update3dBuildingStyle);
+  document.getElementById('tog-wideangle').addEventListener('change', function() {
+    // MapLibre default FOV is ~36deg; wide angle ~70deg gives dramatic perspective
+    var fov = this.checked ? 70 : 36;
+    map.transform.fov = fov;
+    map.triggerRepaint();
+  });
 
   document.getElementById('map-pitch').addEventListener('input',function(){
     var v=parseInt(this.value);
