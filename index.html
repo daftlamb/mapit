@@ -273,6 +273,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="atkinson">Atkinson</option>
             <option value="ordered">Ordered 4×4</option>
             <option value="ordered8">Ordered 8×8</option>
+            <option value="halftone">Halftone</option>
+            <option value="halftone-fine">Halftone Fine</option>
           </select>
         </div>
         <div class="vignette-row">
@@ -1177,14 +1179,21 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       previewCtx.fillRect(0,0,sw,sh);
     }
     // Apply dither or duotone
-    var imgData = previewCtx.getImageData(0,0,sw,sh);
+    var density = parseInt(document.getElementById('dither-density').value)||0;
     if (exportStyle === 'dither') {
       var algo = document.getElementById('dither-algo').value;
-      applyDither(imgData, algo, getActivePalette(), parseInt(document.getElementById('dither-density').value)||0);
+      if (algo === 'halftone' || algo === 'halftone-fine') {
+        applyHalftone(previewCtx, sw, sh, getActivePalette(), density, algo==='halftone-fine');
+      } else {
+        var imgData = previewCtx.getImageData(0,0,sw,sh);
+        applyDither(imgData, algo, getActivePalette(), density);
+        previewCtx.putImageData(imgData, 0, 0);
+      }
     } else if (exportStyle === 'duotone') {
-      applyDuotone(imgData, document.getElementById('duotone-dark').value, document.getElementById('duotone-light').value);
+      var imgData2 = previewCtx.getImageData(0,0,sw,sh);
+      applyDuotone(imgData2, document.getElementById('duotone-dark').value, document.getElementById('duotone-light').value);
+      previewCtx.putImageData(imgData2, 0, 0);
     }
-    previewCtx.putImageData(imgData, 0, 0);
   }
 
   document.querySelectorAll('[data-export-style]').forEach(function(btn) {
@@ -1309,6 +1318,42 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     return imageData;
   }
 
+  // Halftone: draw circles on canvas directly
+  function applyHalftone(ctx, w, h, palette, density, fine) {
+    var cellSize = fine ? 4 : 8;
+    // density slider shifts dot size: 0=neutral, 200=max fill
+    var densityBoost = density > 0 ? (density/200)*0.45 : (density/50)*0.15;
+    var darkColor = palette[0];
+    var lightColor = palette[1];
+    // Read current pixels
+    var imgData = ctx.getImageData(0,0,w,h);
+    var d = imgData.data;
+    // Fill background with light color
+    ctx.fillStyle = lightColor;
+    ctx.fillRect(0,0,w,h);
+    ctx.fillStyle = darkColor;
+    var cols = Math.ceil(w/cellSize);
+    var rows = Math.ceil(h/cellSize);
+    for (var row=0; row<rows; row++) {
+      for (var col=0; col<cols; col++) {
+        // Sample center pixel of this cell
+        var px = Math.min(Math.round(col*cellSize + cellSize/2), w-1);
+        var py = Math.min(Math.round(row*cellSize + cellSize/2), h-1);
+        var idx = (py*w + px)*4;
+        var lum = (d[idx]*0.299 + d[idx+1]*0.587 + d[idx+2]*0.114) / 255;
+        // Dot radius: dark=big, light=small
+        var r = (1 - lum + densityBoost) * (cellSize/2) * 0.92;
+        r = Math.max(0, Math.min(r, cellSize/2));
+        if (r < 0.5) continue;
+        var cx = col*cellSize + cellSize/2;
+        var cy = row*cellSize + cellSize/2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+
   function applyDuotone(imageData, darkHex, lightHex) {
     var d = imageData.data;
     var dk = hexToRgb(darkHex);
@@ -1385,9 +1430,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if (exportStyle==='dither') {
       var algo = document.getElementById('dither-algo').value;
       var density = parseInt(document.getElementById('dither-density').value)||0;
-      var imgData = ctx.getImageData(0,0,out.width,out.height);
-      applyDither(imgData, algo, getActivePalette(), density);
-      ctx.putImageData(imgData,0,0);
+      if (algo === 'halftone' || algo === 'halftone-fine') {
+        applyHalftone(ctx, out.width, out.height, getActivePalette(), density, algo==='halftone-fine');
+      } else {
+        var imgData = ctx.getImageData(0,0,out.width,out.height);
+        applyDither(imgData, algo, getActivePalette(), density);
+        ctx.putImageData(imgData,0,0);
+      }
     } else if (exportStyle==='duotone') {
       var dtDark = document.getElementById('duotone-dark').value;
       var dtLight = document.getElementById('duotone-light').value;
