@@ -274,7 +274,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="ordered">Ordered 4×4</option>
             <option value="ordered8">Ordered 8×8</option>
             <option value="halftone">Halftone</option>
-            <option value="halftone-fine">Halftone Fine</option>
           </select>
         </div>
         <div class="vignette-row">
@@ -307,6 +306,30 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <span>Density</span>
           <input type="range" id="dither-density" min="-50" max="200" value="20" style="flex:1;accent-color:var(--accent)" />
           <span id="dither-density-val" style="width:32px;text-align:right">20</span>
+        </div>
+        <div id="halftone-options" style="display:none;flex-direction:column;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Cell size</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="ht-size" min="3" max="20" value="8" style="width:80px;accent-color:var(--accent)">
+              <span id="ht-size-val" style="font-size:11px;color:var(--muted);width:22px">8</span>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Angle</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="ht-angle" min="0" max="90" value="45" style="width:80px;accent-color:var(--accent)">
+              <span id="ht-angle-val" style="font-size:11px;color:var(--muted);width:28px">45°</span>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Shape</span>
+            <select class="vig-select" id="ht-shape">
+              <option value="circle">Circle</option>
+              <option value="square">Square</option>
+              <option value="diamond">Diamond</option>
+            </select>
+          </div>
         </div>
       </div>
       <div id="duotone-options" style="display:none">
@@ -590,6 +613,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   document.getElementById('coord-size').addEventListener('input', function() {
     document.getElementById('coord-size-val').textContent = this.value;
     updateFrameOverlay();
+  });
+  document.getElementById('ht-size').addEventListener('input', function() {
+    document.getElementById('ht-size-val').textContent = this.value;
+    if (exportStyle !== 'normal') schedulePreview();
+  });
+  document.getElementById('ht-angle').addEventListener('input', function() {
+    document.getElementById('ht-angle-val').textContent = this.value + '°';
+    if (exportStyle !== 'normal') schedulePreview();
   });
 
   // Frame system
@@ -1183,7 +1214,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if (exportStyle === 'dither') {
       var algo = document.getElementById('dither-algo').value;
       if (algo === 'halftone' || algo === 'halftone-fine') {
-        applyHalftone(previewCtx, sw, sh, getActivePalette(), density, algo==='halftone-fine');
+        applyHalftone(previewCtx, sw, sh, getActivePalette(), density);
       } else {
         var imgData = previewCtx.getImageData(0,0,sw,sh);
         applyDither(imgData, algo, getActivePalette(), density);
@@ -1209,9 +1240,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   });
 
   // Trigger preview refresh on setting changes
-  ['dither-algo','dither-palette','duotone-dark','duotone-light','dither-custom-dark','dither-custom-light'].forEach(function(id) {
+  ['dither-algo','dither-palette','duotone-dark','duotone-light','dither-custom-dark','dither-custom-light','ht-size','ht-angle','ht-shape'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', schedulePreview);
     document.getElementById(id).addEventListener('input', schedulePreview);
+  });
+  document.getElementById('dither-algo').addEventListener('change', function() {
+    var isHT = this.value === 'halftone';
+    document.getElementById('halftone-options').style.display = isHT ? 'flex' : 'none';
+    if (exportStyle !== 'normal') schedulePreview();
   });
   document.getElementById('dither-palette').addEventListener('change', function() {
     var isCustom = this.value === 'custom';
@@ -1319,39 +1355,61 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   }
 
   // Halftone: draw circles on canvas directly
-  function applyHalftone(ctx, w, h, palette, density, fine) {
-    var cellSize = fine ? 4 : 8;
-    // density slider shifts dot size: 0=neutral, 200=max fill
+  function applyHalftone(ctx, w, h, palette, density) {
+    var cellSize = parseInt(document.getElementById('ht-size').value) || 8;
+    var angleDeg = parseInt(document.getElementById('ht-angle').value) || 0;
+    var shape = document.getElementById('ht-shape').value || 'circle';
     var densityBoost = density > 0 ? (density/200)*0.45 : (density/50)*0.15;
     var darkColor = palette[0];
     var lightColor = palette[1];
-    // Read current pixels
+    // Snapshot current pixels before we modify canvas
     var imgData = ctx.getImageData(0,0,w,h);
     var d = imgData.data;
-    // Fill background with light color
+    // Fill background
     ctx.fillStyle = lightColor;
     ctx.fillRect(0,0,w,h);
     ctx.fillStyle = darkColor;
-    var cols = Math.ceil(w/cellSize);
-    var rows = Math.ceil(h/cellSize);
-    for (var row=0; row<rows; row++) {
-      for (var col=0; col<cols; col++) {
-        // Sample center pixel of this cell
-        var px = Math.min(Math.round(col*cellSize + cellSize/2), w-1);
-        var py = Math.min(Math.round(row*cellSize + cellSize/2), h-1);
-        var idx = (py*w + px)*4;
+    // Rotate canvas around center for angled grid
+    var rad = angleDeg * Math.PI / 180;
+    var diag = Math.ceil(Math.sqrt(w*w + h*h));
+    ctx.save();
+    ctx.translate(w/2, h/2);
+    ctx.rotate(rad);
+    ctx.translate(-diag/2, -diag/2);
+    var cols = Math.ceil(diag / cellSize) + 2;
+    var rows = Math.ceil(diag / cellSize) + 2;
+    for (var row = 0; row < rows; row++) {
+      for (var col = 0; col < cols; col++) {
+        // Grid center in rotated space, map back to original image coords
+        var gx = col * cellSize + cellSize/2;
+        var gy = row * cellSize + cellSize/2;
+        // Transform to original pixel coords
+        var ox = (gx - diag/2) * Math.cos(-rad) - (gy - diag/2) * Math.sin(-rad) + w/2;
+        var oy = (gx - diag/2) * Math.sin(-rad) + (gy - diag/2) * Math.cos(-rad) + h/2;
+        var px = Math.round(ox), py = Math.round(oy);
+        if (px < 0 || px >= w || py < 0 || py >= h) continue;
+        var idx = (py * w + px) * 4;
         var lum = (d[idx]*0.299 + d[idx+1]*0.587 + d[idx+2]*0.114) / 255;
-        // Dot radius: dark=big, light=small
         var r = (1 - lum + densityBoost) * (cellSize/2) * 0.92;
         r = Math.max(0, Math.min(r, cellSize/2));
-        if (r < 0.5) continue;
-        var cx = col*cellSize + cellSize/2;
-        var cy = row*cellSize + cellSize/2;
+        if (r < 0.4) continue;
+        var cx = gx, cy = gy;
         ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI*2);
+        if (shape === 'circle') {
+          ctx.arc(cx, cy, r, 0, Math.PI*2);
+        } else if (shape === 'square') {
+          ctx.rect(cx - r, cy - r, r*2, r*2);
+        } else { // diamond
+          ctx.moveTo(cx, cy - r);
+          ctx.lineTo(cx + r, cy);
+          ctx.lineTo(cx, cy + r);
+          ctx.lineTo(cx - r, cy);
+          ctx.closePath();
+        }
         ctx.fill();
       }
     }
+    ctx.restore();
   }
 
   function applyDuotone(imageData, darkHex, lightHex) {
@@ -1431,7 +1489,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var algo = document.getElementById('dither-algo').value;
       var density = parseInt(document.getElementById('dither-density').value)||0;
       if (algo === 'halftone' || algo === 'halftone-fine') {
-        applyHalftone(ctx, out.width, out.height, getActivePalette(), density, algo==='halftone-fine');
+        applyHalftone(ctx, out.width, out.height, getActivePalette(), density);
       } else {
         var imgData = ctx.getImageData(0,0,out.width,out.height);
         applyDither(imgData, algo, getActivePalette(), density);
