@@ -113,9 +113,45 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 .modal-box a:hover{color:var(--accent)}
 #panel-export{padding:14px 16px;margin-top:auto;border-top:1px solid var(--border)}
 @media(max-width:700px){
-  #app{flex-direction:column-reverse}
-  #panel{width:100%;height:45vh;border-right:none;border-top:1px solid var(--border)}
-  #map-area{flex:1;min-height:0}
+  #app{flex-direction:column;position:relative}
+  #map-area{width:100%;flex:1;min-height:0}
+  #panel{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    width:100%;
+    height:72px; /* collapsed: just handle + first row */
+    max-height:85vh;
+    border-right:none;
+    border-top:1px solid var(--border);
+    border-radius:16px 16px 0 0;
+    z-index:100;
+    transition:height .3s cubic-bezier(.4,0,.2,1);
+    overflow:hidden;
+    box-shadow:0 -4px 24px rgba(0,0,0,.12);
+  }
+  #panel.drawer-open{height:82vh}
+  #panel-inner{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #drawer-handle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:36px;
+    cursor:pointer;
+    flex-shrink:0;
+    touch-action:none;
+  }
+  #drawer-handle::before{
+    content:'';
+    width:36px;height:4px;
+    background:var(--border);
+    border-radius:2px;
+  }
+  /* Push map up so panel doesn't cover bottom nav controls */
+  #map-area{padding-bottom:72px}
+  #panel.drawer-open ~ * {}
+}
+@media(min-width:701px){
+  #drawer-handle{display:none}
 }
 </style>
 </head>
@@ -130,6 +166,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
 <div id="app">
   <div id="panel">
+    <div id="drawer-handle" id="drawer-handle"></div>
+    <div id="panel-inner">
 
     <div class="panel-section">
       <div class="section-title">Search</div>
@@ -498,6 +536,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <button class="btn btn-wide" id="btn-export-svg" style="color:var(--muted);font-size:11px">⬇ export svg</button>
     </div>
 
+    </div> <!-- /panel-inner -->
   </div>
 
   <div id="map-area">
@@ -819,6 +858,54 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   map.on('load',function(){updateCropOverlay();applyLayerVis();});
   map.on('style.load',function(){applyLayerVis();});
   map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
+
+  // Mobile drawer
+  (function(){
+    var panel = document.getElementById('panel');
+    var handle = document.getElementById('drawer-handle');
+    if (!handle) return;
+    var isOpen = false;
+    var startY = 0, startH = 0, dragging = false;
+
+    function setOpen(open) {
+      isOpen = open;
+      panel.classList.toggle('drawer-open', open);
+    }
+
+    // Tap handle to toggle
+    handle.addEventListener('click', function(e) {
+      if (!dragging) setOpen(!isOpen);
+    });
+
+    // Drag to resize
+    handle.addEventListener('touchstart', function(e) {
+      startY = e.touches[0].clientY;
+      startH = panel.offsetHeight;
+      dragging = false;
+      panel.style.transition = 'none';
+    }, {passive:true});
+
+    handle.addEventListener('touchmove', function(e) {
+      var dy = startY - e.touches[0].clientY;
+      if (Math.abs(dy) > 4) dragging = true;
+      var newH = Math.max(72, Math.min(window.innerHeight * 0.85, startH + dy));
+      panel.style.height = newH + 'px';
+    }, {passive:true});
+
+    handle.addEventListener('touchend', function(e) {
+      panel.style.transition = '';
+      var h = panel.offsetHeight;
+      var mid = window.innerHeight * 0.35;
+      if (h > mid) {
+        setOpen(true);
+        panel.style.height = '';
+      } else {
+        setOpen(false);
+        panel.style.height = '';
+      }
+      setTimeout(function(){ dragging = false; }, 50);
+    });
+  })();
   map.on('moveend', function(){ if(frameStyle!=='none') updateFrameOverlay(); });
 
   // Style grid
