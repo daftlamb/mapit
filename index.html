@@ -339,6 +339,32 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-export-style="dither" style="text-align:left;justify-content:flex-start">Dither</button>
         <button class="btn size-btn" data-export-style="halftone" style="text-align:left;justify-content:flex-start">Halftone</button>
         <button class="btn size-btn" data-export-style="duotone" style="text-align:left;justify-content:flex-start">Duotone</button>
+        <button class="btn size-btn" data-export-style="circuit" style="text-align:left;justify-content:flex-start">Circuit</button>
+      </div>
+      <div id="circuit-options" style="display:none;flex-direction:column;gap:8px">
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Background</span>
+          <input type="color" id="cir-bg" value="#0a0a0a" />
+        </div>
+        <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding-top:2px">Line colors</div>
+        <div class="color-row"><span class="color-label" style="width:64px">Horizontal</span><input type="color" id="cir-h" value="#e8f0fe" /></div>
+        <div class="color-row"><span class="color-label" style="width:64px">Vertical</span><input type="color" id="cir-v" value="#ffd166" /></div>
+        <div class="color-row"><span class="color-label" style="width:64px">Diag 45°</span><input type="color" id="cir-d1" value="#06d6a0" /></div>
+        <div class="color-row"><span class="color-label" style="width:64px">Diag 135°</span><input type="color" id="cir-d2" value="#ef476f" /></div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Threshold</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="cir-threshold" min="10" max="120" value="40" style="width:80px;accent-color:var(--accent)">
+            <span id="cir-threshold-val" style="font-size:11px;color:var(--muted);width:24px">40</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Line width</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="cir-lw" min="1" max="4" value="1" style="width:80px;accent-color:var(--accent)">
+            <span id="cir-lw-val" style="font-size:11px;color:var(--muted);width:16px">1</span>
+          </div>
+        </div>
       </div>
       <div id="dither-options" style="display:none">
         <div class="vignette-row" style="margin-bottom:8px">
@@ -1105,6 +1131,18 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     document.getElementById('route-width-val').textContent = this.value;
   });
 
+  // Circuit controls
+  ['cir-bg','cir-h','cir-v','cir-d1','cir-d2','cir-threshold','cir-lw'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function(){ if(exportStyle==='circuit') schedulePreview(); });
+    document.getElementById(id).addEventListener('change', function(){ if(exportStyle==='circuit') schedulePreview(); });
+  });
+  document.getElementById('cir-threshold').addEventListener('input', function() {
+    document.getElementById('cir-threshold-val').textContent = this.value;
+  });
+  document.getElementById('cir-lw').addEventListener('input', function() {
+    document.getElementById('cir-lw-val').textContent = this.value;
+  });
+
   document.getElementById('map-pitch').addEventListener('input',function(){
     var v=parseInt(this.value);
     document.getElementById('map-pitch-val').textContent=v+'°';
@@ -1546,6 +1584,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var imgData2 = previewCtx.getImageData(0,0,sw,sh);
       applyDuotone(imgData2, document.getElementById('duotone-dark').value, document.getElementById('duotone-light').value);
       previewCtx.putImageData(imgData2, 0, 0);
+    } else if (exportStyle === 'circuit') {
+      applyCircuit(previewCtx, sw, sh);
     }
   }
 
@@ -1557,6 +1597,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
       document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
       document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
+      document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
       if (exportStyle==='normal') { previewCanvas.style.display='none'; }
       else { schedulePreview(); }
     });
@@ -1797,6 +1838,105 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     }
   }
 
+  function applyCircuit(ctx, w, h) {
+    var bg      = document.getElementById('cir-bg').value;
+    var colH    = document.getElementById('cir-h').value;
+    var colV    = document.getElementById('cir-v').value;
+    var colD1   = document.getElementById('cir-d1').value;
+    var colD2   = document.getElementById('cir-d2').value;
+    var thresh  = parseInt(document.getElementById('cir-threshold').value) || 40;
+    var lw      = parseFloat(document.getElementById('cir-lw').value) || 1;
+
+    // Read original pixels
+    var src = ctx.getImageData(0,0,w,h);
+    var d = src.data;
+
+    // Grayscale lookup
+    function lum(i){ return d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114; }
+    function idx(x,y){ return (Math.max(0,Math.min(h-1,y))*w + Math.max(0,Math.min(w-1,x)))*4; }
+
+    // Directional Sobel kernels → 4 edge maps
+    // gH: horizontal edges (vertical lines) [−1,0,1] across rows
+    // gV: vertical edges (horizontal lines) [−1,0,1] down cols
+    // gD1: 45° diagonal  NE-SW
+    // gD2: 135° diagonal NW-SE
+    var gH  = new Float32Array(w*h);
+    var gV  = new Float32Array(w*h);
+    var gD1 = new Float32Array(w*h);
+    var gD2 = new Float32Array(w*h);
+
+    for (var y=1; y<h-1; y++) {
+      for (var x=1; x<w-1; x++) {
+        var p = y*w+x;
+        var tl=lum(idx(x-1,y-1)), tm=lum(idx(x,y-1)), tr=lum(idx(x+1,y-1));
+        var ml=lum(idx(x-1,y)),              mr=lum(idx(x+1,y));
+        var bl=lum(idx(x-1,y+1)), bm=lum(idx(x,y+1)), br=lum(idx(x+1,y+1));
+        // Sobel H (detects vertical edges)
+        gH[p]  = Math.abs(-tl + tr - 2*ml + 2*mr - bl + br);
+        // Sobel V (detects horizontal edges)
+        gV[p]  = Math.abs(-tl - 2*tm - tr + bl + 2*bm + br);
+        // Diagonal 45° (Scharr-style)
+        gD1[p] = Math.abs(-2*tl - tm + ml - mr + tm + 2*br);
+        // Diagonal 135°
+        gD2[p] = Math.abs(tm + 2*tr + ml - mr - 2*bl - bm);
+      }
+    }
+
+    // Clear to background
+    ctx.fillStyle = bg;
+    ctx.fillRect(0,0,w,h);
+
+    // Draw each direction as colored pixels
+    var out = ctx.getImageData(0,0,w,h);
+    var od = out.data;
+
+    function hexRgb(hex){ return [parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]; }
+    var rH=hexRgb(colH), rV=hexRgb(colV), rD1=hexRgb(colD1), rD2=hexRgb(colD2);
+    var bgRgb=hexRgb(bg);
+
+    // Start with background
+    for (var i=0;i<w*h;i++){
+      od[i*4]=bgRgb[0];od[i*4+1]=bgRgb[1];od[i*4+2]=bgRgb[2];od[i*4+3]=255;
+    }
+
+    // Blend each directional edge — strongest direction wins, additive if similar strength
+    for (var y2=0;y2<h;y2++) {
+      for (var x2=0;x2<w;x2++) {
+        var p2=y2*w+x2;
+        var vH=gH[p2], vV=gV[p2], vD1=gD1[p2], vD2=gD2[p2];
+        var base=p2*4;
+        // For each direction above threshold, additive-blend its color
+        function blend(val, rgb) {
+          if (val < thresh) return;
+          var t = Math.min(1, (val-thresh)/(255-thresh));
+          od[base]   = Math.min(255, od[base]   + rgb[0]*t);
+          od[base+1] = Math.min(255, od[base+1] + rgb[1]*t);
+          od[base+2] = Math.min(255, od[base+2] + rgb[2]*t);
+        }
+        blend(vH, rH);
+        blend(vV, rV);
+        blend(vD1, rD1);
+        blend(vD2, rD2);
+      }
+    }
+    ctx.putImageData(out,0,0);
+
+    // Thicken lines if lw > 1 by compositing a dilated version
+    if (lw > 1) {
+      var tmp=document.createElement('canvas');tmp.width=w;tmp.height=h;
+      var tc=tmp.getContext('2d');
+      tc.drawImage(ctx.canvas,0,0);
+      ctx.globalAlpha=0.6;
+      for(var dx2=-Math.floor(lw/2);dx2<=Math.floor(lw/2);dx2++){
+        for(var dy2=-Math.floor(lw/2);dy2<=Math.floor(lw/2);dy2++){
+          if(dx2===0&&dy2===0)continue;
+          ctx.drawImage(tmp,dx2,dy2);
+        }
+      }
+      ctx.globalAlpha=1;
+    }
+  }
+
   function applyDuotone(imageData, darkHex, lightHex) {
     var d = imageData.data;
     var dk = hexToRgb(darkHex);
@@ -1885,6 +2025,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var imgData2 = ctx.getImageData(0,0,out.width,out.height);
       applyDuotone(imgData2, dtDark, dtLight);
       ctx.putImageData(imgData2,0,0);
+    } else if (exportStyle==='circuit') {
+      applyCircuit(ctx, out.width, out.height);
     }
     // Bake frame
     bakeFrame(ctx, out.width, out.height);
