@@ -285,6 +285,33 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="section-title">Markers</div>
       <button class="btn btn-wide" id="btn-add-marker" style="margin-bottom:10px">+ add marker</button>
       <div id="marker-list"></div>
+      <div id="route-options" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);flex-direction:column;gap:8px">
+        <div class="layer-toggle">
+          <span style="font-size:11px">Route line</span>
+          <label class="toggle-switch"><input type="checkbox" id="tog-route" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+        <div id="route-style-opts" style="display:none;flex-direction:column;gap:8px">
+          <div class="color-row">
+            <span class="color-label">Color</span>
+            <input type="color" id="route-color" value="#e05050" />
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Width</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="range" id="route-width" min="1" max="8" value="2" style="width:80px;accent-color:var(--accent)">
+              <span id="route-width-val" style="font-size:11px;color:var(--muted);width:16px">2</span>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Style</span>
+            <select class="vig-select" id="route-dash">
+              <option value="solid">Solid</option>
+              <option value="dashed">Dashed</option>
+              <option value="dotted">Dotted</option>
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="panel-section">
@@ -856,7 +883,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   });
   map.addControl(new maplibregl.NavigationControl(),'bottom-right');
   map.on('load',function(){updateCropOverlay();applyLayerVis();});
-  map.on('style.load',function(){applyLayerVis();});
+  map.on('style.load',function(){applyLayerVis();updateRoute();});
   map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
 
   // Mobile drawer
@@ -1065,6 +1092,19 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     map.triggerRepaint();
   });
 
+  document.getElementById('tog-route').addEventListener('change', function() {
+    document.getElementById('route-style-opts').style.display = this.checked ? 'flex' : 'none';
+    updateRoute();
+  });
+  ['route-color','route-width','route-dash'].forEach(function(id) {
+    var el = document.getElementById(id);
+    el.addEventListener('change', updateRoute);
+    el.addEventListener('input', updateRoute);
+  });
+  document.getElementById('route-width').addEventListener('input', function() {
+    document.getElementById('route-width-val').textContent = this.value;
+  });
+
   document.getElementById('map-pitch').addEventListener('input',function(){
     var v=parseInt(this.value);
     document.getElementById('map-pitch-val').textContent=v+'°';
@@ -1238,6 +1278,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     markers.push(markerObj);
     m.on('dragend',function(){
       markerObj.lnglat=Object.values(m.getLngLat());
+      updateRoute();
     });
     renderMarkerList();
     hideMarkerPopup();
@@ -1264,6 +1305,50 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         renderMarkerList();
       });
       markerList.appendChild(row);
+    });
+    // Show route options only when 2+ markers
+    document.getElementById('route-options').style.display = markers.length >= 2 ? 'flex' : 'none';
+    updateRoute();
+  }
+
+  // Route line
+  var routeOn = false;
+  function updateRoute() {
+    if (!map.isStyleLoaded()) return;
+    var tog = document.getElementById('tog-route');
+    routeOn = tog ? tog.checked : false;
+    // Remove existing layers/source
+    if (map.getLayer('route-line')) map.removeLayer('route-line');
+    if (map.getLayer('route-line-case')) map.removeLayer('route-line-case');
+    if (map.getSource('route')) map.removeSource('route');
+    if (!routeOn || markers.length < 2) return;
+    var coords = markers.map(function(m){ return m.lnglat; });
+    var color = document.getElementById('route-color').value;
+    var width = parseInt(document.getElementById('route-width').value) || 2;
+    var dash = document.getElementById('route-dash').value;
+    var dashArray = dash==='dashed' ? [4,3] : dash==='dotted' ? [1,2] : [1];
+    map.addSource('route', {
+      type:'geojson',
+      data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}
+    });
+    // White case for contrast
+    map.addLayer({
+      id:'route-line-case',
+      type:'line',
+      source:'route',
+      layout:{'line-join':'round','line-cap':'round'},
+      paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}
+    });
+    map.addLayer({
+      id:'route-line',
+      type:'line',
+      source:'route',
+      layout:{'line-join':'round','line-cap':'round'},
+      paint:{
+        'line-color':color,
+        'line-width':width,
+        'line-dasharray': dashArray
+      }
     });
   }
 
