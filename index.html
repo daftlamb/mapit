@@ -1541,16 +1541,17 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if (typeof htMode !== 'undefined' && htMode === 'split') {
       // --- Split channel mode ---
       var bgColor = document.getElementById('ht-bg').value;
-      // Fill background
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0,0,w,h);
+      // Read original pixels FIRST, before any modification
       var imgData = ctx.getImageData(0,0,w,h);
       var d = imgData.data;
+      // Now fill background
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0,0,w,h);
       var channels = [
-        {id:1, rW:0, gW:0, bW:1},   // C  ← cyan: from blue channel
-        {id:2, rW:1, gW:0, bW:0},   // M  ← magenta: from red channel
-        {id:3, rW:0, gW:1, bW:0},   // Y  ← yellow: from green channel
-        {id:4, rW:0.33,gW:0.33,bW:0.33} // K ← luminance
+        {id:1, fn: function(r,g,b){ return 1 - r/255; }},  // C = 1-R
+        {id:2, fn: function(r,g,b){ return 1 - g/255; }},  // M = 1-G
+        {id:3, fn: function(r,g,b){ return 1 - b/255; }},  // Y = 1-B
+        {id:4, fn: function(r,g,b){ return 1 - Math.max(r,g,b)/255; }} // K = 1-max
       ];
       channels.forEach(function(ch) {
         if (!document.getElementById('ht-ch'+ch.id+'-on').checked) return;
@@ -1573,8 +1574,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             if (px<0||px>=w||py<0||py>=h) continue;
             var idx = (py*w+px)*4;
             // Channel-specific luminance
-            var chLum = (d[idx]*ch.rW + d[idx+1]*ch.gW + d[idx+2]*ch.bW) / 255;
-            var r = (1 - chLum + densityBoost) * (cellSize/2) * 0.92;
+            var chLum = ch.fn(d[idx], d[idx+1], d[idx+2]);
+            // chLum already = 0..1 where 1 = "needs lots of ink", so dot size directly proportional
+            var r = (chLum + densityBoost) * (cellSize/2) * 0.92;
             r = Math.max(0, Math.min(r, cellSize/2));
             if (r < 0.4) continue;
             ctx.beginPath();
