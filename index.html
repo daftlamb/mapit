@@ -269,11 +269,11 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
     <div class="panel-section">
       <div class="section-title">Export Style</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
-        <button class="btn size-btn active" data-export-style="normal">Normal</button>
-        <button class="btn size-btn" data-export-style="dither">Dither</button>
-        <button class="btn size-btn" data-export-style="halftone">Halftone</button>
-        <button class="btn size-btn" data-export-style="duotone">Duotone</button>
+      <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:10px">
+        <button class="btn size-btn active" data-export-style="normal" style="text-align:left;justify-content:flex-start">Normal</button>
+        <button class="btn size-btn" data-export-style="dither" style="text-align:left;justify-content:flex-start">Dither</button>
+        <button class="btn size-btn" data-export-style="halftone" style="text-align:left;justify-content:flex-start">Halftone</button>
+        <button class="btn size-btn" data-export-style="duotone" style="text-align:left;justify-content:flex-start">Duotone</button>
       </div>
       <div id="dither-options" style="display:none">
         <div class="vignette-row" style="margin-bottom:8px">
@@ -319,10 +319,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       </div>
 
       <div id="halftone-options" style="display:none;flex-direction:column;gap:8px">
-        <!-- Mode toggle -->
-        <div class="size-btns" style="margin-bottom:2px">
-          <button class="btn size-btn active" id="ht-mode-single" data-ht-mode="single">Single</button>
-          <button class="btn size-btn" id="ht-mode-split" data-ht-mode="split">Split Ch.</button>
+        <!-- Mode sub-tabs -->
+        <div style="border-top:1px solid var(--border);padding-top:8px;display:flex;gap:6px">
+          <button class="btn size-btn active" id="ht-mode-single" data-ht-mode="single" style="flex:1">Single</button>
+          <button class="btn size-btn" id="ht-mode-split" data-ht-mode="split" style="flex:1">Split Ch.</button>
         </div>
 
         <!-- Single mode -->
