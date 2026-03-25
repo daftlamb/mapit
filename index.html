@@ -287,7 +287,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         </div>
         <div class="vignette-row vig-opacity-row" style="margin-top:6px">
           <span>Density</span>
-          <input type="range" id="dither-density" min="-50" max="50" value="20" style="flex:1;accent-color:var(--accent)" />
+          <input type="range" id="dither-density" min="-50" max="200" value="20" style="flex:1;accent-color:var(--accent)" />
           <span id="dither-density-val" style="width:32px;text-align:right">20</span>
         </div>
       </div>
@@ -1203,8 +1203,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var w = imageData.width, h = imageData.height;
     var dark = hexToRgb(palette[0]);
     var light = hexToRgb(palette[1]);
-    // density: -50..50, bias range ±0.15 (subtle, preserves dot texture)
-    var bias = (density||0) / 333;
+    // density: -50..200, positive = denser dots
+    var bias = density > 0 ? (density / 200) * 0.55 : (density / 50) * 0.15;
     var gray = new Float32Array(w*h);
     for (var i=0; i<w*h; i++) {
       gray[i] = (d[i*4]*0.299 + d[i*4+1]*0.587 + d[i*4+2]*0.114) / 255;
