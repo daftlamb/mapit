@@ -677,7 +677,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   map.addControl(new maplibregl.NavigationControl(),'bottom-right');
   map.on('load',function(){updateCropOverlay();applyLayerVis();});
   map.on('style.load',function(){applyLayerVis();});
-  map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(); });
+  map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
   map.on('moveend', function(){ if(frameStyle!=='none') updateFrameOverlay(); });
 
   // Style grid
@@ -1095,8 +1095,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   var previewCtx = previewCanvas.getContext('2d');
   var previewRaf = null;
   var previewDirty = true;
+  var previewScale = 1; // 0.5 while dragging, 1 when idle
+  var previewIdleTimer = null;
 
-  function schedulePreview() {
+  function schedulePreview(fast) {
+    // fast=true: use 0.5x (while map is animating/dragging)
+    // fast=false or undefined: use 1x (after map settles)
+    if (fast) previewScale = 0.5;
     previewDirty = true;
     if (!previewRaf) {
       previewRaf = requestAnimationFrame(function() {
@@ -1104,6 +1109,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         if (previewDirty && exportStyle !== 'normal') renderPreview();
       });
     }
+    // Schedule a 1x re-render after map stops moving
+    clearTimeout(previewIdleTimer);
+    previewIdleTimer = setTimeout(function() {
+      previewScale = 1;
+      schedulePreview(false);
+    }, 400);
   }
 
   function renderPreview() {
@@ -1111,8 +1122,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     if (exportStyle === 'normal') { previewCanvas.style.display='none'; return; }
     var r = getCropRect();
     var mapCanvas = map.getCanvas();
-    // Sample at half resolution for performance
-    var scale = 0.5;
+    var scale = previewScale;
     var sw = Math.round(r.width * scale);
     var sh = Math.round(r.height * scale);
     if (sw < 2 || sh < 2) return;
