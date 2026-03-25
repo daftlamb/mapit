@@ -175,11 +175,27 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="layer-toggle"><span>3D Buildings</span>
         <label class="toggle-switch"><input type="checkbox" id="tog-buildings-3d" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
-      <div class="vignette-row" style="margin-top:8px">
-        <span style="font-size:11px;color:var(--muted)">Tilt</span>
-        <div style="display:flex;align-items:center;gap:6px">
-          <input type="range" id="map-pitch" min="0" max="60" value="0" style="width:80px">
-          <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
+      <div id="building-3d-options" style="display:none;padding-left:4px;margin-top:6px;display:none;flex-direction:column;gap:8px">
+        <div class="color-row">
+          <span class="color-label">Building color</span>
+          <input type="color" id="building-3d-color" value="#d4c8b8" />
+        </div>
+        <div class="layer-toggle"><span style="font-size:11px">Sunset light</span>
+          <label class="toggle-switch"><input type="checkbox" id="tog-sunset" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Tilt</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="map-pitch" min="0" max="60" value="0" style="width:80px">
+            <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Rotation</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="map-bearing" min="-180" max="180" value="0" style="width:80px">
+            <span id="map-bearing-val" style="font-size:11px;color:var(--muted);width:28px">0°</span>
+          </div>
         </div>
       </div>
     </div>
@@ -700,26 +716,60 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   document.getElementById('tog-road-labels').addEventListener('change',function(){layerVis.roadLabels=this.checked;applyLayerVis();});
   document.getElementById('tog-boundary').addEventListener('change',function(){layerVis.boundary=this.checked;applyLayerVis();});
   document.getElementById('tog-buildings').addEventListener('change',function(){layerVis.buildings=this.checked;applyLayerVis();});
+  // 3D building helpers
+  function update3dBuildingStyle() {
+    if (!map.getLayer('building-3d')) return;
+    var color = document.getElementById('building-3d-color').value;
+    var sunset = document.getElementById('tog-sunset').checked;
+    if (sunset) {
+      // Simulate sunset: faces facing "southwest" get warm orange, others cooler
+      map.setPaintProperty('building-3d','fill-extrusion-color',[
+        'interpolate',['linear'],
+        ['%',['get','height'],360],
+        0,'#ff9955', 60,'#ffbb66', 120,color, 180,color, 240,'#cc8844', 360,'#ff9955'
+      ]);
+      map.setPaintProperty('building-3d','fill-extrusion-ambient-occlusion-intensity',0.4);
+    } else {
+      map.setPaintProperty('building-3d','fill-extrusion-color',color);
+      map.setPaintProperty('building-3d','fill-extrusion-ambient-occlusion-intensity',0);
+    }
+  }
+
   document.getElementById('tog-buildings-3d').addEventListener('change',function(){
     layerVis.buildings3d=this.checked;
-    // Hide flat buildings when 3D is on to avoid overlap
     if (this.checked) layerVis.buildings=false;
     else layerVis.buildings=document.getElementById('tog-buildings').checked;
     applyLayerVis();
-    if (this.checked && map.getPitch() < 10) {
-      map.easeTo({pitch:45,duration:600});
-      document.getElementById('map-pitch').value=45;
-      document.getElementById('map-pitch-val').textContent='45°';
-    } else if (!this.checked) {
-      map.easeTo({pitch:0,duration:400});
+    document.getElementById('building-3d-options').style.display = this.checked ? 'flex' : 'none';
+    if (this.checked) {
+      // Axonometric-ish: 45° pitch + 45° bearing
+      map.easeTo({pitch:50,bearing:45,duration:700});
+      document.getElementById('map-pitch').value=50;
+      document.getElementById('map-pitch-val').textContent='50°';
+      document.getElementById('map-bearing').value=45;
+      document.getElementById('map-bearing-val').textContent='45°';
+      update3dBuildingStyle();
+    } else {
+      map.easeTo({pitch:0,bearing:0,duration:400});
       document.getElementById('map-pitch').value=0;
       document.getElementById('map-pitch-val').textContent='0°';
+      document.getElementById('map-bearing').value=0;
+      document.getElementById('map-bearing-val').textContent='0°';
     }
   });
+
+  document.getElementById('building-3d-color').addEventListener('input', update3dBuildingStyle);
+  document.getElementById('tog-sunset').addEventListener('change', update3dBuildingStyle);
+
   document.getElementById('map-pitch').addEventListener('input',function(){
     var v=parseInt(this.value);
     document.getElementById('map-pitch-val').textContent=v+'°';
     map.easeTo({pitch:v,duration:200});
+  });
+  document.getElementById('map-bearing').addEventListener('input',function(){
+    var v=parseInt(this.value);
+    document.getElementById('map-bearing-val').textContent=v+'°';
+    map.easeTo({bearing:v,duration:200});
   });
 
   // Size buttons
