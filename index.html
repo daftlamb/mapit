@@ -315,6 +315,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <select class="vig-select" id="route-curve">
               <option value="straight">Straight</option>
               <option value="curve">Curve</option>
+              <option value="road">🛣 Road (real)</option>
+              <option value="walk">🚶 Walking</option>
+              <option value="bike">🚲 Cycling</option>
             </select>
           </div>
           <div class="layer-toggle">
@@ -1408,11 +1411,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       return result;
     }
 
-    var coords = curveType==='curve' ? catmullRom(pts,32) : pts;
+    var isRealRoute = curveType==='road'||curveType==='walk'||curveType==='bike';
 
-    map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
-    map.addLayer({id:'route-line-case',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}});
-    map.addLayer({id:'route-line',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':color,'line-width':width,'line-dasharray':dashArray}});
+    function applyRouteCoords(coords) {
+      map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
+      map.addLayer({id:'route-line-case',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}});
+      map.addLayer({id:'route-line',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':color,'line-width':width,'line-dasharray':dashArray}});
 
     // Distance labels at midpoints between consecutive markers
     if (showDist) {
@@ -1439,6 +1443,31 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           'text-halo-width':1.5
         }
       });
+    }
+    } // end applyRouteCoords
+
+    if(isRealRoute){
+      var profile = curveType==='walk'?'foot':curveType==='bike'?'bike':'car';
+      var coordStr = pts.map(function(p){return p[0]+','+p[1];}).join(';');
+      var url = 'https://router.project-osrm.org/route/v1/'+profile+'/'+coordStr+'?overview=full&geometries=geojson';
+      // Show loading indicator on route button area
+      var selEl = document.getElementById('route-curve');
+      var origTxt = selEl ? selEl.options[selEl.selectedIndex].text : '';
+      if(selEl) selEl.options[selEl.selectedIndex].text = '⏳ Routing…';
+      fetch(url).then(function(r){return r.json();}).then(function(data){
+        if(selEl) selEl.options[selEl.selectedIndex].text = origTxt;
+        if(data.routes&&data.routes[0]){
+          var coords = data.routes[0].geometry.coordinates;
+          applyRouteCoords(coords);
+        }
+      }).catch(function(){
+        if(selEl) selEl.options[selEl.selectedIndex].text = origTxt;
+        // Fallback to straight line
+        applyRouteCoords(pts);
+      });
+    } else {
+      var coords = curveType==='curve' ? catmullRom(pts,32) : pts;
+      applyRouteCoords(coords);
     }
   }
 
