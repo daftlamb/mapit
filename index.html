@@ -2721,20 +2721,21 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
       img.draggable = false;
 
-      // Position at crop bottom-right, 16px inset
-      var r = getCropRect();
+      // Position at crop bottom-right, 16px inset — wait for image to load
       img.style.left = '0px';
       img.style.top = '0px';
       captionLayer.appendChild(img);
-      // Use setTimeout to let browser lay out the image before measuring
-      setTimeout(function() {
-        var imgW = img.offsetWidth || 160;
-        var imgH = img.offsetHeight || 196;
+      function positionBadge() {
+        var r = getCropRect();
+        var imgW = img.naturalWidth ? Math.min(img.naturalWidth, 160) : 160;
+        var imgH = img.naturalHeight ? Math.round(imgW * img.naturalHeight / img.naturalWidth) : 196;
+        img.style.width = imgW + 'px';
         var bx = r.left + r.width - imgW - 16;
         var by = r.top + r.height - imgH - 16;
         img.style.left = bx + 'px';
         img.style.top = by + 'px';
-      }, 50);
+      }
+      if (img.complete) { positionBadge(); } else { img.onload = positionBadge; }
 
       // Make draggable
       var dragging = false, startX, startY, startLeft, startTop;
