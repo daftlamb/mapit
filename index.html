@@ -2716,7 +2716,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       img.style.cursor = 'move';
       img.style.userSelect = 'none';
       img.style.pointerEvents = 'all';
-      img.style.maxWidth = '160px';
+      img.style.maxWidth = '120px';
       img.style.borderRadius = '8px';
       img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
       img.draggable = false;
@@ -2727,11 +2727,22 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       captionLayer.appendChild(img);
       function positionBadge() {
         var r = getCropRect();
-        var imgW = img.naturalWidth ? Math.min(img.naturalWidth, 160) : 160;
-        var imgH = img.naturalHeight ? Math.round(imgW * img.naturalHeight / img.naturalWidth) : 196;
-        img.style.width = imgW + 'px';
-        var bx = r.left + r.width - imgW - 16;
-        var by = r.top + r.height - imgH - 16;
+        var badgeW = Math.min(img.naturalWidth || 120, 120);
+        var badgeH = img.naturalHeight ? Math.round(badgeW * img.naturalHeight / img.naturalWidth) : 148;
+        img.style.width = badgeW + 'px';
+        var bx = r.left + r.width - badgeW - 16;
+        var by = r.top + r.height - badgeH - 16;
+        // Caption avoidance: if any caption overlaps badge rect, nudge badge up
+        var badgeRect = {left: bx, top: by, right: bx + badgeW, bottom: by + badgeH};
+        captions.forEach(function(cap) {
+          if (!cap.el) return;
+          var cL = parseFloat(cap.el.style.left) || 0;
+          var cT = parseFloat(cap.el.style.top) || 0;
+          var cR = cL + (cap.el.offsetWidth || 80);
+          var cB = cT + (cap.el.offsetHeight || 30);
+          var overlap = cL < badgeRect.right && cR > badgeRect.left && cT < badgeRect.bottom && cB > badgeRect.top;
+          if (overlap) by = Math.min(by, cT - badgeH - 8);
+        });
         img.style.left = bx + 'px';
         img.style.top = by + 'px';
       }
