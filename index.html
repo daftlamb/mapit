@@ -2726,11 +2726,15 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       img.style.left = '0px';
       img.style.top = '0px';
       captionLayer.appendChild(img);
-      var imgW = img.offsetWidth, imgH = img.offsetHeight;
-      var bx = r.left + r.width - imgW - 16;
-      var by = r.top + r.height - imgH - 16;
-      img.style.left = bx + 'px';
-      img.style.top = by + 'px';
+      // Use setTimeout to let browser lay out the image before measuring
+      setTimeout(function() {
+        var imgW = img.offsetWidth || 160;
+        var imgH = img.offsetHeight || 196;
+        var bx = r.left + r.width - imgW - 16;
+        var by = r.top + r.height - imgH - 16;
+        img.style.left = bx + 'px';
+        img.style.top = by + 'px';
+      }, 50);
 
       // Make draggable
       var dragging = false, startX, startY, startLeft, startTop;
