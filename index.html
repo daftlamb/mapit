@@ -598,6 +598,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       </div>
     </div>
 
+    <div class="panel-section">
+      <div class="section-title">City Badge</div>
+      <button class="btn" id="btn-city-badge" style="width:100%;padding:7px">Generate Badge</button>
+      <div id="badge-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    </div>
+
     <div id="panel-export" style="display:flex;flex-direction:column;gap:8px">
       <button class="btn btn-wide" id="btn-export">⬇ export png</button>
       <button class="btn btn-wide" id="btn-export-svg" style="color:var(--muted);font-size:11px">⬇ export svg</button>
@@ -2235,6 +2241,521 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   // Dark mode
   var darkMode=false;
   document.getElementById('btn-darkmode').addEventListener('click',function(){darkMode=!darkMode;document.documentElement.setAttribute('data-theme',darkMode?'dark':'');});
+
+  // ── City Badge ──────────────────────────────────────────────────────────────
+
+  // Grid cell size (px) — unified for text, map outline, and border stitches
+  var CB_CELL = 4;
+  var CB_BF_W = 4, CB_BF_H = 6, CB_BF_GAP = 1;
+
+  var CB_BFONT = {
+    'A':['0110','1001','1111','1001','1001','0000'],
+    'B':['1110','1001','1110','1001','1110','0000'],
+    'C':['0111','1000','1000','1000','0111','0000'],
+    'D':['1110','1001','1001','1001','1110','0000'],
+    'E':['1111','1000','1110','1000','1111','0000'],
+    'F':['1111','1000','1110','1000','1000','0000'],
+    'G':['0111','1000','1011','1001','0111','0000'],
+    'H':['1001','1001','1111','1001','1001','0000'],
+    'I':['0110','0010','0010','0010','0110','0000'],
+    'J':['0011','0001','0001','1001','0110','0000'],
+    'K':['1001','1010','1100','1010','1001','0000'],
+    'L':['1000','1000','1000','1000','1111','0000'],
+    'M':['1001','1111','1111','1001','1001','0000'],
+    'N':['1001','1101','1011','1001','1001','0000'],
+    'O':['0110','1001','1001','1001','0110','0000'],
+    'P':['1110','1001','1110','1000','1000','0000'],
+    'Q':['0110','1001','1001','1011','0111','0000'],
+    'R':['1110','1001','1110','1010','1001','0000'],
+    'S':['0111','1000','0110','0001','1110','0000'],
+    'T':['1110','0100','0100','0100','0100','0000'],
+    'U':['1001','1001','1001','1001','0110','0000'],
+    'V':['1001','1001','1001','0110','0110','0000'],
+    'W':['1001','1001','1111','1111','1001','0000'],
+    'X':['1001','0110','0110','0110','1001','0000'],
+    'Y':['1010','1010','0100','0100','0100','0000'],
+    'Z':['1111','0010','0100','1000','1111','0000'],
+    '0':['0110','1011','1101','1001','0110','0000'],
+    '1':['0100','1100','0100','0100','1110','0000'],
+    '2':['0110','1001','0010','0100','1111','0000'],
+    '3':['1110','0001','0110','0001','1110','0000'],
+    '4':['1001','1001','1111','0001','0001','0000'],
+    '5':['1111','1000','1110','0001','1110','0000'],
+    '6':['0110','1000','1110','1001','0110','0000'],
+    '7':['1111','0001','0010','0100','0100','0000'],
+    '8':['0110','1001','0110','1001','0110','0000'],
+    '9':['0110','1001','0111','0001','0110','0000'],
+    ' ':['0000','0000','0000','0000','0000','0000'],
+    '-':['0000','0000','1110','0000','0000','0000'],
+    '.':['0000','0000','0000','0000','0100','0000'],
+    "'":['0100','0100','0000','0000','0000','0000'],
+    '\u00b0':['0110','0110','0000','0000','0000','0000']
+  };
+
+  var cbMorandiColors = [
+    [210, 25, 62],
+    [340, 20, 65],
+    [30,  28, 63],
+    [160, 22, 58],
+    [270, 18, 60],
+    [15,  30, 60],
+    [200, 20, 55],
+    [50,  25, 62],
+    [130, 20, 57],
+    [300, 15, 62]
+  ];
+
+  function cbDrawBitmapText(text, grid, COLS, ROWS, centerCol, baseRow, color) {
+    var chars = text.toUpperCase().split('');
+    var totalW = chars.length * (CB_BF_W + CB_BF_GAP) - CB_BF_GAP;
+    var startCol = centerCol - Math.floor(totalW / 2);
+    chars.forEach(function(ch, ci) {
+      var glyph = CB_BFONT[ch] || CB_BFONT[' '];
+      var charCol = startCol + ci * (CB_BF_W + CB_BF_GAP);
+      for (var row = 0; row < CB_BF_H; row++) {
+        var bits = glyph[row] || '0000';
+        for (var bit = 0; bit < CB_BF_W; bit++) {
+          if (bits[bit] === '1') {
+            var gc = charCol + bit;
+            var gr = baseRow + row;
+            if (gc >= 0 && gc < COLS && gr >= 0 && gr < ROWS) {
+              if (grid[gr * COLS + gc] === 0) grid[gr * COLS + gc] = color || 1;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function cbDrawCross(col, row, ox, oy, type, color, ctx2) {
+    var baseCX = ox + col * CB_CELL + CB_CELL / 2;
+    var baseCY = oy + row * CB_CELL + CB_CELL / 2;
+    var wobbleAngle = Math.sin(col * 127.1 + row * 311.7) * 0.12;
+    var wobbleX = Math.sin(col * 311.7 + row * 127.1) * 0.5;
+    var wobbleY = Math.sin(col * 211.3 + row * 431.1) * 0.5;
+    var cx = baseCX + wobbleX;
+    var cy = baseCY + wobbleY;
+    var arm = CB_CELL * (type === 2 ? 0.46 : 0.40);
+    var cosA = Math.cos(wobbleAngle), sinA = Math.sin(wobbleAngle);
+    var a1x = arm*0.7071*cosA - arm*0.7071*sinA;
+    var a1y = arm*0.7071*sinA + arm*0.7071*cosA;
+    var a2x = arm*0.7071*cosA - (-arm*0.7071)*sinA;
+    var a2y = arm*0.7071*sinA + (-arm*0.7071)*cosA;
+    var lw = type === 2 ? 2.2 : (type === 3 ? 1.4 : 1.8);
+    ctx2.save();
+    ctx2.strokeStyle = color || 'rgba(255,255,255,0.95)';
+    ctx2.lineWidth = lw;
+    ctx2.lineCap = 'round';
+    ctx2.beginPath();
+    ctx2.moveTo(cx-a1x, cy-a1y); ctx2.lineTo(cx+a1x, cy+a1y);
+    ctx2.moveTo(cx-a2x, cy-a2y); ctx2.lineTo(cx+a2x, cy+a2y);
+    ctx2.stroke();
+    ctx2.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx2.lineWidth = lw * 0.45;
+    ctx2.beginPath();
+    ctx2.moveTo(cx-a1x-0.4, cy-a1y-0.4); ctx2.lineTo(cx+a1x-0.4, cy+a1y-0.4);
+    ctx2.moveTo(cx-a2x-0.4, cy-a2y-0.4); ctx2.lineTo(cx+a2x-0.4, cy+a2y-0.4);
+    ctx2.stroke();
+    ctx2.restore();
+  }
+
+  function cbRasterizePath(pts, grid, COLS, ROWS, ox, oy, value) {
+    for (var i = 0; i < pts.length - 1; i++) {
+      var x0 = pts[i][0], y0 = pts[i][1];
+      var x1 = pts[i+1][0], y1 = pts[i+1][1];
+      var dist = Math.hypot(x1-x0, y1-y0);
+      var steps = Math.max(1, Math.ceil(dist / (CB_CELL * 0.5)));
+      for (var s = 0; s <= steps; s++) {
+        var t = s / steps;
+        var px = x0 + (x1-x0)*t;
+        var py = y0 + (y1-y0)*t;
+        var col = Math.floor((px-ox) / CB_CELL);
+        var row = Math.floor((py-oy) / CB_CELL);
+        if (col >= 0 && col < COLS && row >= 0 && row < ROWS) {
+          var idx = row * COLS + col;
+          if (grid[idx] === 0 || value === 2) grid[idx] = value;
+        }
+      }
+    }
+  }
+
+  function cbRasterizeBorder(grid, COLS, ROWS) {
+    for (var c = 0; c < COLS; c++) {
+      grid[0*COLS+c] = 2; grid[1*COLS+c] = 2;
+      grid[(ROWS-1)*COLS+c] = 2; grid[(ROWS-2)*COLS+c] = 2;
+    }
+    for (var r = 0; r < ROWS; r++) {
+      grid[r*COLS+0] = 2; grid[r*COLS+1] = 2;
+      grid[r*COLS+(COLS-1)] = 2; grid[r*COLS+(COLS-2)] = 2;
+    }
+    var inner = 4;
+    for (var c = inner; c < COLS-inner; c++) {
+      if (grid[inner*COLS+c] === 0) grid[inner*COLS+c] = 2;
+      if (grid[(ROWS-1-inner)*COLS+c] === 0) grid[(ROWS-1-inner)*COLS+c] = 2;
+    }
+    for (var r = inner; r < ROWS-inner; r++) {
+      if (grid[r*COLS+inner] === 0) grid[r*COLS+inner] = 2;
+      if (grid[r*COLS+(COLS-1-inner)] === 0) grid[r*COLS+(COLS-1-inner)] = 2;
+    }
+  }
+
+  function cbHsl2hex(h, s, l) {
+    s /= 100; l /= 100;
+    var a = s * Math.min(l, 1-l);
+    function f(n) {
+      var k = (n + h/30) % 12;
+      var col = l - a * Math.max(Math.min(k-3, 9-k, 1), -1);
+      return Math.round(255*col).toString(16).padStart(2,'0');
+    }
+    return '#' + f(0) + f(8) + f(4);
+  }
+
+  function cbRoundRect(ctx2, x, y, w, h, r) {
+    ctx2.beginPath();
+    ctx2.moveTo(x+r, y);
+    ctx2.lineTo(x+w-r, y);
+    ctx2.arcTo(x+w, y, x+w, y+r, r);
+    ctx2.lineTo(x+w, y+h-r);
+    ctx2.arcTo(x+w, y+h, x+w-r, y+h, r);
+    ctx2.lineTo(x+r, y+h);
+    ctx2.arcTo(x, y+h, x, y+h-r, r);
+    ctx2.lineTo(x, y+r);
+    ctx2.arcTo(x, y, x+r, y, r);
+    ctx2.closePath();
+  }
+
+  // Douglas-Peucker simplify
+  function cbDp(pts, eps) {
+    if (pts.length <= 2) return pts;
+    var mx = 0, ix = 0;
+    var p1 = pts[0], p2 = pts[pts.length-1];
+    for (var i = 1; i < pts.length-1; i++) {
+      var d = cbPld(pts[i], p1, p2);
+      if (d > mx) { mx = d; ix = i; }
+    }
+    if (mx > eps) {
+      return cbDp(pts.slice(0, ix+1), eps).slice(0,-1).concat(cbDp(pts.slice(ix), eps));
+    }
+    return [p1, p2];
+  }
+  function cbPld(p, a, b) {
+    var dx = b[0]-a[0], dy = b[1]-a[1];
+    if (!dx && !dy) return Math.hypot(p[0]-a[0], p[1]-a[1]);
+    var t = Math.max(0, Math.min(1, ((p[0]-a[0])*dx+(p[1]-a[1])*dy)/(dx*dx+dy*dy)));
+    return Math.hypot(p[0]-a[0]-t*dx, p[1]-a[1]-t*dy);
+  }
+
+  // Catmull-Rom spline
+  function cbCatmullRom(pts, steps) {
+    if (pts.length < 3) return pts;
+    steps = steps || 8;
+    var result = [];
+    var n = pts.length;
+    for (var i = 0; i < n; i++) {
+      var p0 = pts[(i-1+n)%n];
+      var p1 = pts[i];
+      var p2 = pts[(i+1)%n];
+      var p3 = pts[(i+2)%n];
+      for (var s = 0; s < steps; s++) {
+        var t = s/steps, t2 = t*t, t3 = t2*t;
+        var x = 0.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3);
+        var y = 0.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3);
+        result.push([x, y]);
+      }
+    }
+    return result;
+  }
+
+  // Render badge onto an offscreen canvas and return the cropped stamp canvas
+  function renderBadge(cityName, lat, lon, geojson) {
+    var W = 360, H = 440;
+    var offCanvas = document.createElement('canvas');
+    offCanvas.width = W; offCanvas.height = H;
+    var ctx2 = offCanvas.getContext('2d');
+
+    var margin = 22;
+    var sx = margin, sy = margin;
+    var sw = W - margin*2;
+    var sh = H - margin*2;
+    var cornerR = 10;
+
+    var COLS = Math.floor(sw / CB_CELL);
+    var ROWS = Math.floor(sh / CB_CELL);
+    var grid = new Uint8Array(COLS * ROWS);
+
+    var stampW = COLS * CB_CELL;
+    var stampH = ROWS * CB_CELL;
+    var ox = sx + Math.floor((sw - stampW) / 2);
+    var oy = sy + Math.floor((sh - stampH) / 2);
+
+    // Morandi color
+    var cidx = Math.floor(Math.random() * cbMorandiColors.length);
+    var mc = cbMorandiColors[cidx];
+    var mH = mc[0], mS = mc[1], mL = mc[2];
+    var stampColor = 'hsl('+mH+','+mS+'%,'+mL+'%)';
+    var lLight = Math.min(100, mL+2);
+    var lDark  = Math.max(0, mL-2);
+    var color1 = 'rgba(255,255,255,0.96)';
+    var color2 = 'hsla('+mH+','+mS+'%,'+Math.min(100,mL+30)+'%,0.9)';
+    var color3 = 'hsl('+mH+','+Math.min(100,mS+10)+'%,'+Math.max(20,mL-25)+'%)';
+
+    // Wrap city name into lines
+    var displayName = cityName.toUpperCase();
+    var WRAP = 10;
+    var words = displayName.split(' ');
+    var cur = '';
+    var lines = [];
+    words.forEach(function(w) {
+      if (!cur) { cur = w; }
+      else if ((cur+' '+w).length <= WRAP) { cur += ' '+w; }
+      else { lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    var finalLines = [];
+    lines.forEach(function(l) {
+      if (l.length <= WRAP) { finalLines.push(l); }
+      else { for (var i=0; i<l.length; i+=WRAP) finalLines.push(l.slice(i,i+WRAP)); }
+    });
+    lines = finalLines;
+
+    var textZoneH = CB_CELL * (8 + CB_BF_H + 4);
+
+    // Rasterize city outline
+    if (geojson) {
+      var ring = [];
+      if (geojson.type === 'Polygon') {
+        ring = geojson.coordinates[0];
+      } else if (geojson.type === 'MultiPolygon') {
+        var best = null, bestLen = 0;
+        geojson.coordinates.forEach(function(poly) {
+          if (poly[0].length > bestLen) { bestLen = poly[0].length; best = poly[0]; }
+        });
+        ring = best || [];
+      }
+      if (ring.length > 2) {
+        ring = cbDp(ring, 0.02);
+        var minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+        ring.forEach(function(p) {
+          if (p[0]<minX) minX=p[0]; if (p[0]>maxX) maxX=p[0];
+          if (p[1]<minY) minY=p[1]; if (p[1]>maxY) maxY=p[1];
+        });
+        var outlineAreaW = stampW * 0.72;
+        var outlineAreaH = stampH - textZoneH - 20;
+        var scX = outlineAreaW / (maxX-minX || 1);
+        var scY = outlineAreaH / (maxY-minY || 1);
+        var sc = Math.min(scX, scY);
+        var midLng = (minX+maxX)/2, midLat = (minY+maxY)/2;
+        var shapeCX = ox + stampW/2;
+        var shapeCY = oy + textZoneH + outlineAreaH/2;
+        var mappedRing = ring.map(function(p) {
+          return [shapeCX + (p[0]-midLng)*sc, shapeCY - (p[1]-midLat)*sc];
+        });
+        var smoothRing = cbCatmullRom(mappedRing, 6);
+        smoothRing.push(smoothRing[0]);
+        cbRasterizePath(smoothRing, grid, COLS, ROWS, ox, oy, 1);
+      }
+    }
+
+    // Bitmap text (first line)
+    var textCenterCol = Math.floor(COLS/2);
+    var textBaseRow = 8;
+    cbDrawBitmapText(lines[0], grid, COLS, ROWS, textCenterCol, textBaseRow, 1);
+
+    // Separator line
+    var lineRow = textBaseRow + CB_BF_H + 1;
+    if (lineRow >= 0 && lineRow < ROWS) {
+      for (var lc = 2; lc < COLS-2; lc++) {
+        if (grid[lineRow*COLS+lc] === 0) grid[lineRow*COLS+lc] = 3;
+      }
+    }
+
+    // Border ring
+    cbRasterizeBorder(grid, COLS, ROWS);
+
+    // Coordinate text at bottom
+    var absLat = Math.abs(lat).toFixed(1);
+    var absLon = Math.abs(lon).toFixed(1);
+    var coordStr = absLat+'\u00b0'+(lat>=0?'N':'S')+' '+absLon+'\u00b0'+(lon>=0?'E':'W');
+    var coordRow = ROWS - 5 - CB_BF_H;
+    cbDrawBitmapText(coordStr, grid, COLS, ROWS, Math.floor(COLS/2), coordRow, 3);
+
+    // Decorative lines
+    var seed = Math.abs(Math.round(lat*1000+lon*1000)) | 1;
+    function srand() { seed = (seed*1664525+1013904223)&0xffffffff; return (seed>>>0)/0xffffffff; }
+    var textEndRow = 8 + CB_BF_H + 4 + 2;
+    var mapEndRow = ROWS - 8;
+    var numLines = 4 + Math.floor(srand()*3);
+    for (var li = 0; li < numLines; li++) {
+      var r0 = Math.floor(textEndRow + srand()*(mapEndRow-textEndRow));
+      var c0 = 6 + Math.floor(srand()*(COLS-12));
+      var len = 2 + Math.floor(srand()*24);
+      for (var si = 0; si < len*2; si++) {
+        var gc = Math.round(c0 + si*0.5);
+        var gr = Math.round(r0);
+        if (gc>=5 && gc<COLS-5 && gr>=textEndRow && gr<mapEndRow) {
+          if (grid[gr*COLS+gc] === 0) grid[gr*COLS+gc] = 3;
+        }
+      }
+    }
+
+    // Draw page background
+    ctx2.fillStyle = '#e8e4de';
+    ctx2.fillRect(0, 0, W, H);
+
+    // Stamp base fill
+    ctx2.save();
+    cbRoundRect(ctx2, ox, oy, stampW, stampH, cornerR);
+    ctx2.clip();
+    ctx2.fillStyle = stampColor;
+    ctx2.fillRect(ox, oy, stampW, stampH);
+    // Fabric texture
+    for (var fy = 0; fy < ROWS; fy++) {
+      for (var fx = 0; fx < COLS; fx++) {
+        var isLight = (fx+fy)%2 === 0;
+        ctx2.fillStyle = isLight
+          ? 'hsl('+mH+','+mS+'%,'+lLight+'%)'
+          : 'hsl('+mH+','+mS+'%,'+lDark+'%)';
+        ctx2.fillRect(ox+fx*CB_CELL, oy+fy*CB_CELL, CB_CELL, CB_CELL);
+      }
+    }
+    ctx2.restore();
+
+    // Draw stitches
+    ctx2.save();
+    cbRoundRect(ctx2, ox, oy, stampW, stampH, cornerR);
+    ctx2.clip();
+    for (var row = 0; row < ROWS; row++) {
+      for (var col = 0; col < COLS; col++) {
+        var cellVal = grid[row*COLS+col];
+        if (cellVal > 0) {
+          var stitchColor = cellVal===2 ? color3 : (cellVal===3 ? color2 : color1);
+          cbDrawCross(col, row, ox, oy, cellVal, stitchColor, ctx2);
+        }
+      }
+    }
+    ctx2.restore();
+
+    // Stamp border outline
+    ctx2.save();
+    cbRoundRect(ctx2, ox, oy, stampW, stampH, cornerR);
+    ctx2.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx2.lineWidth = 1.5;
+    ctx2.stroke();
+    ctx2.restore();
+
+    // Crop to stamp bounds
+    var croppedCanvas = document.createElement('canvas');
+    croppedCanvas.width = stampW;
+    croppedCanvas.height = stampH;
+    var cc = croppedCanvas.getContext('2d');
+    cc.beginPath();
+    cc.moveTo(cornerR, 0); cc.lineTo(stampW-cornerR, 0);
+    cc.arcTo(stampW, 0, stampW, cornerR, cornerR);
+    cc.lineTo(stampW, stampH-cornerR);
+    cc.arcTo(stampW, stampH, stampW-cornerR, stampH, cornerR);
+    cc.lineTo(cornerR, stampH);
+    cc.arcTo(0, stampH, 0, stampH-cornerR, cornerR);
+    cc.lineTo(0, cornerR);
+    cc.arcTo(0, 0, cornerR, 0, cornerR);
+    cc.closePath();
+    cc.clip();
+    cc.drawImage(offCanvas, -ox, -oy);
+    return croppedCanvas;
+  }
+
+  // City Badge button handler
+  document.getElementById('btn-city-badge').addEventListener('click', function() {
+    var statusEl = document.getElementById('badge-status');
+    var btn = document.getElementById('btn-city-badge');
+    var center = map.getCenter();
+    var lat = center.lat, lon = center.lng;
+    btn.disabled = true;
+    statusEl.textContent = 'Looking up location...';
+
+    var blockedClasses = ['military','aeroway','landuse'];
+    var blockedTypes = ['village','hamlet','suburb','neighbourhood','quarter','isolated_dwelling','military','aerodrome','airbase','base','farm'];
+
+    fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(lat+','+lon)+'&format=json&limit=1&polygon_geojson=1&addressdetails=1', { headers: {'Accept-Language':'en'} })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      // If reverse-lookup by coord doesn't return a city, use reverse geocoding endpoint
+      return fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lon+'&format=json&zoom=10&polygon_geojson=1', { headers: {'Accept-Language':'en'} });
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d || !d.display_name) throw new Error('Location not found');
+      var addr = d.address || {};
+      var cityName = addr.city || addr.town || addr.municipality || addr.county || d.display_name.split(',')[0];
+      var placeClass = d.class || '';
+      var placeType = d.type || '';
+      if (blockedClasses.indexOf(placeClass) >= 0 || (placeClass==='place' && blockedTypes.indexOf(placeType)>=0)) {
+        throw new Error('No city found at this location');
+      }
+      // Now fetch city polygon by name for better geojson
+      statusEl.textContent = 'Fetching boundary...';
+      return fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(cityName)+'&format=json&limit=1&polygon_geojson=1', { headers: {'Accept-Language':'en'} })
+      .then(function(r) { return r.json(); })
+      .then(function(data2) {
+        var geo = null;
+        if (data2 && data2[0]) {
+          geo = data2[0].geojson || null;
+          if (!geo || (geo.type !== 'Polygon' && geo.type !== 'MultiPolygon')) geo = null;
+        }
+        if (!geo && d.geojson && (d.geojson.type==='Polygon' || d.geojson.type==='MultiPolygon')) {
+          geo = d.geojson;
+        }
+        return { cityName: cityName, geo: geo };
+      });
+    })
+    .then(function(result) {
+      statusEl.textContent = 'Rendering...';
+      var croppedCanvas = renderBadge(result.cityName, lat, lon, result.geo);
+      var img = document.createElement('img');
+      img.src = croppedCanvas.toDataURL('image/png');
+      img.style.position = 'absolute';
+      img.style.cursor = 'move';
+      img.style.userSelect = 'none';
+      img.style.pointerEvents = 'all';
+      img.style.maxWidth = '160px';
+      img.style.borderRadius = '8px';
+      img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
+      img.draggable = false;
+
+      // Position at crop bottom-right, 16px inset
+      var r = getCropRect();
+      img.style.left = '0px';
+      img.style.top = '0px';
+      captionLayer.appendChild(img);
+      var imgW = img.offsetWidth, imgH = img.offsetHeight;
+      var bx = r.left + r.width - imgW - 16;
+      var by = r.top + r.height - imgH - 16;
+      img.style.left = bx + 'px';
+      img.style.top = by + 'px';
+
+      // Make draggable
+      var dragging = false, startX, startY, startLeft, startTop;
+      img.addEventListener('mousedown', function(e) {
+        dragging = true;
+        startX = e.clientX; startY = e.clientY;
+        startLeft = parseFloat(img.style.left) || 0;
+        startTop = parseFloat(img.style.top) || 0;
+        e.preventDefault();
+      });
+      document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        img.style.left = (startLeft + (e.clientX - startX)) + 'px';
+        img.style.top = (startTop + (e.clientY - startY)) + 'px';
+      });
+      document.addEventListener('mouseup', function() { dragging = false; });
+
+      statusEl.textContent = result.cityName;
+      btn.disabled = false;
+    })
+    .catch(function(e) {
+      statusEl.textContent = e.message || 'Error';
+      btn.disabled = false;
+    });
+  });
 
   // ESC / Delete
   document.addEventListener('keydown',function(e){
