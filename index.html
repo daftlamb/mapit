@@ -2709,14 +2709,17 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     })
     .then(function(result) {
       statusEl.textContent = 'Rendering...';
+      // Remove existing badge if any
+      var existing = captionLayer.querySelector('img.city-badge-img');
+      if (existing) captionLayer.removeChild(existing);
       var croppedCanvas = renderBadge(result.cityName, lat, lon, result.geo);
       var img = document.createElement('img');
+      img.className = 'city-badge-img';
       img.src = croppedCanvas.toDataURL('image/png');
       img.style.position = 'absolute';
       img.style.cursor = 'move';
       img.style.userSelect = 'none';
       img.style.pointerEvents = 'all';
-      img.style.maxWidth = '120px';
       img.style.borderRadius = '8px';
       img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
       img.draggable = false;
@@ -2727,20 +2730,20 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       captionLayer.appendChild(img);
       function positionBadge() {
         var r = getCropRect();
-        var badgeW = Math.min(img.naturalWidth || 120, 120);
-        var badgeH = img.naturalHeight ? Math.round(badgeW * img.naturalHeight / img.naturalWidth) : 148;
+        var badgeW = Math.round(r.width * 0.22); // 22% of crop width, consistent across devices
+        var aspect = img.naturalHeight / (img.naturalWidth || 1);
+        var badgeH = Math.round(badgeW * aspect);
         img.style.width = badgeW + 'px';
         var bx = r.left + r.width - badgeW - 16;
         var by = r.top + r.height - badgeH - 16;
-        // Caption avoidance: if any caption overlaps badge rect, nudge badge up
-        var badgeRect = {left: bx, top: by, right: bx + badgeW, bottom: by + badgeH};
+        // Caption avoidance
         captions.forEach(function(cap) {
           if (!cap.el) return;
           var cL = parseFloat(cap.el.style.left) || 0;
           var cT = parseFloat(cap.el.style.top) || 0;
           var cR = cL + (cap.el.offsetWidth || 80);
           var cB = cT + (cap.el.offsetHeight || 30);
-          var overlap = cL < badgeRect.right && cR > badgeRect.left && cT < badgeRect.bottom && cB > badgeRect.top;
+          var overlap = cL < bx + badgeW && cR > bx && cT < by + badgeH && cB > by;
           if (overlap) by = Math.min(by, cT - badgeH - 8);
         });
         img.style.left = bx + 'px';
