@@ -601,6 +601,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     <div class="panel-section">
       <div class="section-title">City Badge</div>
       <button class="btn" id="btn-city-badge" style="width:100%;padding:7px">Generate Badge</button>
+      <div id="badge-actions" style="display:none;display:flex;gap:6px;margin-top:6px">
+        <button class="btn" id="btn-badge-regen" style="flex:1;padding:5px;font-size:11px">↺ New Color</button>
+        <button class="btn" id="btn-badge-remove" style="flex:1;padding:5px;font-size:11px;background:var(--danger,#c0392b)">✕ Remove</button>
+      </div>
       <div id="badge-status" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
     </div>
 
@@ -2117,6 +2121,20 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     }
     // Bake frame
     bakeFrame(ctx, out.width, out.height);
+    // Draw city badge if present
+    var badgeImg = captionLayer.querySelector('img.city-badge-img');
+    if (badgeImg) {
+      var bLeft = parseFloat(badgeImg.style.left) || 0;
+      var bTop  = parseFloat(badgeImg.style.top)  || 0;
+      var bW    = parseFloat(badgeImg.style.width) || badgeImg.naturalWidth;
+      var aspect2 = badgeImg.naturalHeight / (badgeImg.naturalWidth || 1);
+      var bH    = Math.round(bW * aspect2);
+      var rx = (bLeft - r.left) * scaleX;
+      var ry = (bTop  - r.top)  * scaleY;
+      var rw = bW * scaleX;
+      var rh = bH * scaleY;
+      ctx.drawImage(badgeImg, rx, ry, rw, rh);
+    }
     return out;
   }
 
@@ -2247,6 +2265,37 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   // Grid cell size (px) — unified for text, map outline, and border stitches
   var CB_CELL = 4;
   var CB_BF_W = 4, CB_BF_H = 6, CB_BF_GAP = 1;
+  // Small 3×5 font for coordinates
+  var CB_SFONT = {
+    '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
+    '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
+    '4':['101','101','111','001','001'],'5':['111','100','111','001','111'],
+    '6':['111','100','111','101','111'],'7':['111','001','001','001','001'],
+    '8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
+    'N':['101','111','111','101','101'],'S':['111','100','111','001','111'],
+    'E':['111','100','110','100','111'],'W':['101','101','111','111','101'],
+    '.':['000','000','000','000','010'],'°':['010','101','010','000','000'],
+    ' ':['000','000','000','000','000']
+  };
+  var CB_SF_W = 3, CB_SF_H = 5, CB_SF_GAP = 1;
+  function cbDrawSmallText(text, grid, COLS, ROWS, centerCol, baseRow, color) {
+    var chars = text.split('');
+    var totalW = chars.length * (CB_SF_W + CB_SF_GAP) - CB_SF_GAP;
+    var startCol = centerCol - Math.floor(totalW / 2);
+    chars.forEach(function(ch, ci) {
+      var glyph = CB_SFONT[ch] || CB_SFONT[' '];
+      var cc = startCol + ci * (CB_SF_W + CB_SF_GAP);
+      for (var r = 0; r < CB_SF_H; r++) {
+        var bits = glyph[r] || '000';
+        for (var b = 0; b < CB_SF_W; b++) {
+          if (bits[b] === '1') {
+            var gc = cc+b, gr = baseRow+r;
+            if (gc>=0&&gc<COLS&&gr>=0&&gr<ROWS&&grid[gr*COLS+gc]===0) grid[gr*COLS+gc]=color||3;
+          }
+        }
+      }
+    });
+  }
 
   var CB_BFONT = {
     'A':['0110','1001','1111','1001','1001','0000'],
@@ -2576,8 +2625,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var absLat = Math.abs(lat).toFixed(1);
     var absLon = Math.abs(lon).toFixed(1);
     var coordStr = absLat+'\u00b0'+(lat>=0?'N':'S')+' '+absLon+'\u00b0'+(lon>=0?'E':'W');
-    var coordRow = ROWS - 5 - CB_BF_H;
-    cbDrawBitmapText(coordStr, grid, COLS, ROWS, Math.floor(COLS/2), coordRow, 3);
+    var coordRow = ROWS - 5 - CB_SF_H;
+    cbDrawSmallText(coordStr, grid, COLS, ROWS, Math.floor(COLS/2), coordRow, 3);
 
     // Decorative lines
     var seed = Math.abs(Math.round(lat*1000+lon*1000)) | 1;
@@ -2769,11 +2818,67 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
       statusEl.textContent = result.cityName;
       btn.disabled = false;
+      // Show remove/regen actions
+      var actionsEl = document.getElementById('badge-actions');
+      actionsEl.style.display = 'flex';
+      // Store last badge params for regen
+      window._lastBadgeResult = result;
+      window._lastBadgeLatLon = {lat: lat, lon: lon};
     })
     .catch(function(e) {
       statusEl.textContent = e.message || 'Error';
       btn.disabled = false;
     });
+  });
+
+  // Badge remove
+  document.getElementById('btn-badge-remove').addEventListener('click', function() {
+    var existing = captionLayer.querySelector('img.city-badge-img');
+    if (existing) captionLayer.removeChild(existing);
+    document.getElementById('badge-actions').style.display = 'none';
+    document.getElementById('badge-status').textContent = '';
+    window._lastBadgeResult = null;
+  });
+
+  // Badge regenerate (new random color)
+  document.getElementById('btn-badge-regen').addEventListener('click', function() {
+    if (!window._lastBadgeResult || !window._lastBadgeLatLon) return;
+    var r = window._lastBadgeResult, ll = window._lastBadgeLatLon;
+    var existing = captionLayer.querySelector('img.city-badge-img');
+    if (existing) captionLayer.removeChild(existing);
+    var croppedCanvas = renderBadge(r.cityName, ll.lat, ll.lon, r.geo);
+    var img = document.createElement('img');
+    img.className = 'city-badge-img';
+    img.src = croppedCanvas.toDataURL('image/png');
+    img.style.position = 'absolute';
+    img.style.cursor = 'move';
+    img.style.userSelect = 'none';
+    img.style.pointerEvents = 'all';
+    img.style.borderRadius = '8px';
+    img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
+    img.draggable = false;
+    img.style.left = '0px'; img.style.top = '0px';
+    captionLayer.appendChild(img);
+    function reposRegen() {
+      var cr = getCropRect();
+      var bW = Math.round(cr.width * 0.22);
+      var bH = Math.round(bW * img.naturalHeight / (img.naturalWidth || 1));
+      img.style.width = bW + 'px';
+      var bx = cr.left + cr.width - bW - 16;
+      var by = cr.top + cr.height - bH - 16;
+      captions.forEach(function(cap) {
+        if (!cap.el) return;
+        var cL = parseFloat(cap.el.style.left)||0, cT = parseFloat(cap.el.style.top)||0;
+        var cR = cL+(cap.el.offsetWidth||80), cB = cT+(cap.el.offsetHeight||30);
+        if (cL < bx+bW && cR > bx && cT < by+bH && cB > by) by = Math.min(by, cT-bH-8);
+      });
+      img.style.left = bx+'px'; img.style.top = by+'px';
+    }
+    if (img.complete) reposRegen(); else img.onload = reposRegen;
+    var d=false,sx,sy,sl,st;
+    img.addEventListener('mousedown',function(e){d=true;sx=e.clientX;sy=e.clientY;sl=parseFloat(img.style.left)||0;st=parseFloat(img.style.top)||0;e.preventDefault();});
+    document.addEventListener('mousemove',function(e){if(!d)return;img.style.left=(sl+(e.clientX-sx))+'px';img.style.top=(st+(e.clientY-sy))+'px';});
+    document.addEventListener('mouseup',function(){d=false;});
   });
 
   // ESC / Delete
@@ -2782,7 +2887,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       hideMarkerPopup();
       document.getElementById('about-modal').style.display='none';
       var cm=document.getElementById('coffee-modal');
-      if(cm.style.display==='flex'){cm.style.display='none';if(pendingExport){pendingExport=false;doExport();}}
+      if(cm.style.display==='flex'){cm.style.display='none';if(pendingExport){var pe=pendingExport;pendingExport=null;if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();}}
       if(selectedCaption)selectCaption(null);
     }
     if((e.key==='Delete'||e.key==='Backspace')&&selectedCaption&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
