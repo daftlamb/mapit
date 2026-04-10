@@ -403,6 +403,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="riso-blue">Riso Blue</option>
             <option value="blueprint">Blueprint</option>
             <option value="gold">Gold</option>
+         <option value="color">Full Color</option>
+         <option value="color">Full Color</option>
             <option value="custom">Custom…</option>
           </select>
         </div>
@@ -1782,6 +1784,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         document.getElementById(isHT ? 'ht-custom-light' : 'dither-custom-light').value
       ];
     }
+   if (key === 'color') return null;
     return DITHER_PALETTES[key] || DITHER_PALETTES.bw;
   }
 
@@ -1792,7 +1795,24 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function applyDither(imageData, algo, palette, density) {
     var d = imageData.data;
     var w = imageData.width, h = imageData.height;
-    var dark = hexToRgb(palette[0]);
+   // Full color dither
+   if (!palette) {
+     var errR=new Float32Array(w*h),errG=new Float32Array(w*h),errB=new Float32Array(w*h);
+     for (var yi=0;yi<h;yi++){for (var xi=0;xi<w;xi++){
+       var pi=yi*w+xi;
+       [0,1,2].forEach(function(ch){
+         var old=(d[pi*4+ch]/255)+(ch===0?errR:ch===1?errG:errB)[pi];
+         var qv=Math.round(old*7)/7;
+         var e=old-qv;
+         var ea=ch===0?errR:ch===1?errG:errB;
+         if(xi+1<w)ea[pi+1]+=e*7/16;
+         if(yi+1<h){if(xi>0)ea[pi+w-1]+=e*3/16;ea[pi+w]+=e*5/16;if(xi+1<w)ea[pi+w+1]+=e/16;}
+         d[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
+       });
+     }}
+     return imageData;
+   }
+   var dark = hexToRgb(palette[0]);
     var light = hexToRgb(palette[1]);
     // density: -50..200, positive = denser dots
     var bias = density > 0 ? (density / 200) * 0.55 : (density / 50) * 0.15;
