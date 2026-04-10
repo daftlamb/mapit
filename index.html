@@ -618,7 +618,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 
   <div id="map-area">
     <div id="map">
-  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(26,26,26,0.9);border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;font-family:inherit;">🛰 Satellite</button></div>
+  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:2000;background:rgba(26,26,26,0.9);border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;font-family:inherit;pointer-events:all;">🛰 Satellite</button></div>
     <div id="crop-overlay"></div>
     <div id="gradient-overlay"></div>
     <canvas id="dither-preview" style="position:absolute;pointer-events:none;z-index:16;display:none;image-rendering:pixelated"></canvas>
@@ -2909,7 +2909,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 </script>
 
   <!-- Satellite toggle button -->
-  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:10;background:#1a1a1a;border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;">🛰 Satellite</button>
+  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:2000;background:#1a1a1a;border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;">🛰 Satellite</button>
   <script>
   (function(){
     var isSatellite = false;
