@@ -1796,7 +1796,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var w = imageData.width, h = imageData.height;
    // Full color dither - pixelate then dither per channel
    if (!palette) {
-     var pixelSize = Math.max(2, Math.round(Math.max(w,h)/120));
+     var pixelSize = Math.max(2, Math.round(16 - (density+50)/250*14));
      var offCtx = document.createElement('canvas');
      offCtx.width=w; offCtx.height=h;
      var ctx2=offCtx.getContext('2d');
@@ -1810,19 +1810,19 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
      var sd=sCtx.getImageData(0,0,sw2,sh2);
      var sd2=sd.data;
      // Floyd-Steinberg per channel on small image
-     var levels=6;
+     var levels=2;
      var errR=new Float32Array(sw2*sh2),errG=new Float32Array(sw2*sh2),errB=new Float32Array(sw2*sh2);
      for(var yi=0;yi<sh2;yi++){for(var xi=0;xi<sw2;xi++){
        var pi=yi*sw2+xi;
-       [0,1,2].forEach(function(ch){
-         var ea=ch===0?errR:ch===1?errG:errB;
-         var old=(sd2[pi*4+ch]/255)+ea[pi];
-         var qv=Math.round(old*(levels-1))/(levels-1);
-         var e=old-qv;
-         if(xi+1<sw2)ea[pi+1]+=e*7/16;
-         if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=e*3/16;ea[pi+sw2]+=e*5/16;if(xi+1<sw2)ea[pi+sw2+1]+=e/16;}
-         sd2[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
-       });
+       for(var ch=0;ch<3;ch++){
+           var ea=ch===0?errR:ch===1?errG:errB;
+           var old=(sd2[pi*4+ch]/255)+ea[pi];
+           var qv=Math.round(old*(levels-1))/(levels-1);
+           var e=old-qv;
+           if(algo==='atkinson'){var ae=e/8;if(xi+1<sw2)ea[pi+1]+=ae;if(xi+2<sw2)ea[pi+2]+=ae;if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=ae;ea[pi+sw2]+=ae;if(xi+1<sw2)ea[pi+sw2+1]+=ae;}if(yi+2<sh2)ea[pi+2*sw2]+=ae;}
+           else{if(xi+1<sw2)ea[pi+1]+=e*7/16;if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=e*3/16;ea[pi+sw2]+=e*5/16;if(xi+1<sw2)ea[pi+sw2+1]+=e/16;}}
+           sd2[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
+         }
      }}
      sCtx.putImageData(sd,0,0);
      // scale back up with nearest-neighbor (pixelated)
