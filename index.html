@@ -939,8 +939,17 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   });
   map.addControl(new mapboxgl.NavigationControl(),'bottom-right');
   map.on('load',function(){
-    map.addLayer({id:'satellite-layer',type:'raster',source:'satellite',layout:{visibility:'none'}}, map.getStyle().layers[0].id);
-    updateCropOverlay();applyLayerVis();
+    map.addLayer({id:'satellite-layer',type:'raster',source:'satellite',layout:{visibility:'none'},paint:{'raster-opacity':0.85}});
+    
+    
+  // Satellite toggle
+  var isSatellite = false;
+  document.getElementById('btn-satellite').addEventListener('click', function() {
+    isSatellite = !isSatellite;
+    map.setLayoutProperty('satellite-layer', 'visibility', isSatellite ? 'visible' : 'none');
+    this.style.borderColor = isSatellite ? '#c8a060' : '#333';
+  });
+  updateCropOverlay();applyLayerVis();
   });
   map.on('style.load',function(){applyLayerVis();updateRoute();});
   map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
@@ -2907,20 +2916,5 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   });
 })();
 </script>
-
-  <!-- Satellite toggle button -->
-  
-  <script>
-  (function(){
-    var isSatellite = false;
-    document.getElementById('btn-satellite').addEventListener('click', function() {
-      isSatellite = !isSatellite;
-      if (map.getLayer('satellite-layer')) {
-        map.setLayoutProperty('satellite-layer', 'visibility', isSatellite ? 'visible' : 'none');
-      }
-      this.style.borderColor = isSatellite ? '#c8a060' : '#333';
-    });
-  })();
-  </script>
 </body>
 </html>
