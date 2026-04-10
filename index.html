@@ -404,6 +404,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="blueprint">Blueprint</option>
             <option value="gold">Gold</option>
          <option value="color">Full Color</option>
+         <option value="color">Full Color</option>
             <option value="custom">Custom…</option>
           </select>
         </div>
@@ -1794,67 +1795,22 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function applyDither(imageData, algo, palette, density) {
     var d = imageData.data;
     var w = imageData.width, h = imageData.height;
-   // Full color dither - pixelate then dither per channel
+   // Full color dither
    if (!palette) {
-     // density: -50..200 maps to pixelSize 12..2
-     var pixelSize = Math.max(2, Math.round(12 - (density + 50) / 250 * 10));
-     var offCtx = document.createElement('canvas');
-     offCtx.width=w; offCtx.height=h;
-     var ctx2=offCtx.getContext('2d');
-     ctx2.putImageData(imageData,0,0);
-     var sw2=Math.max(1,Math.round(w/pixelSize)), sh2=Math.max(1,Math.round(h/pixelSize));
-     var small=document.createElement('canvas');
-     small.width=sw2; small.height=sh2;
-     var sCtx=small.getContext('2d');
-     sCtx.drawImage(offCtx,0,0,sw2,sh2);
-     var sd=sCtx.getImageData(0,0,sw2,sh2);
-     var sd2=sd.data;
-     var levels=6;
-     if (algo==='ordered' || algo==='ordered8') {
-       var m4=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
-       var m8=[[0,32,8,40,2,34,10,42],[48,16,56,24,50,18,58,26],[12,44,4,36,14,46,6,38],[60,28,52,20,62,30,54,22],[3,35,11,43,1,33,9,41],[51,19,59,27,49,17,57,25],[15,47,7,39,13,45,5,37],[63,31,55,23,61,29,53,21]];
-       var mat=algo==='ordered8'?m8:m4, sz=algo==='ordered8'?8:4, div=algo==='ordered8'?64:16;
-       for(var yi=0;yi<sh2;yi++){for(var xi=0;xi<sw2;xi++){
-         var pi=yi*sw2+xi;
-         var thr=(mat[yi%sz][xi%sz]+0.5)/div;
-         for(var ch=0;ch<3;ch++){
-           var v=sd2[pi*4+ch]/255;
-           var qv=Math.floor(v*(levels-1)+thr)/( levels-1);
-           sd2[pi*4+ch]=Math.max(0,Math.min(255,Math.round(Math.min(1,qv)*255)));
-         }
-       }}
-     } else {
-       // Floyd-Steinberg or Atkinson per channel
-       var errR=new Float32Array(sw2*sh2),errG=new Float32Array(sw2*sh2),errB=new Float32Array(sw2*sh2);
-       for(var yi=0;yi<sh2;yi++){for(var xi=0;xi<sw2;xi++){
-         var pi=yi*sw2+xi;
-         for(var ch=0;ch<3;ch++){
-           var ea=ch===0?errR:ch===1?errG:errB;
-           var old=(sd2[pi*4+ch]/255)+ea[pi];
-           var qv=Math.round(old*(levels-1))/(levels-1);
-           var e=old-qv;
-           if(algo==='atkinson'){
-             var ae=e/8;
-             if(xi+1<sw2)ea[pi+1]+=ae;
-             if(xi+2<sw2)ea[pi+2]+=ae;
-             if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=ae;ea[pi+sw2]+=ae;if(xi+1<sw2)ea[pi+sw2+1]+=ae;}
-             if(yi+2<sh2)ea[pi+2*sw2]+=ae;
-           } else {
-             if(xi+1<sw2)ea[pi+1]+=e*7/16;
-             if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=e*3/16;ea[pi+sw2]+=e*5/16;if(xi+1<sw2)ea[pi+sw2+1]+=e/16;}
-           }
-           sd2[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
-         }
-       }}
-     }
-     sCtx.putImageData(sd,0,0);
-     ctx2.clearRect(0,0,w,h);
-     ctx2.imageSmoothingEnabled=false;
-     ctx2.drawImage(small,0,0,w,h);
-     var result=ctx2.getImageData(0,0,w,h);
-     for(var k=0;k<d.length;k++) d[k]=result.data[k];
+     var errR=new Float32Array(w*h),errG=new Float32Array(w*h),errB=new Float32Array(w*h);
+     for (var yi=0;yi<h;yi++){for (var xi=0;xi<w;xi++){
+       var pi=yi*w+xi;
+       [0,1,2].forEach(function(ch){
+         var old=(d[pi*4+ch]/255)+(ch===0?errR:ch===1?errG:errB)[pi];
+         var qv=Math.round(old*7)/7;
+         var e=old-qv;
+         var ea=ch===0?errR:ch===1?errG:errB;
+         if(xi+1<w)ea[pi+1]+=e*7/16;
+         if(yi+1<h){if(xi>0)ea[pi+w-1]+=e*3/16;ea[pi+w]+=e*5/16;if(xi+1<w)ea[pi+w+1]+=e/16;}
+         d[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
+       });
+     }}
      return imageData;
-   }
    }
    var dark = hexToRgb(palette[0]);
     var light = hexToRgb(palette[1]);
