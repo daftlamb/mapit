@@ -1794,44 +1794,33 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function applyDither(imageData, algo, palette, density) {
     var d = imageData.data;
     var w = imageData.width, h = imageData.height;
-   // Full color dither - pixelate then dither per channel
+   // Full color dither - Floyd-Steinberg per channel, low bit depth
    if (!palette) {
-     var pixelSize = Math.max(2, Math.round(Math.max(w,h)/120));
-     var offCtx = document.createElement('canvas');
-     offCtx.width=w; offCtx.height=h;
-     var ctx2=offCtx.getContext('2d');
-     // draw current imageData, scale down, scale up for pixelation
-     ctx2.putImageData(imageData,0,0);
-     var small=document.createElement('canvas');
-     var sw2=Math.round(w/pixelSize), sh2=Math.round(h/pixelSize);
-     small.width=sw2; small.height=sh2;
-     var sCtx=small.getContext('2d');
-     sCtx.drawImage(offCtx,0,0,sw2,sh2);
-     var sd=sCtx.getImageData(0,0,sw2,sh2);
-     var sd2=sd.data;
-     // Floyd-Steinberg per channel on small image
-     var levels=6;
-     var errR=new Float32Array(sw2*sh2),errG=new Float32Array(sw2*sh2),errB=new Float32Array(sw2*sh2);
-     for(var yi=0;yi<sh2;yi++){for(var xi=0;xi<sw2;xi++){
-       var pi=yi*sw2+xi;
-       [0,1,2].forEach(function(ch){
+     var levels = 2;
+     var bias = density > 0 ? (density/200)*0.4 : (density/50)*0.1;
+     var errR=new Float32Array(w*h),errG=new Float32Array(w*h),errB=new Float32Array(w*h);
+     for(var yi=0;yi<h;yi++){for(var xi=0;xi<w;xi++){
+       var pi=yi*w+xi;
+       for(var ch=0;ch<3;ch++){
          var ea=ch===0?errR:ch===1?errG:errB;
-         var old=(sd2[pi*4+ch]/255)+ea[pi];
+         var old=(d[pi*4+ch]/255)+ea[pi]-bias;
          var qv=Math.round(old*(levels-1))/(levels-1);
          var e=old-qv;
-         if(xi+1<sw2)ea[pi+1]+=e*7/16;
-         if(yi+1<sh2){if(xi>0)ea[pi+sw2-1]+=e*3/16;ea[pi+sw2]+=e*5/16;if(xi+1<sw2)ea[pi+sw2+1]+=e/16;}
-         sd2[pi*4+ch]=Math.max(0,Math.min(255,Math.round(qv*255)));
-       });
+         if(algo==='atkinson'){
+           var ae=e/8;
+           if(xi+1<w)ea[pi+1]+=ae;
+           if(xi+2<w)ea[pi+2]+=ae;
+           if(yi+1<h){if(xi>0)ea[pi+w-1]+=ae;ea[pi+w]+=ae;if(xi+1<w)ea[pi+w+1]+=ae;}
+           if(yi+2<h)ea[pi+2*w]+=ae;
+         } else {
+           if(xi+1<w)ea[pi+1]+=e*7/16;
+           if(yi+1<h){if(xi>0)ea[pi+w-1]+=e*3/16;ea[pi+w]+=e*5/16;if(xi+1<w)ea[pi+w+1]+=e/16;}
+         }
+         d[pi*4+ch]=Math.max(0,Math.min(255,Math.round(Math.max(0,Math.min(1,qv))*255)));
+       }
      }}
-     sCtx.putImageData(sd,0,0);
-     // scale back up with nearest-neighbor (pixelated)
-     ctx2.clearRect(0,0,w,h);
-     ctx2.imageSmoothingEnabled=false;
-     ctx2.drawImage(small,0,0,w,h);
-     var result=ctx2.getImageData(0,0,w,h);
-     for(var k=0;k<d.length;k++) d[k]=result.data[k];
      return imageData;
+   }
    }
    var dark = hexToRgb(palette[0]);
     var light = hexToRgb(palette[1]);
