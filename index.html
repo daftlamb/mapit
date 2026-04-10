@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet" />
-<link href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" rel="stylesheet" />
-<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
 :root{--bg:#f5f5f5;--panel-bg:#fff;--border:#e0e0e0;--text:#1a1a1a;--muted:#888;--accent:#39ff14;--header-bg:#fff;--canvas-bg:#eee;--header-h:44px}
 [data-theme="dark"]{--bg:#141414;--panel-bg:#1e1e1e;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;--accent:#39ff14;--header-bg:#0e0e0e;--canvas-bg:#1a1a1a}
@@ -660,7 +660,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     <p>为任意地点生成精美地图海报，适合手账、旅行记录和壁纸。</p>
     <p>contact: <a href="mailto:hello@mapitapp.com">hello@mapitapp.com</a></p>
     <p style="margin-top:10px;font-size:11px">Also try: <a href="https://badgeitapp.com" target="_blank">Badge It</a> · <a href="https://griditapp.com" target="_blank">Grid It</a> · <a href="https://ditheritapp.com" target="_blank">Dither It</a></p>
-    <p style="margin-top:10px;font-size:10px;color:var(--muted)">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · Tiles by <a href="https://openfreemap.org" target="_blank">OpenFreeMap</a></p>
+    <p style="margin-top:10px;font-size:10px;color:var(--muted)">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · © Mapbox © OpenStreetMap</p>
   </div>
 </div>
 
@@ -699,9 +699,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   function buildStyle(c) {
     return {
       version:8,
-      glyphs:'https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf',
-      sprite:'https://tiles.openfreemap.org/sprites/liberty/sprite',
-      sources:{ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'}},
+      glyphs:'mapbox://fonts/mapbox/{fontstack}/{range}.pbf',
+      sprite:'mapbox://sprites/mapbox/dark-v11',
+      sources:{
+        ofm:{type:'vector',url:'https://tiles.openfreemap.org/planet'},
+        mapbox:{type:'vector',url:'mapbox://mapbox.mapbox-streets-v8'},
+        satellite:{type:'raster',url:'mapbox://mapbox.satellite',tileSize:256}
+      },
       layers:[
         {id:'background',type:'background',paint:{'background-color':c.land}},
         {id:'water',type:'fill',source:'ofm','source-layer':'water',paint:{'fill-color':c.water}},
@@ -924,15 +928,19 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   }
 
   // Map
-  var map = new maplibregl.Map({
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN21hZ3BzaiJ9.iltIayr2V7Yiy0bTGFHWsw';
+  var map = new mapboxgl.Map({
     container:'map',
     style:buildStyle(currentColors),
     center:[121.47,31.23],
     zoom:12,
     preserveDrawingBuffer:true
   });
-  map.addControl(new maplibregl.NavigationControl(),'bottom-right');
-  map.on('load',function(){updateCropOverlay();applyLayerVis();});
+  map.addControl(new mapboxgl.NavigationControl(),'bottom-right');
+  map.on('load',function(){
+    map.addLayer({id:'satellite-layer',type:'raster',source:'satellite',layout:{visibility:'none'}}, map.getStyle().layers[0].id);
+    updateCropOverlay();applyLayerVis();
+  });
   map.on('style.load',function(){applyLayerVis();updateRoute();});
   map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
 
@@ -1335,7 +1343,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       el.appendChild(tag);
     }
 
-    var m=new maplibregl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat(lnglat).addTo(map);
+    var m=new mapboxgl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat(lnglat).addTo(map);
     var markerObj={mapMarker:m,name:name,emoji:emoji,lnglat:lnglat};
     markers.push(markerObj);
     m.on('dragend',function(){
@@ -2898,5 +2906,20 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   });
 })();
 </script>
+
+  <!-- Satellite toggle button -->
+  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:10;background:#1a1a1a;border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;">🛰 Satellite</button>
+  <script>
+  (function(){
+    var isSatellite = false;
+    document.getElementById('btn-satellite').addEventListener('click', function() {
+      isSatellite = !isSatellite;
+      if (map.getLayer('satellite-layer')) {
+        map.setLayoutProperty('satellite-layer', 'visibility', isSatellite ? 'visible' : 'none');
+      }
+      this.style.borderColor = isSatellite ? '#c8a060' : '#333';
+    });
+  })();
+  </script>
 </body>
 </html>
