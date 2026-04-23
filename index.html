@@ -2225,6 +2225,41 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
     ctx.putImageData(out, 0, 0);
 
+    if (bleed > 0.08) {
+      var pigmentCanvas = document.createElement('canvas');
+      pigmentCanvas.width = w;
+      pigmentCanvas.height = h;
+      var pigmentCtx = pigmentCanvas.getContext('2d');
+      var pigmentData = pigmentCtx.createImageData(w, h);
+      var pd = pigmentData.data;
+      for (var pi = 0; pi < w * h; pi++) {
+        var si = pi * 4;
+        var sr = src[si], sg = src[si + 1], sb = src[si + 2];
+        var maxC = Math.max(sr, sg, sb);
+        var minC = Math.min(sr, sg, sb);
+        var chroma = (maxC - minC) / 255;
+        var darkness = 1 - (sr * 0.299 + sg * 0.587 + sb * 0.114) / 255;
+        var pigmentMass = Math.max(chroma * 1.25, darkness * 0.18);
+        pd[si] = Math.round(sr * 0.88 + paperColor[0] * 0.12);
+        pd[si + 1] = Math.round(sg * 0.88 + paperColor[1] * 0.12);
+        pd[si + 2] = Math.round(sb * 0.88 + paperColor[2] * 0.12);
+        pd[si + 3] = Math.max(0, Math.min(115, Math.round(pigmentMass * (38 + bleed * 88))));
+      }
+      pigmentCtx.putImageData(pigmentData, 0, 0);
+
+      blurCtx.clearRect(0, 0, w, h);
+      blurCtx.filter = 'blur(' + Math.max(3, Math.round(3 + bleed * 10)) + 'px) saturate(1.08)';
+      blurCtx.drawImage(pigmentCanvas, 0, 0, w, h);
+      blurCtx.filter = 'none';
+
+      ctx.save();
+      ctx.globalAlpha = 0.55 + bleed * 0.20;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(blurCanvas, -Math.round(bleed * 2), Math.round(bleed * 1.5));
+      ctx.drawImage(blurCanvas, Math.round(bleed * 1.5), -Math.round(bleed * 2));
+      ctx.restore();
+    }
+
     if (bleed > 0.15) {
       blurCtx.clearRect(0, 0, w, h);
       blurCtx.filter = 'blur(' + Math.max(2, Math.round(blurRadius * 1.6)) + 'px)';
