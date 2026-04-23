@@ -378,6 +378,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <span id="wc-paper-val" style="font-size:11px;color:var(--muted);width:26px">48</span>
           </div>
         </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Rough</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="wc-rough" min="0" max="100" value="34" style="flex:1;accent-color:var(--accent)">
+            <span id="wc-rough-val" style="font-size:11px;color:var(--muted);width:26px">34</span>
+          </div>
+        </div>
       </div>
       <div id="circuit-options" style="display:none;flex-direction:column;gap:8px">
         <div class="vignette-row">
@@ -1667,6 +1674,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var r = getCropRect();
     var mapCanvas = map.getCanvas();
     var scale = previewScale;
+    if (exportStyle === 'watercolor') scale = Math.min(scale, 0.7);
     var sw = Math.round(r.width * scale);
     var sh = Math.round(r.height * scale);
     if (sw < 2 || sh < 2) return;
@@ -1786,7 +1794,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById(id).addEventListener('change', function(){ if(exportStyle!=='normal') schedulePreview(); });
     document.getElementById(id).addEventListener('input', function(){ if(exportStyle!=='normal') schedulePreview(); });
   });
-  ['wc-wash','wc-bleed','wc-paper'].forEach(function(id) {
+  ['wc-wash','wc-bleed','wc-paper','wc-rough'].forEach(function(id) {
     document.getElementById(id).addEventListener('input', function() {
       document.getElementById(id+'-val').textContent = this.value;
       if (exportStyle === 'watercolor') schedulePreview();
@@ -2146,10 +2154,42 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return nx0 * (1 - ty) + nx1 * ty;
   }
 
+  function makeWatercolorNoiseGrid(w, h, scale, seed) {
+    var cols = Math.ceil(w / scale) + 2;
+    var rows = Math.ceil(h / scale) + 2;
+    var values = new Float32Array(cols * rows);
+    for (var gy = 0; gy < rows; gy++) {
+      for (var gx = 0; gx < cols; gx++) {
+        values[gy * cols + gx] = watercolorNoise(gx, gy, seed);
+      }
+    }
+    return {cols: cols, rows: rows, scale: scale, values: values};
+  }
+
+  function sampleWatercolorNoiseGrid(grid, x, y) {
+    var sx = x / grid.scale;
+    var sy = y / grid.scale;
+    var x0 = Math.max(0, Math.min(grid.cols - 2, Math.floor(sx)));
+    var y0 = Math.max(0, Math.min(grid.rows - 2, Math.floor(sy)));
+    var tx = sx - x0;
+    var ty = sy - y0;
+    tx = tx * tx * (3 - 2 * tx);
+    ty = ty * ty * (3 - 2 * ty);
+    var i = y0 * grid.cols + x0;
+    var n00 = grid.values[i];
+    var n10 = grid.values[i + 1];
+    var n01 = grid.values[i + grid.cols];
+    var n11 = grid.values[i + grid.cols + 1];
+    var nx0 = n00 * (1 - tx) + n10 * tx;
+    var nx1 = n01 * (1 - tx) + n11 * tx;
+    return nx0 * (1 - ty) + nx1 * ty;
+  }
+
   function applyWatercolor(ctx, w, h) {
     var wash = (parseInt(document.getElementById('wc-wash').value) || 0) / 100;
     var bleed = (parseInt(document.getElementById('wc-bleed').value) || 0) / 100;
     var paper = (parseInt(document.getElementById('wc-paper').value) || 0) / 100;
+    var rough = (parseInt(document.getElementById('wc-rough').value) || 0) / 100;
     var blurRadius = Math.max(1, Math.round(1 + bleed * 5));
 
     var original = ctx.getImageData(0, 0, w, h);
@@ -2172,6 +2212,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var edgeBoost = 0.10 + bleed * 0.34;
     var grain = paper * 9;
     var lum = new Float32Array(w * h);
+    var fineGrid = makeWatercolorNoiseGrid(w, h, 2, 2);
+    var longGrid = makeWatercolorNoiseGrid(w, h, 28, 5);
+    var washGrid = makeWatercolorNoiseGrid(w, h, 90, 11);
+    var pigmentGrid = makeWatercolorNoiseGrid(w, h, 46, 17);
+    var roughGrid = makeWatercolorNoiseGrid(w, h, 4, 29);
 
     for (var li = 0; li < w * h; li++) {
       var l4 = li * 4;
@@ -2199,6 +2244,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         var bottom = Math.min(h - 1, y + 1) * w + x;
         var edge = Math.abs(lum[right] - lum[left]) + Math.abs(lum[bottom] - lum[top]);
         var edgeT = Math.min(1, edge / 180) * edgeBoost;
+        if (rough > 0) {
+          var roughN = sampleWatercolorNoiseGrid(roughGrid, x, y);
+          var roughEdge = Math.min(1, edge / 150) * rough;
+          edgeT += (roughN - 0.45) * roughEdge * 0.45;
+          edgeT = Math.max(0, Math.min(0.82, edgeT));
+        }
         r *= 1 - edgeT;
         g *= 1 - edgeT;
         b *= 1 - edgeT;
@@ -2207,10 +2258,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         g = g * (1 - tint) + paperColor[1] * tint;
         b = b * (1 - tint) + paperColor[2] * tint;
 
-        var fineFiber = (watercolorNoise(x, Math.floor(y * 1.8), 2) - 0.5) * grain * 0.7;
-        var longFiber = (watercolorSmoothNoise(x * 0.35, y, 28, 5) - 0.5) * grain * 0.9;
-        var softWash = (watercolorSmoothNoise(x, y, 90, 11) - 0.5) * wash * 6;
-        var pigment = 1 + (watercolorSmoothNoise(x, y, 46, 17) - 0.5) * wash * 0.035;
+        var fineFiber = (sampleWatercolorNoiseGrid(fineGrid, x, y) - 0.5) * grain * 0.7;
+        var longFiber = (sampleWatercolorNoiseGrid(longGrid, x * 0.35, y) - 0.5) * grain * 0.9;
+        var softWash = (sampleWatercolorNoiseGrid(washGrid, x, y) - 0.5) * wash * 6;
+        var pigment = 1 + (sampleWatercolorNoiseGrid(pigmentGrid, x, y) - 0.5) * wash * 0.035;
         var paperLift = fineFiber + longFiber + softWash;
         r = r * pigment + paperLift;
         g = g * pigment + paperLift;

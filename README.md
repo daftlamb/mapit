@@ -38,7 +38,10 @@ The watercolor style is implemented as a canvas post-processing effect. It does 
 - soft wash by blending the map with a blurred copy
 - light desaturation and paper-toned color lift
 - edge bleed based on local luminance contrast
+- pigment bleed that lets color drift slightly outside linework
+- rough line variation for drier, less digital edges
 - deterministic paper grain and fiber texture
+- cached low-resolution noise fields for faster previews and exports
 - shared preview/export function so the on-screen preview matches the final PNG
 
 This keeps the project single-file and avoids external texture assets that could taint the export canvas.
