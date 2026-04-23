@@ -795,7 +795,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   function getCropRect() {
     var ratioMap = {'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
     var ratio = ratioMap[currentRatio]||1;
-    var aW = mapArea.clientWidth, aH = mapArea.clientHeight;
+    var mapAreaStyle = window.getComputedStyle(mapArea);
+    var bottomPad = parseFloat(mapAreaStyle.paddingBottom) || 0;
+    var aW = mapArea.clientWidth, aH = Math.max(1, mapArea.clientHeight - bottomPad);
     var w,h;
     if (aW/aH>ratio){h=aH*.9;w=h*ratio;}else{w=aW*.9;h=w/ratio;}
     return {      left:(aW-w)/2, top:(aH-h)/2, width:w, height:h
@@ -809,8 +811,15 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     cropOverlay.style.width=r.width+'px';
     cropOverlay.style.height=r.height+'px';
     cropOverlay.style.boxShadow='0 0 0 9999px rgba(0,0,0,0.38)';
-    cropOverlay.style.border='2px solid rgba(255,255,255,0.6)';
-    cropOverlay.style.borderRadius='2px';
+    var frameRadius = parseInt(document.getElementById('frame-radius').value) || 0;
+    if (frameStyle !== 'none') {
+      // In frame mode, hide crop white stroke to avoid corner residue behind rounded frame.
+      cropOverlay.style.border='none';
+      cropOverlay.style.borderRadius=frameRadius+'px';
+    } else {
+      cropOverlay.style.border='2px solid rgba(255,255,255,0.6)';
+      cropOverlay.style.borderRadius='2px';
+    }
     cropOverlay.style.pointerEvents='none';
     updateGradientOverlay();
     if (exportStyle !== 'normal') schedulePreview();
@@ -906,6 +915,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   function updateFrameOverlay() {
     var r = getCropRect();
     var radius = parseInt(document.getElementById('frame-radius').value) || 0;
+    if (frameStyle !== 'none') {
+      cropOverlay.style.border = 'none';
+      cropOverlay.style.borderRadius = radius + 'px';
+    }
     frameOverlay.style.left = r.left+'px';
     frameOverlay.style.top = r.top+'px';
     frameOverlay.style.width = r.width+'px';
@@ -916,7 +929,12 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     frameOverlay.style.overflow = radius ? 'hidden' : 'visible';
     // coord-stamp-options visibility
     document.getElementById('coord-stamp-options').style.display = frameStyle==='none' ? 'none' : 'block';
-    if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
+    if (frameStyle === 'none') {
+      cropOverlay.style.border='2px solid rgba(255,255,255,0.6)';
+      cropOverlay.style.borderRadius='2px';
+      frameOverlay.style.display='none';
+      return;
+    }
     frameOverlay.style.display = 'block';
     if (frameStyle === 'polaroid') {
       var fc = document.getElementById('frame-color').value;
@@ -926,23 +944,34 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var topH = Math.max(10, r.height * 0.04);
       var frameIsLight = isLightColor(fc);
       var textColor = frameIsLight ? '#444' : '#ddd';
-      var left = document.createElement('div');
-      left.style.cssText='position:absolute;top:0;left:0;width:'+sideW+'px;height:100%;background:'+fc;
-      var right = document.createElement('div');
-      right.style.cssText='position:absolute;top:0;right:0;width:'+sideW+'px;height:100%;background:'+fc;
-      var top = document.createElement('div');
-      top.style.cssText='position:absolute;top:0;left:0;width:100%;height:'+topH+'px;background:'+fc;
+      var fw = r.width, fh = r.height;
+      var innerX = sideW;
+      var innerY = topH;
+      var innerW = Math.max(1, fw - sideW * 2);
+      var innerH = Math.max(1, fh - topH - bottomH);
+      var svgNS = 'http://www.w3.org/2000/svg';
+      var svg = document.createElementNS(svgNS, 'svg');
+      svg.setAttribute('viewBox', '0 0 ' + fw + ' ' + fh);
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      svg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+      var path = document.createElementNS(svgNS, 'path');
+      path.setAttribute('fill', fc);
+      path.setAttribute('fill-rule', 'evenodd');
+      path.setAttribute('d', roundedRectPathD(0, 0, fw, fh, radius) + ' ' + rectPathD(innerX, innerY, innerW, innerH));
+      svg.appendChild(path);
       var bottom = document.createElement('div');
-      bottom.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;background:'+fc+';display:flex;align-items:center;justify-content:center';
+      bottom.style.cssText =
+        'position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;' +
+        'background:'+fc+';border-radius:0 0 '+radius+'px '+radius+'px;' +
+        'display:flex;align-items:center;justify-content:center;pointer-events:none;';
+      frameOverlay.appendChild(svg);
       if (capText) {
         var span = document.createElement('span');
         span.style.cssText='font-family:Outfit,sans-serif;font-size:'+Math.round(bottomH*0.32)+'px;color:'+textColor+';letter-spacing:.05em;font-weight:300';
         span.textContent = capText;
         bottom.appendChild(span);
       }
-      frameOverlay.appendChild(left);
-      frameOverlay.appendChild(right);
-      frameOverlay.appendChild(top);
       frameOverlay.appendChild(bottom);
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
@@ -955,6 +984,27 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     }
     // Coord stamp — overlaid on the map image, bottom edge, inside crop
     renderCoordStampDOM(r);
+  }
+
+  function roundedRectPathD(x, y, w, h, r) {
+    var rr = Math.max(0, Math.min(r || 0, w / 2, h / 2));
+    if (!rr) return 'M ' + x + ' ' + y + ' H ' + (x + w) + ' V ' + (y + h) + ' H ' + x + ' Z';
+    return [
+      'M', x + rr, y,
+      'H', x + w - rr,
+      'A', rr, rr, 0, 0, 1, x + w, y + rr,
+      'V', y + h - rr,
+      'A', rr, rr, 0, 0, 1, x + w - rr, y + h,
+      'H', x + rr,
+      'A', rr, rr, 0, 0, 1, x, y + h - rr,
+      'V', y + rr,
+      'A', rr, rr, 0, 0, 1, x + rr, y,
+      'Z'
+    ].join(' ');
+  }
+
+  function rectPathD(x, y, w, h) {
+    return 'M ' + x + ' ' + y + ' H ' + (x + w) + ' V ' + (y + h) + ' H ' + x + ' Z';
   }
 
   function renderCoordStampDOM(r) {
