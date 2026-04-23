@@ -39,9 +39,11 @@ The watercolor style is implemented as a canvas post-processing effect. It does 
 - light desaturation and paper-toned color lift
 - edge bleed based on local luminance contrast
 - pigment bleed that lets color drift slightly outside linework
+- separate wetter diffusion for water and softer diffusion for green areas
 - rough line variation for drier, less digital edges
 - deterministic paper grain and fiber texture
 - cached low-resolution noise fields for faster previews and exports
+- high-resolution exports process the watercolor pass on a capped work canvas, then scale back to the final poster size
 - shared preview/export function so the on-screen preview matches the final PNG
 
 This keeps the project single-file and avoids external texture assets that could taint the export canvas.

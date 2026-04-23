@@ -2185,7 +2185,29 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return nx0 * (1 - ty) + nx1 * ty;
   }
 
-  function applyWatercolor(ctx, w, h) {
+  function watercolorColorScore(r, g, b, target, tolerance) {
+    var dr = r - target[0], dg = g - target[1], db = b - target[2];
+    var dist = Math.sqrt(dr * dr + dg * dg + db * db);
+    return Math.max(0, Math.min(1, 1 - dist / tolerance));
+  }
+
+  function applyWatercolor(ctx, w, h, internalPass) {
+    if (!internalPass) {
+      var maxSide = Math.max(w, h);
+      if (maxSide > 2600) {
+        var scaleDown = 2600 / maxSide;
+        var work = document.createElement('canvas');
+        work.width = Math.max(1, Math.round(w * scaleDown));
+        work.height = Math.max(1, Math.round(h * scaleDown));
+        var workCtx = work.getContext('2d');
+        workCtx.drawImage(ctx.canvas, 0, 0, w, h, 0, 0, work.width, work.height);
+        applyWatercolor(workCtx, work.width, work.height, true);
+        ctx.clearRect(0, 0, w, h);
+        ctx.drawImage(work, 0, 0, work.width, work.height, 0, 0, w, h);
+        return;
+      }
+    }
+
     var wash = (parseInt(document.getElementById('wc-wash').value) || 0) / 100;
     var bleed = (parseInt(document.getElementById('wc-bleed').value) || 0) / 100;
     var paper = (parseInt(document.getElementById('wc-paper').value) || 0) / 100;
@@ -2217,6 +2239,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var washGrid = makeWatercolorNoiseGrid(w, h, 90, 11);
     var pigmentGrid = makeWatercolorNoiseGrid(w, h, 46, 17);
     var roughGrid = makeWatercolorNoiseGrid(w, h, 4, 29);
+    var waterRgb = hexToRgb(currentColors.water);
+    var landRgb = hexToRgb(currentColors.land);
+    var buildingRgb = hexToRgb(currentColors.building || currentColors.road);
+    var roadRgb = hexToRgb(currentColors.road);
+    var inkRgb = [76, 86, 78];
 
     for (var li = 0; li < w * h; li++) {
       var l4 = li * 4;
@@ -2243,6 +2270,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         var top = Math.max(0, y - 1) * w + x;
         var bottom = Math.min(h - 1, y + 1) * w + x;
         var edge = Math.abs(lum[right] - lum[left]) + Math.abs(lum[bottom] - lum[top]);
+        var edgeNorm = Math.min(1, edge / 180);
         var edgeT = Math.min(1, edge / 180) * edgeBoost;
         if (rough > 0) {
           var roughN = sampleWatercolorNoiseGrid(roughGrid, x, y);
@@ -2267,6 +2295,21 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         g = g * pigment + paperLift;
         b = b * pigment + paperLift;
 
+        var sourceGray = lum[y * w + x];
+        var sourceDarkness = 1 - sourceGray / 255;
+        var sourceMax = Math.max(src[i], src[i + 1], src[i + 2]);
+        var sourceMin = Math.min(src[i], src[i + 1], src[i + 2]);
+        var sourceChroma = (sourceMax - sourceMin) / 255;
+        var roadScore = watercolorColorScore(src[i], src[i + 1], src[i + 2], roadRgb, 70);
+        var buildingScore = watercolorColorScore(src[i], src[i + 1], src[i + 2], buildingRgb, 82);
+        var inkLine = Math.min(1, edgeNorm * 0.62 + sourceDarkness * 0.34 + Math.max(roadScore, buildingScore) * 0.28);
+        inkLine *= Math.max(0, 1 - sourceChroma * 0.42);
+        if (rough > 0) inkLine *= 0.76 + sampleWatercolorNoiseGrid(roughGrid, x + 19, y - 11) * 0.42;
+        inkLine = Math.max(0, Math.min(0.55, inkLine * (0.34 + rough * 0.22)));
+        r = r * (1 - inkLine) + inkRgb[0] * inkLine;
+        g = g * (1 - inkLine) + inkRgb[1] * inkLine;
+        b = b * (1 - inkLine) + inkRgb[2] * inkLine;
+
         dst[i] = Math.max(0, Math.min(255, Math.round(r)));
         dst[i + 1] = Math.max(0, Math.min(255, Math.round(g)));
         dst[i + 2] = Math.max(0, Math.min(255, Math.round(b)));
@@ -2283,6 +2326,18 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var pigmentCtx = pigmentCanvas.getContext('2d');
       var pigmentData = pigmentCtx.createImageData(w, h);
       var pd = pigmentData.data;
+      var waterCanvas = document.createElement('canvas');
+      waterCanvas.width = w;
+      waterCanvas.height = h;
+      var waterCtx = waterCanvas.getContext('2d');
+      var waterData = waterCtx.createImageData(w, h);
+      var wd = waterData.data;
+      var greenCanvas = document.createElement('canvas');
+      greenCanvas.width = w;
+      greenCanvas.height = h;
+      var greenCtx = greenCanvas.getContext('2d');
+      var greenData = greenCtx.createImageData(w, h);
+      var gd = greenData.data;
       for (var pi = 0; pi < w * h; pi++) {
         var si = pi * 4;
         var sr = src[si], sg = src[si + 1], sb = src[si + 2];
@@ -2290,13 +2345,37 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         var minC = Math.min(sr, sg, sb);
         var chroma = (maxC - minC) / 255;
         var darkness = 1 - (sr * 0.299 + sg * 0.587 + sb * 0.114) / 255;
+        var waterScore = Math.max(
+          watercolorColorScore(sr, sg, sb, waterRgb, 92),
+          Math.max(0, Math.min(1, (sb + sg - sr * 1.8) / 210))
+        );
+        var landLooksGreen = landRgb[1] > landRgb[0] * 1.03 && landRgb[1] > landRgb[2] * 0.88;
+        var landGreenScore = landLooksGreen ? watercolorColorScore(sr, sg, sb, landRgb, 86) : 0;
+        var greenScore = Math.max(
+          landGreenScore,
+          Math.max(0, Math.min(1, (sg - sr * 0.78 - sb * 0.36) / 95))
+        );
+        waterScore *= Math.max(0, 1 - darkness * 0.38);
+        greenScore *= Math.max(0, 1 - waterScore * 0.75);
         var pigmentMass = Math.max(chroma * 1.25, darkness * 0.18);
         pd[si] = Math.round(sr * 0.88 + paperColor[0] * 0.12);
         pd[si + 1] = Math.round(sg * 0.88 + paperColor[1] * 0.12);
         pd[si + 2] = Math.round(sb * 0.88 + paperColor[2] * 0.12);
-        pd[si + 3] = Math.max(0, Math.min(115, Math.round(pigmentMass * (38 + bleed * 88))));
+        pd[si + 3] = Math.max(0, Math.min(95, Math.round(pigmentMass * (32 + bleed * 70) * (1 - waterScore * 0.32 - greenScore * 0.18))));
+
+        wd[si] = Math.round(sr * 0.82 + waterRgb[0] * 0.18);
+        wd[si + 1] = Math.round(sg * 0.82 + waterRgb[1] * 0.18);
+        wd[si + 2] = Math.round(sb * 0.82 + waterRgb[2] * 0.18);
+        wd[si + 3] = Math.max(0, Math.min(120, Math.round(waterScore * (40 + bleed * 115))));
+
+        gd[si] = Math.round(sr * 0.84 + landRgb[0] * 0.16);
+        gd[si + 1] = Math.round(sg * 0.84 + landRgb[1] * 0.16);
+        gd[si + 2] = Math.round(sb * 0.84 + landRgb[2] * 0.16);
+        gd[si + 3] = Math.max(0, Math.min(100, Math.round(greenScore * (28 + bleed * 82))));
       }
       pigmentCtx.putImageData(pigmentData, 0, 0);
+      waterCtx.putImageData(waterData, 0, 0);
+      greenCtx.putImageData(greenData, 0, 0);
 
       blurCtx.clearRect(0, 0, w, h);
       blurCtx.filter = 'blur(' + Math.max(3, Math.round(3 + bleed * 10)) + 'px) saturate(1.08)';
@@ -2308,6 +2387,28 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.globalCompositeOperation = 'source-over';
       ctx.drawImage(blurCanvas, -Math.round(bleed * 2), Math.round(bleed * 1.5));
       ctx.drawImage(blurCanvas, Math.round(bleed * 1.5), -Math.round(bleed * 2));
+      ctx.restore();
+
+      blurCtx.clearRect(0, 0, w, h);
+      blurCtx.filter = 'blur(' + Math.max(5, Math.round(5 + bleed * 16)) + 'px) saturate(1.05)';
+      blurCtx.drawImage(waterCanvas, 0, 0, w, h);
+      blurCtx.filter = 'none';
+      ctx.save();
+      ctx.globalAlpha = 0.50 + bleed * 0.24;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(blurCanvas, -Math.round(bleed * 3.2), Math.round(bleed * 2.2));
+      ctx.drawImage(blurCanvas, Math.round(bleed * 2.4), -Math.round(bleed * 2.8));
+      ctx.restore();
+
+      blurCtx.clearRect(0, 0, w, h);
+      blurCtx.filter = 'blur(' + Math.max(4, Math.round(4 + bleed * 12)) + 'px) saturate(1.03)';
+      blurCtx.drawImage(greenCanvas, 0, 0, w, h);
+      blurCtx.filter = 'none';
+      ctx.save();
+      ctx.globalAlpha = 0.42 + bleed * 0.20;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(blurCanvas, -Math.round(bleed * 2.2), Math.round(bleed * 1.6));
+      ctx.drawImage(blurCanvas, Math.round(bleed * 1.8), -Math.round(bleed * 1.9));
       ctx.restore();
     }
 
