@@ -79,6 +79,8 @@ input[type="color"]{width:36px;height:24px;border:1px solid var(--border);border
 /* Gradient vignette */
 .vignette-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px}
 .vignette-row:last-child{margin-bottom:0}
+.blob-slider-label{width:74px;flex-shrink:0;font-size:11px;color:var(--muted)}
+.blob-slider-wrap{display:flex;align-items:center;gap:6px;flex:1;min-width:0}
 select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:11px;outline:none;cursor:pointer}
 .vig-opacity-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 #vig-opacity{flex:1;accent-color:var(--accent)}
@@ -355,6 +357,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-export-style="duotone" style="text-align:left;justify-content:flex-start">Duotone</button>
         <button class="btn size-btn" data-export-style="circuit" style="text-align:left;justify-content:flex-start">Circuit</button>
         <button class="btn size-btn" data-export-style="watercolor" style="text-align:left;justify-content:flex-start">Watercolor</button>
+        <button class="btn size-btn" data-export-style="blob" style="text-align:left;justify-content:flex-start">Blob</button>
       </div>
       <div id="watercolor-note" style="display:none;margin:-4px 0 10px;font-size:10px;line-height:1.5;color:var(--muted)">
         For watercolor, lower Gradient Vignette opacity to 0, remove Coordinates, turn off Place Labels and Road Names, and use softer, less saturated color palettes.
@@ -386,6 +389,91 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <div style="display:flex;align-items:center;gap:6px">
             <input type="range" id="wc-rough" min="0" max="100" value="34" style="flex:1;accent-color:var(--accent)">
             <span id="wc-rough-val" style="font-size:11px;color:var(--muted);width:26px">34</span>
+          </div>
+        </div>
+      </div>
+      <div id="blob-options" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Paper</span>
+          <input type="color" id="blob-paper" value="#f5f0e6" />
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Palette</span>
+          <select class="vig-select" id="blob-palette">
+            <option value="wuguanzhong" selected>Wu Abstract</option>
+            <option value="inkland">Ink Land</option>
+            <option value="mineral">Mineral</option>
+            <option value="sunset">Sunset</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+        <div id="blob-custom-colors" style="display:none;gap:8px;flex-direction:column">
+          <div class="color-row"><span class="color-label">Line 1</span><input type="color" id="blob-c1" value="#1f1c17" /></div>
+          <div class="color-row"><span class="color-label">Line 2</span><input type="color" id="blob-c2" value="#3c2f22" /></div>
+          <div class="color-row"><span class="color-label">Line 3</span><input type="color" id="blob-c3" value="#5b3e2f" /></div>
+          <div class="color-row"><span class="color-label">Line 4</span><input type="color" id="blob-c4" value="#4e5f56" /></div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Sensitivity</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-sens" min="0" max="100" value="52" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-sens-val" style="font-size:11px;color:var(--muted);width:26px">52</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Detail</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-detail" min="0" max="100" value="64" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-detail-val" style="font-size:11px;color:var(--muted);width:26px">64</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Blur</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-blur" min="0" max="60" value="16" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-blur-val" style="font-size:11px;color:var(--muted);width:26px">16</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Min chain</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-min" min="8" max="160" value="22" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-min-val" style="font-size:11px;color:var(--muted);width:26px">22</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Extend</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-extend" min="0" max="90" value="16" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-extend-val" style="font-size:11px;color:var(--muted);width:26px">16</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Smooth</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-smooth" min="0" max="4" value="2" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-smooth-val" style="font-size:11px;color:var(--muted);width:16px">2</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Jitter</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-jitter" min="0" max="100" value="24" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-jitter-val" style="font-size:11px;color:var(--muted);width:26px">24</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Width</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-width" min="1" max="8" value="2" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-width-val" style="font-size:11px;color:var(--muted);width:16px">2</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span class="blob-slider-label">Opacity</span>
+          <div class="blob-slider-wrap">
+            <input type="range" id="blob-opacity" min="10" max="100" value="78" style="flex:1;accent-color:var(--accent)">
+            <span id="blob-opacity-val" style="font-size:11px;color:var(--muted);width:26px">78</span>
           </div>
         </div>
       </div>
@@ -724,6 +812,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   var currentRatio = '1:1';
   var addingMarker = false;
   var markers = [];
+  var routeRenderState = null;
   var pendingExport = false;
   var pendingMarkerLngLat = null;
   var selectedEmoji = '📍';
@@ -963,7 +1052,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var bottom = document.createElement('div');
       bottom.style.cssText =
         'position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;' +
-        'background:'+fc+';border-radius:0 0 '+radius+'px '+radius+'px;' +
         'display:flex;align-items:center;justify-content:center;pointer-events:none;';
       frameOverlay.appendChild(svg);
       if (capText) {
@@ -1505,7 +1593,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (map.getLayer('route-dist')) map.removeLayer('route-dist');
     if (map.getSource('route')) map.removeSource('route');
     if (map.getSource('route-midpoints')) map.removeSource('route-midpoints');
-    if (!routeOn || markers.length < 2) return;
+    if (!routeOn || markers.length < 2) {
+      routeRenderState = null;
+      if (exportStyle !== 'normal') schedulePreview();
+      return;
+    }
     var pts = markers.map(function(m){ return m.lnglat; });
     var color = document.getElementById('route-color').value;
     var width = parseInt(document.getElementById('route-width').value) || 2;
@@ -1548,6 +1640,13 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:coords}}});
       map.addLayer({id:'route-line-case',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ffffff','line-width':width+3,'line-opacity':0.5}});
       map.addLayer({id:'route-line',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':color,'line-width':width,'line-dasharray':dashArray}});
+      routeRenderState = {
+        coords: coords,
+        color: color,
+        width: width,
+        dashArray: dashArray,
+        showDist: showDist
+      };
 
     // Distance labels at midpoints between consecutive markers
     if (showDist) {
@@ -1575,6 +1674,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         }
       });
     }
+    if (exportStyle !== 'normal') schedulePreview();
     } // end applyRouteCoords
 
     if(isRealRoute){
@@ -1600,6 +1700,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var coords = curveType==='curve' ? catmullRom(pts,32) : pts;
       applyRouteCoords(coords);
     }
+    if (exportStyle !== 'normal') schedulePreview();
   }
 
   // Caption system with snap-to-center
@@ -1739,6 +1840,115 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }, 400);
   }
 
+  function projectMapPointToEffect(lnglat, cropRect, targetW, targetH) {
+    var p = map.project({ lng: lnglat[0], lat: lnglat[1] });
+    return {
+      x: (p.x - cropRect.left) * (targetW / cropRect.width),
+      y: (p.y - cropRect.top) * (targetH / cropRect.height)
+    };
+  }
+
+  function drawRouteAndMarkersOnEffect(ctx, targetW, targetH, cropRect) {
+    function inBounds(pt) {
+      return pt.x >= -24 && pt.x <= targetW + 24 && pt.y >= -24 && pt.y <= targetH + 24;
+    }
+    function segKm(a, b) {
+      var R = 6371;
+      var dLat = (b[1] - a[1]) * Math.PI / 180;
+      var dLng = (b[0] - a[0]) * Math.PI / 180;
+      var s = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(a[1] * Math.PI / 180) * Math.cos(b[1] * Math.PI / 180) *
+              Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+    }
+
+    if (routeRenderState && routeRenderState.coords && routeRenderState.coords.length > 1) {
+      var routePts = routeRenderState.coords.map(function(c) {
+        return projectMapPointToEffect(c, cropRect, targetW, targetH);
+      });
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#ffffff';
+      ctx.globalAlpha = 0.52;
+      ctx.lineWidth = (routeRenderState.width + 3) * (targetW / cropRect.width);
+      ctx.beginPath();
+      for (var i = 0; i < routePts.length; i++) {
+        if (i === 0) ctx.moveTo(routePts[i].x, routePts[i].y);
+        else ctx.lineTo(routePts[i].x, routePts[i].y);
+      }
+      ctx.stroke();
+
+      ctx.strokeStyle = routeRenderState.color;
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = routeRenderState.width * (targetW / cropRect.width);
+      var dash = routeRenderState.dashArray || [1];
+      if (dash.length > 1) {
+        var scale = targetW / cropRect.width;
+        ctx.setLineDash(dash.map(function(v) { return v * 3 * scale; }));
+      } else {
+        ctx.setLineDash([]);
+      }
+      ctx.beginPath();
+      for (var j = 0; j < routePts.length; j++) {
+        if (j === 0) ctx.moveTo(routePts[j].x, routePts[j].y);
+        else ctx.lineTo(routePts[j].x, routePts[j].y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (routeRenderState.showDist && markers.length >= 2) {
+        ctx.fillStyle = routeRenderState.color;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(1, 1.3 * (targetW / cropRect.width));
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = Math.max(9, 11 * (targetW / cropRect.width)) + 'px Outfit,sans-serif';
+        for (var m = 0; m < markers.length - 1; m++) {
+          var ma = markers[m].lnglat;
+          var mb = markers[m + 1].lnglat;
+          var mid = [(ma[0] + mb[0]) / 2, (ma[1] + mb[1]) / 2];
+          var mp = projectMapPointToEffect(mid, cropRect, targetW, targetH);
+          if (!inBounds(mp)) continue;
+          var km = segKm(ma, mb);
+          var label = km >= 10 ? Math.round(km) + 'km' : km.toFixed(1) + 'km';
+          ctx.strokeText(label, mp.x, mp.y - 10);
+          ctx.fillText(label, mp.x, mp.y - 10);
+        }
+      }
+      ctx.restore();
+    }
+
+    if (!markers.length) return;
+    ctx.save();
+    for (var mk = 0; mk < markers.length; mk++) {
+      var marker = markers[mk];
+      var pt = projectMapPointToEffect(marker.lnglat, cropRect, targetW, targetH);
+      if (!inBounds(pt)) continue;
+      var emojiSize = Math.max(14, Math.round(22 * (targetW / cropRect.width)));
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'alphabetic';
+      ctx.font = emojiSize + 'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+      ctx.fillText(marker.emoji || '📍', pt.x, pt.y);
+      if (marker.name) {
+        var fontSize = Math.max(9, Math.round(11 * (targetW / cropRect.width)));
+        ctx.font = '500 ' + fontSize + 'px Outfit,sans-serif';
+        var text = marker.name;
+        var padX = 6 * (targetW / cropRect.width);
+        var tagW = ctx.measureText(text).width + padX * 2;
+        var tagH = fontSize + 4 * (targetW / cropRect.width);
+        var tagX = pt.x - tagW / 2;
+        var tagY = pt.y + 4 * (targetW / cropRect.width);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillRect(tagX, tagY, tagW, tagH);
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, pt.x, tagY + tagH / 2);
+      }
+    }
+    ctx.restore();
+  }
+
   function renderPreview() {
     previewDirty = false;
     if (exportStyle === 'normal') { previewCanvas.style.display='none'; return; }
@@ -1747,6 +1957,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var mapCanvas = map.getCanvas();
     var scale = previewScale;
     if (exportStyle === 'watercolor') scale = Math.min(scale, 0.7);
+    if (exportStyle === 'blob') scale = Math.min(scale, 0.8);
     var sw = Math.round(r.width * scale);
     var sh = Math.round(r.height * scale);
     if (sw < 2 || sh < 2) return;
@@ -1767,6 +1978,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var srcX = r.left * scaleX, srcY = r.top * scaleY;
     var srcW = r.width * scaleX, srcH = r.height * scaleY;
     previewCtx.drawImage(mapCanvas, srcX, srcY, srcW, srcH, 0, 0, sw, sh);
+    drawRouteAndMarkersOnEffect(previewCtx, sw, sh, r);
     // Apply gradient if active
     var dir = document.getElementById('vig-dir').value;
     if (dir !== 'none') {
@@ -1803,6 +2015,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       applyCircuit(previewCtx, sw, sh);
     } else if (exportStyle === 'watercolor') {
       applyWatercolor(previewCtx, sw, sh);
+    } else if (exportStyle === 'blob') {
+      applyBlob(previewCtx, sw, sh);
     }
   }
 
@@ -1817,6 +2031,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
       document.getElementById('watercolor-note').style.display = exportStyle==='watercolor' ? 'block' : 'none';
       document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
+      document.getElementById('blob-options').style.display = exportStyle==='blob' ? 'flex' : 'none';
       if (exportStyle==='normal') { previewCanvas.style.display='none'; }
       else { schedulePreview(); }
     });
@@ -1877,6 +2092,27 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       if (exportStyle === 'watercolor') schedulePreview();
     });
   });
+  ['blob-paper','blob-palette','blob-c1','blob-c2','blob-c3','blob-c4'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      if (exportStyle === 'blob') schedulePreview();
+    });
+    document.getElementById(id).addEventListener('change', function() {
+      if (exportStyle === 'blob') schedulePreview();
+    });
+  });
+  document.getElementById('blob-palette').addEventListener('change', function() {
+    document.getElementById('blob-custom-colors').style.display = this.value === 'custom' ? 'flex' : 'none';
+    if (exportStyle === 'blob') schedulePreview();
+  });
+  ['blob-sens','blob-detail','blob-blur','blob-min','blob-extend','blob-smooth','blob-jitter','blob-width','blob-opacity'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      document.getElementById(id+'-val').textContent = this.value;
+      if (exportStyle === 'blob') schedulePreview();
+    });
+    document.getElementById(id).addEventListener('change', function() {
+      if (exportStyle === 'blob') schedulePreview();
+    });
+  });
 
   // Dither palettes [dark, light]
   var DITHER_PALETTES = {
@@ -1891,6 +2127,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     blueprint: ['#0a1628','#a8c8f0'],
     gold:      ['#1a1000','#f5c842']
   };
+  var BLOB_PALETTES = {
+    wuguanzhong: ['#1e1b16', '#33443d', '#584331', '#8f2f2f'],
+    inkland:     ['#1f1d1a', '#2f3332', '#4f4537', '#6f7f78'],
+    mineral:     ['#213640', '#416a73', '#6f8578', '#b16e4d'],
+    sunset:      ['#3a2432', '#7a3f45', '#b36b4c', '#304b56']
+  };
 
   function getActivePalette() {
     var isHT = exportStyle === 'halftone';
@@ -1903,6 +2145,19 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }
    if (key === 'color') return null;
     return DITHER_PALETTES[key] || DITHER_PALETTES.bw;
+  }
+
+  function getBlobPaletteColors() {
+    var key = document.getElementById('blob-palette').value;
+    if (key === 'custom') {
+      return [
+        document.getElementById('blob-c1').value,
+        document.getElementById('blob-c2').value,
+        document.getElementById('blob-c3').value,
+        document.getElementById('blob-c4').value
+      ];
+    }
+    return BLOB_PALETTES[key] || BLOB_PALETTES.wuguanzhong;
   }
 
   function hexToRgb(h) {
@@ -2525,6 +2780,340 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }
   }
 
+  function blobGaussianBlur(channel, w, h, sigma) {
+    if (sigma <= 0) return channel;
+    var radius = Math.ceil(sigma * 2);
+    var size = radius * 2 + 1;
+    var kernel = new Float32Array(size);
+    var sum = 0;
+    var i;
+    for (i = 0; i < size; i++) {
+      var x = i - radius;
+      var kv = Math.exp(-(x * x) / (2 * sigma * sigma));
+      kernel[i] = kv;
+      sum += kv;
+    }
+    for (i = 0; i < size; i++) kernel[i] /= sum;
+    var temp = new Float32Array(w * h);
+    var out = new Float32Array(w * h);
+    var y;
+    var x2;
+    var k;
+    for (y = 0; y < h; y++) {
+      for (x2 = 0; x2 < w; x2++) {
+        var hv = 0;
+        for (k = 0; k < size; k++) {
+          var xi = Math.max(0, Math.min(w - 1, x2 + k - radius));
+          hv += channel[y * w + xi] * kernel[k];
+        }
+        temp[y * w + x2] = hv;
+      }
+    }
+    for (y = 0; y < h; y++) {
+      for (x2 = 0; x2 < w; x2++) {
+        var vv = 0;
+        for (k = 0; k < size; k++) {
+          var yi = Math.max(0, Math.min(h - 1, y + k - radius));
+          vv += temp[yi * w + x2] * kernel[k];
+        }
+        out[y * w + x2] = vv;
+      }
+    }
+    return out;
+  }
+
+  function blobDetectEdges(imgData, sensitivity, detail, blurAmount) {
+    var w = imgData.width;
+    var h = imgData.height;
+    var d = imgData.data;
+    var R = new Float32Array(w * h);
+    var G = new Float32Array(w * h);
+    var B = new Float32Array(w * h);
+    var i;
+    for (i = 0; i < w * h; i++) {
+      R[i] = d[i * 4];
+      G[i] = d[i * 4 + 1];
+      B[i] = d[i * 4 + 2];
+    }
+
+    var sigma = Math.max(0, blurAmount / 10);
+    var bR = sigma > 0.3 ? blobGaussianBlur(R, w, h, sigma) : R;
+    var bG = sigma > 0.3 ? blobGaussianBlur(G, w, h, sigma) : G;
+    var bB = sigma > 0.3 ? blobGaussianBlur(B, w, h, sigma) : B;
+
+    var mag = new Float32Array(w * h);
+    var ang = new Float32Array(w * h);
+    var x;
+    var y;
+    for (y = 1; y < h - 1; y++) {
+      for (x = 1; x < w - 1; x++) {
+        var gx2 = 0;
+        var gy2 = 0;
+        var gxy = 0;
+        var channels = [bR, bG, bB];
+        for (var ci = 0; ci < 3; ci++) {
+          var ch = channels[ci];
+          var gx = -ch[(y - 1) * w + (x - 1)] - 2 * ch[y * w + (x - 1)] - ch[(y + 1) * w + (x - 1)]
+                  + ch[(y - 1) * w + (x + 1)] + 2 * ch[y * w + (x + 1)] + ch[(y + 1) * w + (x + 1)];
+          var gy = -ch[(y - 1) * w + (x - 1)] - 2 * ch[(y - 1) * w + x] - ch[(y - 1) * w + (x + 1)]
+                  + ch[(y + 1) * w + (x - 1)] + 2 * ch[(y + 1) * w + x] + ch[(y + 1) * w + (x + 1)];
+          gx2 += gx * gx;
+          gy2 += gy * gy;
+          gxy += gx * gy;
+        }
+        var F = 0.5 * (gx2 + gy2 + Math.sqrt((gx2 - gy2) * (gx2 - gy2) + 4 * gxy * gxy));
+        mag[y * w + x] = Math.sqrt(Math.max(0, F));
+        ang[y * w + x] = 0.5 * Math.atan2(2 * gxy, gx2 - gy2);
+      }
+    }
+
+    var nms = new Float32Array(w * h);
+    for (y = 1; y < h - 1; y++) {
+      for (x = 1; x < w - 1; x++) {
+        var m = mag[y * w + x];
+        if (m === 0) continue;
+        var deg = ((ang[y * w + x] * 180 / Math.PI) % 180 + 180) % 180;
+        var n1;
+        var n2;
+        if (deg < 22.5 || deg >= 157.5) {
+          n1 = mag[y * w + (x - 1)];
+          n2 = mag[y * w + (x + 1)];
+        } else if (deg < 67.5) {
+          n1 = mag[(y - 1) * w + (x + 1)];
+          n2 = mag[(y + 1) * w + (x - 1)];
+        } else if (deg < 112.5) {
+          n1 = mag[(y - 1) * w + x];
+          n2 = mag[(y + 1) * w + x];
+        } else {
+          n1 = mag[(y - 1) * w + (x - 1)];
+          n2 = mag[(y + 1) * w + (x + 1)];
+        }
+        nms[y * w + x] = (m >= n1 && m >= n2) ? m : 0;
+      }
+    }
+
+    var globalMax = 0;
+    for (i = 0; i < w * h; i++) if (nms[i] > globalMax) globalMax = nms[i];
+    if (globalMax < 1) globalMax = 1;
+    var normG = new Float32Array(w * h);
+    for (i = 0; i < w * h; i++) normG[i] = nms[i] / globalMax;
+
+    var winR = Math.max(3, Math.round(Math.min(w, h) / 40));
+    var tmp = new Float32Array(w * h);
+    var localMean = new Float32Array(w * h);
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        var sx = 0;
+        var cnt = 0;
+        for (var dx = -winR; dx <= winR; dx++) {
+          var xi2 = Math.max(0, Math.min(w - 1, x + dx));
+          sx += normG[y * w + xi2];
+          cnt++;
+        }
+        tmp[y * w + x] = sx / cnt;
+      }
+    }
+    for (y = 0; y < h; y++) {
+      for (x = 0; x < w; x++) {
+        var sy = 0;
+        var cy = 0;
+        for (var dy = -winR; dy <= winR; dy++) {
+          var yi2 = Math.max(0, Math.min(h - 1, y + dy));
+          sy += tmp[yi2 * w + x];
+          cy++;
+        }
+        localMean[y * w + x] = sy / cy;
+      }
+    }
+
+    var db = detail / 100;
+    var normalized = new Float32Array(w * h);
+    for (i = 0; i < w * h; i++) {
+      var localRef = Math.max(localMean[i] * 3, 0.02);
+      var localN = Math.min(1, normG[i] / localRef);
+      normalized[i] = normG[i] * (1 - db) + localN * db;
+    }
+
+    var hist = new Int32Array(1000);
+    for (i = 0; i < w * h; i++) hist[Math.min(999, Math.floor(normalized[i] * 999))]++;
+    var keepFrac = 0.01 + sensitivity / 100 * 0.11;
+    var cumul = 0;
+    var highBin = 999;
+    for (var b = 999; b >= 0; b--) {
+      cumul += hist[b];
+      if (cumul / (w * h) >= keepFrac) { highBin = b; break; }
+    }
+    var highT = highBin / 999;
+    var lowT = highT * 0.35;
+
+    var STRONG = 2;
+    var WEAK = 1;
+    var edge = new Uint8Array(w * h);
+    for (i = 0; i < w * h; i++) {
+      if (normalized[i] >= highT) edge[i] = STRONG;
+      else if (normalized[i] >= lowT) edge[i] = WEAK;
+    }
+    var queue = [];
+    for (i = 0; i < w * h; i++) if (edge[i] === STRONG) queue.push(i);
+    var dx8 = [-1,0,1,-1,1,-1,0,1];
+    var dy8 = [-1,-1,-1,0,0,1,1,1];
+    var qi = 0;
+    while (qi < queue.length) {
+      var idx = queue[qi++];
+      var yy = Math.floor(idx / w);
+      var xx = idx % w;
+      for (var kk = 0; kk < 8; kk++) {
+        var nx = xx + dx8[kk];
+        var ny = yy + dy8[kk];
+        if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+        var ni = ny * w + nx;
+        if (edge[ni] === WEAK) { edge[ni] = STRONG; queue.push(ni); }
+      }
+    }
+    for (i = 0; i < w * h; i++) if (edge[i] === WEAK) edge[i] = 0;
+    return edge;
+  }
+
+  function blobTraceChains(edge, w, h, minLen) {
+    var visited = new Uint8Array(w * h);
+    var chains = [];
+    var dx8 = [-1,0,1,-1,1,-1,0,1];
+    var dy8 = [-1,-1,-1,0,0,1,1,1];
+    for (var sy = 1; sy < h - 1; sy++) {
+      for (var sx = 1; sx < w - 1; sx++) {
+        var si = sy * w + sx;
+        if (!edge[si] || visited[si]) continue;
+        visited[si] = 1;
+        var ch = [{x:sx, y:sy}];
+        var cx = sx;
+        var cy = sy;
+        var ext = true;
+        while (ext) {
+          ext = false;
+          for (var d = 0; d < 8; d++) {
+            var nx = cx + dx8[d];
+            var ny = cy + dy8[d];
+            if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
+            var ni = ny * w + nx;
+            if (edge[ni] && !visited[ni]) {
+              visited[ni] = 1;
+              ch.push({x:nx, y:ny});
+              cx = nx;
+              cy = ny;
+              ext = true;
+              break;
+            }
+          }
+        }
+        if (ch.length >= minLen) chains.push(ch);
+      }
+    }
+    return chains;
+  }
+
+  function blobSmoothChain(chain, passes) {
+    var pts = chain;
+    for (var p = 0; p < passes; p++) {
+      if (pts.length < 3) break;
+      var next = [pts[0]];
+      for (var i = 1; i < pts.length - 1; i++) {
+        next.push({
+          x: (pts[i - 1].x + pts[i].x + pts[i + 1].x) / 3,
+          y: (pts[i - 1].y + pts[i].y + pts[i + 1].y) / 3
+        });
+      }
+      next.push(pts[pts.length - 1]);
+      pts = next;
+    }
+    return pts;
+  }
+
+  function blobExtendChain(chain, extendPx) {
+    if (!extendPx || chain.length < 2) return chain;
+    var first = chain[0];
+    var second = chain[1];
+    var last = chain[chain.length - 1];
+    var prev = chain[chain.length - 2];
+    var sx = first.x - second.x;
+    var sy = first.y - second.y;
+    var sl = Math.sqrt(sx * sx + sy * sy) || 1;
+    sx /= sl;
+    sy /= sl;
+    var ex = last.x - prev.x;
+    var ey = last.y - prev.y;
+    var el = Math.sqrt(ex * ex + ey * ey) || 1;
+    ex /= el;
+    ey /= el;
+    var start = { x: first.x + sx * extendPx, y: first.y + sy * extendPx };
+    var end = { x: last.x + ex * extendPx, y: last.y + ey * extendPx };
+    var out = [start];
+    for (var i = 0; i < chain.length; i++) out.push(chain[i]);
+    out.push(end);
+    return out;
+  }
+
+  function blobJitter(x, y, seed) {
+    var v = Math.sin(x * 12.9898 + y * 78.233 + seed * 37.719) * 43758.5453;
+    return (v - Math.floor(v)) - 0.5;
+  }
+
+  function applyBlob(ctx, w, h) {
+    var src = ctx.getImageData(0, 0, w, h);
+    var paper = document.getElementById('blob-paper').value;
+    var lineColors = getBlobPaletteColors();
+    var sensitivity = parseInt(document.getElementById('blob-sens').value) || 52;
+    var detail = parseInt(document.getElementById('blob-detail').value) || 64;
+    var blur = parseInt(document.getElementById('blob-blur').value) || 16;
+    var minLen = parseInt(document.getElementById('blob-min').value) || 22;
+    var extendPx = parseInt(document.getElementById('blob-extend').value) || 0;
+    var smoothPasses = parseInt(document.getElementById('blob-smooth').value) || 2;
+    var jitterAmt = (parseInt(document.getElementById('blob-jitter').value) || 24) / 100;
+    var width = parseInt(document.getElementById('blob-width').value) || 2;
+    var opacity = (parseInt(document.getElementById('blob-opacity').value) || 78) / 100;
+
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, w, h);
+
+    var edgeMap = blobDetectEdges(src, sensitivity, detail, blur);
+    var chains = blobTraceChains(edgeMap, w, h, minLen);
+    var chainBudget = Math.max(220, Math.round((w * h) / 1200));
+    if (chains.length > chainBudget) {
+      var pickStep = Math.ceil(chains.length / chainBudget);
+      var reduced = [];
+      for (var ci = 0; ci < chains.length; ci += pickStep) reduced.push(chains[ci]);
+      chains = reduced;
+    }
+
+    ctx.lineWidth = width;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    for (var cIdx = 0; cIdx < chains.length; cIdx++) {
+      var chain = chains[cIdx];
+      if (chain.length < 2) continue;
+      var step = chain.length > 560 ? 2 : 1;
+      var decimated = [];
+      for (var pIdx = 0; pIdx < chain.length; pIdx += step) decimated.push(chain[pIdx]);
+      if (decimated.length < 2) continue;
+      decimated = blobExtendChain(decimated, extendPx);
+      var sm = blobSmoothChain(decimated, smoothPasses);
+      var firstPt = decimated[0];
+      var colorSeed = (Math.floor(firstPt.x) * 73856093) ^ (Math.floor(firstPt.y) * 19349663) ^ (cIdx * 83492791);
+      var colorIndex = Math.abs(colorSeed) % lineColors.length;
+      ctx.strokeStyle = lineColors[colorIndex];
+      ctx.globalAlpha = opacity * (0.82 + (colorIndex / Math.max(1, lineColors.length - 1)) * 0.18);
+      ctx.beginPath();
+      for (var si = 0; si < sm.length; si++) {
+        var pt = sm[si];
+        var jx = blobJitter(pt.x, pt.y, cIdx + 1) * jitterAmt * 3.2;
+        var jy = blobJitter(pt.x + 41.2, pt.y + 19.7, cIdx + 7) * jitterAmt * 3.2;
+        if (si === 0) ctx.moveTo(pt.x + jx, pt.y + jy);
+        else ctx.lineTo(pt.x + jx, pt.y + jy);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function applyDuotone(imageData, darkHex, lightHex) {
     var d = imageData.data;
     var dk = hexToRgb(darkHex);
@@ -2550,8 +3139,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var out=document.createElement('canvas');
     out.width=Math.round(cw);out.height=Math.round(ch);
     var ctx=out.getContext('2d');
+    var r=getCropRect();
     // 1. Map
     ctx.drawImage(mapCanvas,cx,cy,cw,ch,0,0,out.width,out.height);
+    drawRouteAndMarkersOnEffect(ctx, out.width, out.height, r);
     // 2. Gradient overlay
     var dir=document.getElementById('vig-dir').value;
     if(dir!=='none'){
@@ -2575,7 +3166,6 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       }
     }
     // 3. Captions
-    var r=getCropRect();
     var scaleX=out.width/r.width;
     var scaleY=out.height/r.height;
     captions.forEach(function(cap){
@@ -2617,6 +3207,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       applyCircuit(ctx, out.width, out.height);
     } else if (exportStyle==='watercolor') {
       applyWatercolor(ctx, out.width, out.height);
+    } else if (exportStyle==='blob') {
+      applyBlob(ctx, out.width, out.height);
     }
     // Bake frame
     bakeFrame(ctx, out.width, out.height);
