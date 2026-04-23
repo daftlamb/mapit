@@ -16,7 +16,7 @@ Map It renders interactive vector maps in the browser and turns the current view
 - 3D pitch, bearing, and building extrusion controls
 - Label, road name, boundary, building, and satellite toggles
 - Caption, marker, coordinate stamp, and city badge overlays
-- Poster frames, vignette overlays, and export ratios
+- Poster frames with optional rounded corners, vignette overlays, and export ratios
 - Export styles: Normal, Dither, Halftone, Duotone, Circuit, and Watercolor
 - High-resolution PNG export
 

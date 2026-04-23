@@ -357,7 +357,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-export-style="watercolor" style="text-align:left;justify-content:flex-start">Watercolor</button>
       </div>
       <div id="watercolor-note" style="display:none;margin:-4px 0 10px;font-size:10px;line-height:1.5;color:var(--muted)">
-        For watercolor, lower Gradient Vignette opacity to 0, remove Coordinates, and use softer, less saturated color palettes.
+        For watercolor, lower Gradient Vignette opacity to 0, remove Coordinates, turn off Place Labels and Road Names, and use softer, less saturated color palettes.
       </div>
       <div id="watercolor-options" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
         <div class="vignette-row">
@@ -582,6 +582,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn active" data-frame="none">None</button>
         <button class="btn size-btn" data-frame="polaroid">Polaroid</button>
         <button class="btn size-btn" data-frame="border">Border</button>
+      </div>
+      <div id="frame-options-common" style="display:none;margin-bottom:10px">
+        <div class="vignette-row vig-opacity-row">
+          <span>Corner</span>
+          <input type="range" id="frame-radius" min="0" max="48" value="0" style="flex:1;accent-color:var(--accent)" />
+          <span id="frame-radius-val" style="width:28px;text-align:right">0</span>
+        </div>
       </div>
       <div id="frame-options-polaroid" style="display:none">
         <div class="color-row" style="margin-bottom:8px">
@@ -880,6 +887,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       frameStyle = btn.dataset.frame;
       document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
+      document.getElementById('frame-options-common').style.display = frameStyle==='none' ? 'none' : 'block';
       ['polaroid','border'].forEach(function(t){
         document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
       });
@@ -887,19 +895,25 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','frame-radius'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateFrameOverlay);
+  });
+  document.getElementById('frame-radius').addEventListener('input', function() {
+    document.getElementById('frame-radius-val').textContent = this.value;
   });
 
   function updateFrameOverlay() {
     var r = getCropRect();
+    var radius = parseInt(document.getElementById('frame-radius').value) || 0;
     frameOverlay.style.left = r.left+'px';
     frameOverlay.style.top = r.top+'px';
     frameOverlay.style.width = r.width+'px';
     frameOverlay.style.height = r.height+'px';
     frameOverlay.innerHTML = '';
     frameOverlay.style.boxShadow = '';
+    frameOverlay.style.borderRadius = radius + 'px';
+    frameOverlay.style.overflow = radius ? 'hidden' : 'visible';
     // coord-stamp-options visibility
     document.getElementById('coord-stamp-options').style.display = frameStyle==='none' ? 'none' : 'block';
     if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
@@ -2389,8 +2403,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.save();
       ctx.globalAlpha = 0.55 + bleed * 0.20;
       ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(blurCanvas, -Math.round(bleed * 2), Math.round(bleed * 1.5));
-      ctx.drawImage(blurCanvas, Math.round(bleed * 1.5), -Math.round(bleed * 2));
+      ctx.drawImage(blurCanvas, 0, 0);
       ctx.restore();
 
       blurCtx.clearRect(0, 0, w, h);
@@ -2400,8 +2413,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.save();
       ctx.globalAlpha = 0.50 + bleed * 0.24;
       ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(blurCanvas, -Math.round(bleed * 3.2), Math.round(bleed * 2.2));
-      ctx.drawImage(blurCanvas, Math.round(bleed * 2.4), -Math.round(bleed * 2.8));
+      ctx.drawImage(blurCanvas, 0, 0);
       ctx.restore();
 
       blurCtx.clearRect(0, 0, w, h);
@@ -2411,8 +2423,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.save();
       ctx.globalAlpha = 0.42 + bleed * 0.20;
       ctx.globalCompositeOperation = 'source-over';
-      ctx.drawImage(blurCanvas, -Math.round(bleed * 2.2), Math.round(bleed * 1.6));
-      ctx.drawImage(blurCanvas, Math.round(bleed * 1.8), -Math.round(bleed * 1.9));
+      ctx.drawImage(blurCanvas, 0, 0);
       ctx.restore();
     }
 
@@ -2424,8 +2435,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.save();
       ctx.globalAlpha = 0.10 + bleed * 0.10;
       ctx.globalCompositeOperation = 'multiply';
-      ctx.drawImage(blurCanvas, -1, 1);
-      ctx.drawImage(blurCanvas, 1, -1);
+      ctx.drawImage(blurCanvas, 0, 0);
       ctx.restore();
     }
 
@@ -2604,6 +2614,34 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }
     // Coord stamp — baked onto map image at bottom edge
     bakeCoordOnMap(ctx, fw, fh);
+    applyFrameCornerMask(ctx, fw, fh);
+  }
+
+  function roundedFramePath(ctx, x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  function applyFrameCornerMask(ctx, fw, fh) {
+    var radius = parseInt(document.getElementById('frame-radius').value) || 0;
+    if (!radius) return;
+    var scaledRadius = Math.round(radius * fw / 400);
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = '#000';
+    roundedFramePath(ctx, 0, 0, fw, fh, scaledRadius);
+    ctx.fill();
+    ctx.restore();
   }
 
   function bakeCoordOnMap(ctx, fw, fh) {
