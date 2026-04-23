@@ -356,6 +356,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-export-style="circuit" style="text-align:left;justify-content:flex-start">Circuit</button>
         <button class="btn size-btn" data-export-style="watercolor" style="text-align:left;justify-content:flex-start">Watercolor</button>
       </div>
+      <div id="watercolor-note" style="display:none;margin:-4px 0 10px;font-size:10px;line-height:1.5;color:var(--muted)">
+        For watercolor, lower Gradient Vignette opacity to 0, remove Coordinates, and use softer, less saturated color palettes.
+      </div>
       <div id="watercolor-options" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Wash</span>
@@ -1742,6 +1745,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
       document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
       document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
+      document.getElementById('watercolor-note').style.display = exportStyle==='watercolor' ? 'block' : 'none';
       document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
       if (exportStyle==='normal') { previewCanvas.style.display='none'; }
       else { schedulePreview(); }
