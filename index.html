@@ -906,12 +906,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
   function updateFrameOverlay() {
     var r = getCropRect();
     var radius = parseInt(document.getElementById('frame-radius').value) || 0;
+    var maskBg = getComputedStyle(document.documentElement).getPropertyValue('--canvas-bg').trim() || '#eee';
+    var outerMask = radius ? '0 0 0 9999px ' + maskBg : '';
     frameOverlay.style.left = r.left+'px';
     frameOverlay.style.top = r.top+'px';
     frameOverlay.style.width = r.width+'px';
     frameOverlay.style.height = r.height+'px';
     frameOverlay.innerHTML = '';
-    frameOverlay.style.boxShadow = '';
+    frameOverlay.style.boxShadow = outerMask;
     frameOverlay.style.borderRadius = radius + 'px';
     frameOverlay.style.overflow = radius ? 'hidden' : 'visible';
     // coord-stamp-options visibility
@@ -947,7 +949,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
-      frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
+      frameOverlay.style.boxShadow = (outerMask ? outerMask + ', ' : '') + 'inset 0 0 0 '+bw+'px '+bc;
     }
     // Coord stamp — overlaid on the map image, bottom edge, inside crop
     renderCoordStampDOM(r);
