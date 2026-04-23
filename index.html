@@ -947,7 +947,11 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
-      frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
+      var borderEl = document.createElement('div');
+      borderEl.style.cssText =
+        'position:absolute;left:0;top:0;width:100%;height:100%;box-sizing:border-box;' +
+        'border:'+bw+'px solid '+bc+';border-radius:'+radius+'px;';
+      frameOverlay.appendChild(borderEl);
     }
     // Coord stamp — overlaid on the map image, bottom edge, inside crop
     renderCoordStampDOM(r);
@@ -1689,6 +1693,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     previewDirty = false;
     if (exportStyle === 'normal') { previewCanvas.style.display='none'; return; }
     var r = getCropRect();
+    var radius = parseInt(document.getElementById('frame-radius').value) || 0;
     var mapCanvas = map.getCanvas();
     var scale = previewScale;
     if (exportStyle === 'watercolor') scale = Math.min(scale, 0.7);
@@ -1700,6 +1705,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     previewCanvas.style.top = r.top + 'px';
     previewCanvas.style.width = r.width + 'px';
     previewCanvas.style.height = r.height + 'px';
+    previewCanvas.style.borderRadius = (frameStyle !== 'none' && radius > 0) ? (radius + 'px') : '0px';
     previewCanvas.width = sw;
     previewCanvas.height = sh;
     previewCanvas.style.display = 'block';
@@ -2608,9 +2614,16 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
       var scaledBw = Math.round(bw * fw / 400);
+      var radius = parseInt(document.getElementById('frame-radius').value) || 0;
+      var scaledRadius = Math.round(radius * fw / 400);
       ctx.strokeStyle = bc;
       ctx.lineWidth = scaledBw*2;
-      ctx.strokeRect(0,0,fw,fh);
+      if (scaledRadius > 0) {
+        roundedFramePath(ctx, 0, 0, fw, fh, scaledRadius);
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(0,0,fw,fh);
+      }
     }
     // Coord stamp — baked onto map image at bottom edge
     bakeCoordOnMap(ctx, fw, fh);
