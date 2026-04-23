@@ -356,6 +356,29 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-export-style="circuit" style="text-align:left;justify-content:flex-start">Circuit</button>
         <button class="btn size-btn" data-export-style="watercolor" style="text-align:left;justify-content:flex-start">Watercolor</button>
       </div>
+      <div id="watercolor-options" style="display:none;flex-direction:column;gap:8px;margin-top:10px">
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Wash</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="wc-wash" min="0" max="100" value="55" style="flex:1;accent-color:var(--accent)">
+            <span id="wc-wash-val" style="font-size:11px;color:var(--muted);width:26px">55</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Bleed</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="wc-bleed" min="0" max="100" value="42" style="flex:1;accent-color:var(--accent)">
+            <span id="wc-bleed-val" style="font-size:11px;color:var(--muted);width:26px">42</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Paper</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="wc-paper" min="0" max="100" value="48" style="flex:1;accent-color:var(--accent)">
+            <span id="wc-paper-val" style="font-size:11px;color:var(--muted);width:26px">48</span>
+          </div>
+        </div>
+      </div>
       <div id="circuit-options" style="display:none;flex-direction:column;gap:8px">
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Background</span>
@@ -1697,6 +1720,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       previewCtx.putImageData(imgData2, 0, 0);
     } else if (exportStyle === 'circuit') {
       applyCircuit(previewCtx, sw, sh);
+    } else if (exportStyle === 'watercolor') {
+      applyWatercolor(previewCtx, sw, sh);
     }
   }
 
@@ -1709,6 +1734,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
       document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
       document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
+      document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
       if (exportStyle==='normal') { previewCanvas.style.display='none'; }
       else { schedulePreview(); }
     });
@@ -1759,6 +1785,15 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   ['vig-dir','vig-color','vig-opacity'].forEach(function(id) {
     document.getElementById(id).addEventListener('change', function(){ if(exportStyle!=='normal') schedulePreview(); });
     document.getElementById(id).addEventListener('input', function(){ if(exportStyle!=='normal') schedulePreview(); });
+  });
+  ['wc-wash','wc-bleed','wc-paper'].forEach(function(id) {
+    document.getElementById(id).addEventListener('input', function() {
+      document.getElementById(id+'-val').textContent = this.value;
+      if (exportStyle === 'watercolor') schedulePreview();
+    });
+    document.getElementById(id).addEventListener('change', function() {
+      if (exportStyle === 'watercolor') schedulePreview();
+    });
   });
 
   // Dither palettes [dark, light]
@@ -2088,6 +2123,121 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }
   }
 
+  function watercolorNoise(x, y, seed) {
+    var n = Math.sin(x * 12.9898 + y * 78.233 + seed * 37.719) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  function applyWatercolor(ctx, w, h) {
+    var wash = (parseInt(document.getElementById('wc-wash').value) || 0) / 100;
+    var bleed = (parseInt(document.getElementById('wc-bleed').value) || 0) / 100;
+    var paper = (parseInt(document.getElementById('wc-paper').value) || 0) / 100;
+    var blurRadius = Math.max(1, Math.round(1 + bleed * 5));
+
+    var original = ctx.getImageData(0, 0, w, h);
+    var src = original.data;
+    var blurCanvas = document.createElement('canvas');
+    blurCanvas.width = w;
+    blurCanvas.height = h;
+    var blurCtx = blurCanvas.getContext('2d');
+    blurCtx.filter = 'blur(' + blurRadius + 'px) saturate(1.04)';
+    blurCtx.drawImage(ctx.canvas, 0, 0, w, h);
+    blurCtx.filter = 'none';
+    var blur = blurCtx.getImageData(0, 0, w, h).data;
+
+    var out = ctx.createImageData(w, h);
+    var dst = out.data;
+    var paperColor = [250, 246, 235];
+    var tint = 0.10 + wash * 0.18;
+    var blurMix = 0.16 + wash * 0.26;
+    var sat = 1 - wash * 0.25;
+    var edgeBoost = 0.10 + bleed * 0.34;
+    var grain = paper * 20;
+    var lum = new Float32Array(w * h);
+
+    for (var li = 0; li < w * h; li++) {
+      var l4 = li * 4;
+      lum[li] = src[l4] * 0.299 + src[l4 + 1] * 0.587 + src[l4 + 2] * 0.114;
+    }
+
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < w; x++) {
+        var i = (y * w + x) * 4;
+        var r = src[i], g = src[i + 1], b = src[i + 2];
+        var br = blur[i], bg = blur[i + 1], bb = blur[i + 2];
+
+        r = r * (1 - blurMix) + br * blurMix;
+        g = g * (1 - blurMix) + bg * blurMix;
+        b = b * (1 - blurMix) + bb * blurMix;
+
+        var gray = r * 0.299 + g * 0.587 + b * 0.114;
+        r = gray * (1 - sat) + r * sat;
+        g = gray * (1 - sat) + g * sat;
+        b = gray * (1 - sat) + b * sat;
+
+        var left = y * w + Math.max(0, x - 1);
+        var right = y * w + Math.min(w - 1, x + 1);
+        var top = Math.max(0, y - 1) * w + x;
+        var bottom = Math.min(h - 1, y + 1) * w + x;
+        var edge = Math.abs(lum[right] - lum[left]) + Math.abs(lum[bottom] - lum[top]);
+        var edgeT = Math.min(1, edge / 180) * edgeBoost;
+        r *= 1 - edgeT;
+        g *= 1 - edgeT;
+        b *= 1 - edgeT;
+
+        r = r * (1 - tint) + paperColor[0] * tint;
+        g = g * (1 - tint) + paperColor[1] * tint;
+        b = b * (1 - tint) + paperColor[2] * tint;
+
+        var fiber = (watercolorNoise(Math.floor(x / 2), y, 2) - 0.5) * grain;
+        var cloud = (watercolorNoise(Math.floor(x / 18), Math.floor(y / 18), 7) - 0.5) * grain * 0.8;
+        var pigment = 1 + (watercolorNoise(Math.floor(x / 9), Math.floor(y / 9), 11) - 0.5) * wash * 0.10;
+        r = r * pigment + fiber + cloud;
+        g = g * pigment + fiber + cloud;
+        b = b * pigment + fiber + cloud;
+
+        dst[i] = Math.max(0, Math.min(255, Math.round(r)));
+        dst[i + 1] = Math.max(0, Math.min(255, Math.round(g)));
+        dst[i + 2] = Math.max(0, Math.min(255, Math.round(b)));
+        dst[i + 3] = src[i + 3];
+      }
+    }
+
+    ctx.putImageData(out, 0, 0);
+
+    if (bleed > 0.15) {
+      blurCtx.clearRect(0, 0, w, h);
+      blurCtx.filter = 'blur(' + Math.max(2, Math.round(blurRadius * 1.6)) + 'px)';
+      blurCtx.drawImage(ctx.canvas, 0, 0, w, h);
+      blurCtx.filter = 'none';
+      ctx.save();
+      ctx.globalAlpha = 0.10 + bleed * 0.10;
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.drawImage(blurCanvas, -1, 1);
+      ctx.drawImage(blurCanvas, 1, -1);
+      ctx.restore();
+    }
+
+    if (paper > 0.2) {
+      ctx.save();
+      ctx.globalAlpha = paper * 0.08;
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.strokeStyle = '#d8cdb8';
+      ctx.lineWidth = 1;
+      var gap = Math.max(7, Math.round(14 - paper * 6));
+      for (var yy = 0; yy < h; yy += gap) {
+        ctx.beginPath();
+        for (var xx = 0; xx <= w; xx += 18) {
+          var wobble = (watercolorNoise(xx, yy, 19) - 0.5) * 2.5;
+          if (xx === 0) ctx.moveTo(xx, yy + wobble);
+          else ctx.lineTo(xx, yy + wobble);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
   function applyDuotone(imageData, darkHex, lightHex) {
     var d = imageData.data;
     var dk = hexToRgb(darkHex);
@@ -2178,6 +2328,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.putImageData(imgData2,0,0);
     } else if (exportStyle==='circuit') {
       applyCircuit(ctx, out.width, out.height);
+    } else if (exportStyle==='watercolor') {
+      applyWatercolor(ctx, out.width, out.height);
     }
     // Bake frame
     bakeFrame(ctx, out.width, out.height);

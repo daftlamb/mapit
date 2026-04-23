@@ -2,45 +2,53 @@
 
 > Any place. Any style. Poster-ready.
 
-Map It is a map poster generator. Search any city or location, choose a visual style, adjust pitch and bearing, add a caption — then export as a high-resolution image.
+Map It is a single-file map poster generator. Search for a city, address, or coordinate, style the map, add captions and markers, then export a high-resolution poster image.
 
----
+## What It Does
 
-## What it does
-
-Map It turns any location into a designed poster. Built on MapLibre GL, it renders vector maps in real time with full 3D tilt and rotation support. Style it, frame it, export it.
-
----
+Map It renders interactive vector maps in the browser and turns the current view into a designed poster. The export pipeline composites the map canvas, overlays, captions, frames, badges, and post-processing effects into a final image.
 
 ## Features
 
-- **Search anywhere** — city, address, or coordinates
-- **Multiple map styles** — switch between visual themes (minimal, satellite, dark, etc.)
-- **3D view** — adjust pitch (0–85°) and bearing (−180°–180°) for dramatic perspectives
-- **3D buildings** — extruded building layers on supported styles
-- **Place labels** — toggle on/off
-- **Caption** — add custom text below the map
-- **Emoji stamps** — decorate with location markers
-- **Export PNG** — high-resolution poster output
-
----
+- Search by city, address, place, or coordinates
+- Multiple map color presets
+- Manual water, land, road, and label color controls
+- 3D pitch, bearing, and building extrusion controls
+- Label, road name, boundary, building, and satellite toggles
+- Caption, marker, coordinate stamp, and city badge overlays
+- Poster frames, vignette overlays, and export ratios
+- Export styles: Normal, Dither, Halftone, Duotone, Circuit, and Watercolor
+- High-resolution PNG export
 
 ## Tech
 
-- [MapLibre GL JS](https://maplibre.org/) v4
-- Canvas 2D for export compositing
-- No backend. No framework. One HTML file.
+- Mapbox GL JS for browser map rendering
+- OpenFreeMap / OpenStreetMap-based vector map data
+- Nominatim for location search
+- Wikipedia summary API for optional place captions
+- Canvas 2D for export compositing and post-processing effects
+- No backend, no framework, one main HTML file
 
----
+Map service credentials are intentionally not documented here. Keep production keys restricted and do not expose private credentials in public documentation.
 
-## Try it
+## Watercolor Effect
 
-→ **[mapitapp.cc](https://mapitapp.cc)**
+The watercolor style is implemented as a canvas post-processing effect. It does not replace the map renderer. The app first renders the map normally, then applies a watercolor pass during preview and export:
 
----
+- soft wash by blending the map with a blurred copy
+- light desaturation and paper-toned color lift
+- edge bleed based on local luminance contrast
+- deterministic paper grain and fiber texture
+- shared preview/export function so the on-screen preview matches the final PNG
 
-## Made by
+This keeps the project single-file and avoids external texture assets that could taint the export canvas.
+
+## Try It
+
+[mapitapp.cc](https://mapitapp.cc)
+
+## Made By
 
 Design by [Mog](mailto:daftlamb@gmail.com)
 
-Part of the *\*It* series of single-purpose creative tools.
+Part of the It series of single-purpose creative tools.
