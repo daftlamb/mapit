@@ -1098,32 +1098,36 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       var railW = Math.max(30, r.width * 0.14);
       var topBand = Math.max(18, r.height * 0.08);
       var bottomBand = Math.max(20, r.height * 0.11);
-      var paper = document.createElement('div');
-      paper.style.cssText='position:absolute;inset:0;background:'+tc+';opacity:.92';
       var rail = document.createElement('div');
-      rail.style.cssText='position:absolute;left:0;top:0;width:'+railW+'px;height:100%;border-right:1px dashed '+ti+';opacity:.55';
+      rail.style.cssText='position:absolute;left:0;top:0;width:'+railW+'px;height:100%;background:'+tc+';border-right:1px dashed '+ti+';opacity:.95';
       var top = document.createElement('div');
-      top.style.cssText='position:absolute;left:0;top:0;width:100%;height:'+topBand+'px;border-bottom:1px solid '+ti+';opacity:.45';
+      top.style.cssText='position:absolute;left:0;top:0;width:100%;height:'+topBand+'px;background:'+tc+';border-bottom:1px solid '+ti+';opacity:.95';
       var bottom = document.createElement('div');
-      bottom.style.cssText='position:absolute;left:0;bottom:0;width:100%;height:'+bottomBand+'px;border-top:1px solid '+ti+';opacity:.45';
-      frameOverlay.appendChild(paper);
+      bottom.style.cssText='position:absolute;left:0;bottom:0;width:100%;height:'+bottomBand+'px;background:'+tc+';border-top:1px solid '+ti+';opacity:.95';
       frameOverlay.appendChild(rail);
       frameOverlay.appendChild(top);
       frameOverlay.appendChild(bottom);
+      var windowRect = document.createElement('div');
+      windowRect.style.cssText='position:absolute;left:'+railW+'px;top:'+topBand+'px;width:'+(r.width-railW)+'px;height:'+(r.height-topBand-bottomBand)+'px;border:1px solid rgba(0,0,0,.12);pointer-events:none';
+      frameOverlay.appendChild(windowRect);
       var marks = Math.max(8, Math.floor(r.height / (pw*2)));
       for (var i=0;i<=marks;i++) {
-        var dot = document.createElement('div');
         var y = (i / marks) * r.height;
+        var dot = document.createElement('div');
         dot.style.cssText='position:absolute;left:'+Math.round(railW-1)+'px;top:'+(y-pw*0.35)+'px;width:'+Math.round(pw*0.7)+'px;height:'+Math.round(pw*0.7)+'px;border-radius:50%;background:rgba(0,0,0,.14);mix-blend-mode:multiply';
         frameOverlay.appendChild(dot);
       }
+      var head = document.createElement('div');
+      head.style.cssText='position:absolute;left:'+(railW+10)+'px;top:6px;font-family:Outfit,"Noto Sans SC",sans-serif;font-size:'+Math.max(10,Math.round(r.width*0.022))+'px;letter-spacing:.08em;color:'+ti+';opacity:.9;font-weight:500';
+      head.textContent = 'MAP TICKET';
+      frameOverlay.appendChild(head);
       var serial = document.createElement('div');
       serial.style.cssText='position:absolute;left:8px;top:'+(topBand+8)+'px;writing-mode:vertical-rl;text-orientation:mixed;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:'+Math.max(9,Math.round(r.width*0.016))+'px;letter-spacing:.08em;color:'+ti+';opacity:.82';
       serial.textContent = (document.getElementById('ticket-serial').value || 'MAP-2049-07').toUpperCase();
       frameOverlay.appendChild(serial);
       if (document.getElementById('ticket-date').checked) {
         var stamp = document.createElement('div');
-        stamp.style.cssText='position:absolute;right:10px;bottom:'+(bottomBand+8)+'px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:'+Math.max(9,Math.round(r.width*0.014))+'px;letter-spacing:.09em;color:'+ti+';opacity:.72';
+        stamp.style.cssText='position:absolute;right:10px;bottom:8px;font-family:Outfit,"Noto Sans SC",sans-serif;font-size:'+Math.max(9,Math.round(r.width*0.014))+'px;letter-spacing:.09em;color:'+ti+';opacity:.8';
         var d = new Date();
         var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
         stamp.textContent = ds;
@@ -3329,11 +3333,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var bottomBand = Math.max(20, fh * 0.11);
       ctx.save();
       ctx.fillStyle = tc;
-      ctx.globalAlpha = 0.92;
-      ctx.fillRect(0,0,fw,fh);
-      ctx.globalAlpha = 1;
-      ctx.strokeStyle = ti;
+      ctx.globalAlpha = 0.95;
+      ctx.fillRect(0,0,railW,fh);
+      ctx.fillRect(0,0,fw,topBand);
+      ctx.fillRect(0,fh-bottomBand,fw,bottomBand);
       ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = ti;
       ctx.beginPath();
       ctx.moveTo(0, topBand); ctx.lineTo(fw, topBand);
       ctx.moveTo(0, fh-bottomBand); ctx.lineTo(fw, fh-bottomBand);
@@ -3352,8 +3357,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         ctx.arc(railW, y, rad, 0, Math.PI*2);
         ctx.fill();
       }
-      ctx.globalAlpha = 0.82;
+      ctx.globalAlpha = 0.9;
       ctx.fillStyle = ti;
+      ctx.font = '500 '+Math.max(10,Math.round(fw*0.022))+'px Outfit,"Noto Sans SC",sans-serif';
+      ctx.textAlign='left';
+      ctx.textBaseline='middle';
+      ctx.fillText('MAP TICKET', railW+10, topBand*0.5);
       ctx.font = '500 '+Math.max(10,Math.round(fw*0.016))+'px ui-monospace,SFMono-Regular,Menlo,monospace';
       ctx.save();
       ctx.translate(12, topBand+8);
@@ -3364,11 +3373,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       if (document.getElementById('ticket-date').checked) {
         var d = new Date();
         var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-        ctx.globalAlpha = 0.72;
+        ctx.globalAlpha = 0.8;
         ctx.textAlign='right';
-        ctx.textBaseline='bottom';
-        ctx.font = '500 '+Math.max(9,Math.round(fw*0.014))+'px ui-monospace,SFMono-Regular,Menlo,monospace';
-        ctx.fillText(ds, fw-10, fh-bottomBand-8);
+        ctx.textBaseline='middle';
+        ctx.font = '500 '+Math.max(9,Math.round(fw*0.014))+'px Outfit,"Noto Sans SC",sans-serif';
+        ctx.fillText(ds, fw-10, fh - bottomBand*0.5);
       }
       ctx.restore();
     } else if (frameStyle==='border') {
