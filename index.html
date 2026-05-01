@@ -670,6 +670,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn active" data-frame="none">None</button>
         <button class="btn size-btn" data-frame="polaroid">Polaroid</button>
         <button class="btn size-btn" data-frame="border">Border</button>
+        <button class="btn size-btn" data-frame="ticket">Ticket</button>
       </div>
       <div id="frame-options-common" style="display:none;margin-bottom:10px">
         <div class="vignette-row vig-opacity-row">
@@ -697,6 +698,31 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <span>Width</span>
           <input type="range" id="border-width" min="4" max="60" value="16" style="flex:1;accent-color:var(--accent)" />
           <span id="border-width-val" style="width:28px;text-align:right">16</span>
+        </div>
+      </div>
+      <div id="frame-options-ticket" style="display:none">
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Ticket color</span>
+          <input type="color" id="ticket-color" value="#f6f1e6" />
+        </div>
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Ink color</span>
+          <input type="color" id="ticket-ink" value="#2a241c" />
+        </div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Serial</span>
+          <input type="text" id="ticket-serial" value="MAP-2049-07" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:11px;outline:none;margin-left:8px" />
+        </div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Perforation</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="range" id="ticket-perf" min="8" max="24" value="14" style="width:80px">
+            <span id="ticket-perf-val" style="font-size:11px;color:var(--muted);width:22px">14</span>
+          </div>
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Date stamp</span>
+          <input type="checkbox" id="ticket-date" checked style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         </div>
       </div>
       <!-- Coord stamp — shown when frame != none -->
@@ -967,6 +993,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     document.getElementById('coord-size-val').textContent = this.value;
     updateFrameOverlay();
   });
+  document.getElementById('ticket-perf').addEventListener('input', function() {
+    document.getElementById('ticket-perf-val').textContent = this.value;
+    updateFrameOverlay();
+  });
   document.getElementById('ht-size').addEventListener('input', function() {
     document.getElementById('ht-size-val').textContent = this.value;
     if (exportStyle !== 'normal') schedulePreview();
@@ -986,14 +1016,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
       document.getElementById('frame-options-common').style.display = frameStyle==='none' ? 'none' : 'block';
-      ['polaroid','border'].forEach(function(t){
+      ['polaroid','border','ticket'].forEach(function(t){
         document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
       });
       updateFrameOverlay();
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','frame-radius'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','frame-radius','ticket-color','ticket-ink','ticket-serial','ticket-date'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateFrameOverlay);
   });
@@ -1061,6 +1091,44 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         bottom.appendChild(span);
       }
       frameOverlay.appendChild(bottom);
+    } else if (frameStyle === 'ticket') {
+      var tc = document.getElementById('ticket-color').value;
+      var ti = document.getElementById('ticket-ink').value;
+      var pw = parseInt(document.getElementById('ticket-perf').value) || 14;
+      var railW = Math.max(30, r.width * 0.14);
+      var topBand = Math.max(18, r.height * 0.08);
+      var bottomBand = Math.max(20, r.height * 0.11);
+      var paper = document.createElement('div');
+      paper.style.cssText='position:absolute;inset:0;background:'+tc+';opacity:.92';
+      var rail = document.createElement('div');
+      rail.style.cssText='position:absolute;left:0;top:0;width:'+railW+'px;height:100%;border-right:1px dashed '+ti+';opacity:.55';
+      var top = document.createElement('div');
+      top.style.cssText='position:absolute;left:0;top:0;width:100%;height:'+topBand+'px;border-bottom:1px solid '+ti+';opacity:.45';
+      var bottom = document.createElement('div');
+      bottom.style.cssText='position:absolute;left:0;bottom:0;width:100%;height:'+bottomBand+'px;border-top:1px solid '+ti+';opacity:.45';
+      frameOverlay.appendChild(paper);
+      frameOverlay.appendChild(rail);
+      frameOverlay.appendChild(top);
+      frameOverlay.appendChild(bottom);
+      var marks = Math.max(8, Math.floor(r.height / (pw*2)));
+      for (var i=0;i<=marks;i++) {
+        var dot = document.createElement('div');
+        var y = (i / marks) * r.height;
+        dot.style.cssText='position:absolute;left:'+Math.round(railW-1)+'px;top:'+(y-pw*0.35)+'px;width:'+Math.round(pw*0.7)+'px;height:'+Math.round(pw*0.7)+'px;border-radius:50%;background:rgba(0,0,0,.14);mix-blend-mode:multiply';
+        frameOverlay.appendChild(dot);
+      }
+      var serial = document.createElement('div');
+      serial.style.cssText='position:absolute;left:8px;top:'+(topBand+8)+'px;writing-mode:vertical-rl;text-orientation:mixed;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:'+Math.max(9,Math.round(r.width*0.016))+'px;letter-spacing:.08em;color:'+ti+';opacity:.82';
+      serial.textContent = (document.getElementById('ticket-serial').value || 'MAP-2049-07').toUpperCase();
+      frameOverlay.appendChild(serial);
+      if (document.getElementById('ticket-date').checked) {
+        var stamp = document.createElement('div');
+        stamp.style.cssText='position:absolute;right:10px;bottom:'+(bottomBand+8)+'px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:'+Math.max(9,Math.round(r.width*0.014))+'px;letter-spacing:.09em;color:'+ti+';opacity:.72';
+        var d = new Date();
+        var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        stamp.textContent = ds;
+        frameOverlay.appendChild(stamp);
+      }
     } else if (frameStyle === 'border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
@@ -1108,10 +1176,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
     var el = document.createElement('div');
     el.className = 'coord-stamp';
     var pad = 10;
-    var bottomH = frameStyle==='polaroid' ? Math.max(48, r.height*0.14) : 0;
+    var bottomH = frameStyle==='polaroid' ? Math.max(48, r.height*0.14) : (frameStyle==='ticket' ? Math.max(20, r.height*0.11) : 0);
     var borderW = frameStyle==='border' ? (parseInt(document.getElementById('border-width').value)||16) : 0;
     var bottomInset = bottomH + borderW + pad;
-    var sideInset = (frameStyle==='polaroid' ? Math.max(10, r.width*0.04) : borderW) + pad;
+    var sideInset = (frameStyle==='polaroid' ? Math.max(10, r.width*0.04) : (frameStyle==='ticket' ? Math.max(30, r.width*0.14) : borderW)) + pad;
     var align = pos==='left' ? 'left:'+sideInset+'px' : pos==='right' ? 'right:'+sideInset+'px' : 'left:50%;transform:translateX(-50%)';
     var textShadow = shadow ? '0 1px 4px rgba(0,0,0,0.55)' : 'none';
     el.style.cssText = 'position:absolute;bottom:'+bottomInset+'px;'+align+';font-family:Outfit,sans-serif;font-size:'+fs+'px;font-weight:300;letter-spacing:.1em;color:'+color+';text-shadow:'+textShadow+';pointer-events:none;white-space:nowrap';
@@ -3252,6 +3320,57 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         ctx.textBaseline = 'middle';
         ctx.fillText(capText, fw/2, fh - bottomH/2);
       }
+    } else if (frameStyle==='ticket') {
+      var tc = document.getElementById('ticket-color').value;
+      var ti = document.getElementById('ticket-ink').value;
+      var perf = parseInt(document.getElementById('ticket-perf').value)||14;
+      var railW = Math.max(30, fw * 0.14);
+      var topBand = Math.max(18, fh * 0.08);
+      var bottomBand = Math.max(20, fh * 0.11);
+      ctx.save();
+      ctx.fillStyle = tc;
+      ctx.globalAlpha = 0.92;
+      ctx.fillRect(0,0,fw,fh);
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = ti;
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath();
+      ctx.moveTo(0, topBand); ctx.lineTo(fw, topBand);
+      ctx.moveTo(0, fh-bottomBand); ctx.lineTo(fw, fh-bottomBand);
+      ctx.stroke();
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(railW, 0); ctx.lineTo(railW, fh);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 0.14;
+      var marks = Math.max(8, Math.floor(fh / (perf*2)));
+      for (var i=0;i<=marks;i++) {
+        var y = (i / marks) * fh;
+        var rad = Math.max(2, perf*0.35);
+        ctx.beginPath();
+        ctx.arc(railW, y, rad, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 0.82;
+      ctx.fillStyle = ti;
+      ctx.font = '500 '+Math.max(10,Math.round(fw*0.016))+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+      ctx.save();
+      ctx.translate(12, topBand+8);
+      ctx.rotate(-Math.PI/2);
+      var serial = (document.getElementById('ticket-serial').value || 'MAP-2049-07').toUpperCase();
+      ctx.fillText(serial, 0, 0);
+      ctx.restore();
+      if (document.getElementById('ticket-date').checked) {
+        var d = new Date();
+        var ds = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+        ctx.globalAlpha = 0.72;
+        ctx.textAlign='right';
+        ctx.textBaseline='bottom';
+        ctx.font = '500 '+Math.max(9,Math.round(fw*0.014))+'px ui-monospace,SFMono-Regular,Menlo,monospace';
+        ctx.fillText(ds, fw-10, fh-bottomBand-8);
+      }
+      ctx.restore();
     } else if (frameStyle==='border') {
       var bc = document.getElementById('border-color').value;
       var bw = parseInt(document.getElementById('border-width').value)||16;
@@ -3311,10 +3430,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var fs = baseFontSize * (fw / 600);
     fs = Math.max(8, Math.min(fs, 32));
     var pad = Math.max(8, fs * 1.0);
-    var bottomH = frameStyle==='polaroid' ? Math.max(48, fh*0.14) : 0;
+    var bottomH = frameStyle==='polaroid' ? Math.max(48, fh*0.14) : (frameStyle==='ticket' ? Math.max(20, fh*0.11) : 0);
     var borderW = frameStyle==='border' ? Math.round((parseInt(document.getElementById('border-width').value)||16) * fw / 400) : 0;
     var y = fh - bottomH - borderW - pad;
-    var sideInset = (frameStyle==='polaroid' ? Math.max(10, fw*0.04) : borderW) + pad;
+    var sideInset = (frameStyle==='polaroid' ? Math.max(10, fw*0.04) : (frameStyle==='ticket' ? Math.max(30, fw*0.14) : borderW)) + pad;
     ctx.save();
     ctx.font = '300 '+fs+'px Outfit,sans-serif';
     ctx.textBaseline = 'bottom';
