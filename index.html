@@ -21,6 +21,8 @@ header{height:var(--header-h);background:var(--header-bg);border-bottom:1px soli
 .header-spacer{flex:1}
 .btn-icon{background:none;border:1px solid var(--border);color:var(--text);border-radius:6px;height:28px;cursor:pointer;font-family:inherit;font-size:12px;padding:0 8px;transition:border-color .15s,color .15s}
 .btn-icon:hover{border-color:var(--accent);color:var(--accent)}
+#btn-darkmode{width:18px;height:18px;min-width:18px;padding:0;border-radius:50%;font-size:0;line-height:0;background:linear-gradient(90deg,#111 50%,#f5f5f5 50%);border:1px solid var(--border)}
+[data-theme="dark"] #btn-darkmode{background:linear-gradient(90deg,#f5f5f5 50%,#111 50%);}
 #app{display:flex;flex:1;min-height:0}
 #panel{width:300px;flex-shrink:0;background:var(--panel-bg);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .panel-section{padding:14px 16px;border-bottom:1px solid var(--border)}
@@ -404,7 +406,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="inkland">Ink Land</option>
             <option value="mineral">Mineral</option>
             <option value="sunset">Sunset</option>
-            <option value="custom">Custom��</option>
+            <option value="custom">Custom��</option>
           </select>
         </div>
         <div id="blob-custom-colors" style="display:none;gap:8px;flex-direction:column">
@@ -713,7 +715,7 @@ hello this is my txt design</textarea>
         </div>
 
       </div>
-      <!-- Coord stamp �?shown when frame != none -->
+      <!-- Coord stamp �?shown when frame != none -->
       <div id="coord-stamp-options" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div class="vignette-row" style="margin-bottom:8px">
           <span style="font-size:11px;color:var(--muted)">Coordinates</span>
@@ -785,14 +787,24 @@ hello this is my txt design</textarea>
 
 <!-- Coffee modal -->
 <div class="modal-backdrop" id="coffee-modal">
-  <div class="modal-box" style="text-align:center">
+  <div class="modal-box" style="text-align:center;max-width:360px">
     <button class="modal-close" id="coffee-close">&#10005;</button>
-    <h3>Buy me a coffee / Support Map It</h3>
-    <p style="margin-bottom:12px">Map It is free. If it helps, you can scan to support the project.</p>
+    <h3>Support Map It</h3>
+    <p style="margin-bottom:8px">Map It is free. If it helps, you can scan to support the project.</p>
+    <p style="margin-bottom:8px">Create elegant map posters for journals, travel notes, and wallpapers.</p>
+    <p style="margin-bottom:10px">contact: <a href="mailto:mog@mogmogmog.com">mog@mogmogmog.com</a></p>
+    <img src="support-qr.jpg" alt="support qr" style="width:160px;height:160px;display:block;margin:0 auto 8px auto;object-fit:contain;border-radius:6px;border:1px solid var(--border)">
+    <p style="margin-top:8px;font-size:11px">Also try: <a href="https://badgeitapp.com/" target="_blank">Badge It</a> | <a href="https://griditapp.com/" target="_blank">Grid It</a> | <a href="https://ditheritapp.com/" target="_blank">Dither It</a></p>
+    <p style="margin-top:8px;font-size:10px;color:var(--muted)">Map data (c) <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Mapbox | OpenStreetMap</p>
+    <button class="btn btn-wide" id="btn-export-skip" style="margin-top:10px">download free</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="about-modal">
+  <div class="modal-box" style="text-align:center">
+    <button class="modal-close" id="about-close">&#10005;</button>
+    <h3>About Map It</h3>
     <p>Create elegant map posters for journals, travel notes, and wallpapers.</p>
-    <p>contact: <a href="mailto:hello@mapitapp.com">hello@mapitapp.com</a></p>
-    <p style="margin-top:10px;font-size:11px">Also try: <a href="https://badgeitapp.com" target="_blank">Badge It</a> | <a href="https://griditapp.com" target="_blank">Grid It</a> | <a href="https://ditheritapp.com" target="_blank">Dither It</a></p>
-    <p style="margin-top:10px;font-size:10px;color:var(--muted)">Map data (c) <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Mapbox | OpenStreetMap</p>
   </div>
 </div>
 
@@ -1428,7 +1440,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var t = (h - 19) / 2;
       return [lerpColor('#ff9944','#8822aa',t), lerpColor('#b85520','#441166',t), 0.5];
     } else {
-      // Late evening �?night
+      // Late evening �?night
       var t = (h - 21) / 1;
       return [lerpColor('#8822aa','#1a2035',t), lerpColor('#441166','#0d1220',t), 0.6];
     }
@@ -1450,7 +1462,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var hour = parseFloat(document.getElementById('sun-time').value) || 15;
       var sc = getSunColors(hour);
       var lightCol = sc[0], shadowCol = sc[1], ao = sc[2];
-      // Top faces get light color, base gets shadow �?via height interpolation
+      // Top faces get light color, base gets shadow �?via height interpolation
       map.setPaintProperty('building-3d','fill-extrusion-color',[
         'interpolate',['linear'],
         ['coalesce',['get','height'],['*',['+',2,['%',['coalesce',['id'],1],22]],3.5]],
@@ -1633,7 +1645,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById('caption-text').value = lastWikiText;
   });
 
-  // Coord helper �?used by bakeFrame
+  // Coord helper �?used by bakeFrame
   // getCoordStr inlined in bakeCoordOnMap / renderCoordStampDOM
 
   var emojiGrid=document.getElementById('emoji-grid');
@@ -1669,7 +1681,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if(markers.length>=10){alert('Max 10 markers');return;}
     addingMarker=!addingMarker;
     btnAddMarker.classList.toggle('adding',addingMarker);
-    btnAddMarker.textContent=addingMarker?'�?cancel':'+ add marker';
+    btnAddMarker.textContent=addingMarker?'�?cancel':'+ add marker';
     map.getCanvas().style.cursor=addingMarker?'crosshair':'';
   });
 
@@ -1728,7 +1740,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       row.className='marker-item';
       row.innerHTML='<div class="marker-emoji">'+m.emoji+'</div>'
         +'<div class="marker-name">'+(m.name||(m.lnglat[1].toFixed(3)+', '+m.lnglat[0].toFixed(3)))+'</div>'
-        +'<button class="marker-del" data-idx="'+i+'">�?/button>';
+        +'<button class="marker-del" data-idx="'+i+'">�?/button>';
       row.querySelector('.marker-del').addEventListener('click',function(){
         var idx=parseInt(this.dataset.idx);
         markers[idx].mapMarker.remove();
@@ -2050,6 +2062,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       applyCircuit(previewCtx, sw, sh);
     } else if (exportStyle === 'watercolor') {
       applyWatercolor(previewCtx, sw, sh);
+    } else if (exportStyle === 'blob') {
+      applyBlob(previewCtx, sw, sh);
     }
   }
 
@@ -2426,9 +2440,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     function lum(i){ return d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114; }
     function idx(x,y){ return (Math.max(0,Math.min(h-1,y))*w + Math.max(0,Math.min(w-1,x)))*4; }
 
-    // Directional Sobel kernels �?4 edge maps
-    // gH: horizontal edges (vertical lines) [�?,0,1] across rows
-    // gV: vertical edges (horizontal lines) [�?,0,1] down cols
+    // Directional Sobel kernels �?4 edge maps
+    // gH: horizontal edges (vertical lines) [�?,0,1] across rows
+    // gV: vertical edges (horizontal lines) [�?,0,1] down cols
     // gD1: 45° diagonal  NE-SW
     // gD2: 135° diagonal NW-SE
     var gH  = new Float32Array(w*h);
@@ -2470,7 +2484,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       od[i*4]=bgRgb[0];od[i*4+1]=bgRgb[1];od[i*4+2]=bgRgb[2];od[i*4+3]=255;
     }
 
-    // Blend each directional edge �?strongest direction wins, additive if similar strength
+    // Blend each directional edge �?strongest direction wins, additive if similar strength
     for (var y2=0;y2<h;y2++) {
       for (var x2=0;x2<w;x2++) {
         var p2=y2*w+x2;
@@ -3175,7 +3189,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return imageData;
   }
 
-  // Export �?bakes map + gradient + captions
+  // Export �?bakes map + gradient + captions
   function buildExportCanvas() {
     var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
     var ratio=ratioMap[currentRatio]||1;
@@ -3309,7 +3323,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     } else if (frameStyle==='ticket') {
       bakeTicketFrame(ctx, fw, fh);
     }
-    // Coord stamp �?baked onto map image at bottom edge
+    // Coord stamp �?baked onto map image at bottom edge
     bakeCoordOnMap(ctx, fw, fh);
   }
 
@@ -3422,8 +3436,25 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return (r*0.299+g*0.587+b*0.114) > 160;
   }
 
+  function getTicketOnlyCanvas(base) {
+    if (frameStyle !== 'ticket') return base;
+    var layout = getTicketLayout(base.width, base.height, 0, 0);
+    var out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(layout.w));
+    out.height = Math.max(1, Math.round(layout.h));
+    var ctx = out.getContext('2d');
+    var bodyPath = new Path2D(buildTicketBodyPath(layout));
+    ctx.save();
+    ctx.translate(-layout.x, -layout.y);
+    ctx.clip(bodyPath);
+    ctx.drawImage(base, 0, 0);
+    ctx.restore();
+    return out;
+  }
+
   function doExportPng() {
     var out = buildExportCanvas();
+    out = getTicketOnlyCanvas(out);
     var a=document.createElement('a');
     a.href=out.toDataURL('image/png');
     a.download='mapit-export.png';
@@ -3432,6 +3463,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   function doExportSvg() {
     var out = buildExportCanvas();
+    out = getTicketOnlyCanvas(out);
     var dataUrl = out.toDataURL('image/png');
     var w = out.width, h = out.height;
     var svg = '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -3449,29 +3481,38 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   // Export / coffee modal
-  document.getElementById('btn-export').addEventListener('click',function(){pendingExport='png';document.getElementById('coffee-modal').style.display='flex';});
+  document.getElementById('btn-export').addEventListener('click',function(){
+    pendingExport = null;
+    doExportPng();
+  });
   document.getElementById('btn-export-svg').addEventListener('click',function(){pendingExport='svg';document.getElementById('coffee-modal').style.display='flex';});
-  document.getElementById('btn-export-skip').addEventListener('click',function(){
-    document.getElementById('coffee-modal').style.display='none';
+  function byId(id){ return document.getElementById(id); }
+  var btnSkip = byId('btn-export-skip');
+  if (btnSkip) btnSkip.addEventListener('click',function(){
+    byId('coffee-modal').style.display='none';
     var pe=pendingExport;pendingExport=null;
     if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();
   });
-  document.getElementById('coffee-close').addEventListener('click',function(){
-    document.getElementById('coffee-modal').style.display='none';
-    var pe=pendingExport;pendingExport=null;
-    if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();
+  var coffeeClose = byId('coffee-close');
+  if (coffeeClose) coffeeClose.addEventListener('click',function(){
+    byId('coffee-modal').style.display='none';
+    pendingExport=null;
   });
-  document.getElementById('coffee-modal').addEventListener('click',function(e){
-    if(e.target===document.getElementById('coffee-modal')){
-      document.getElementById('coffee-modal').style.display='none';
-      var pe=pendingExport;pendingExport=null;
-      if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();
+  var coffeeModal = byId('coffee-modal');
+  if (coffeeModal) coffeeModal.addEventListener('click',function(e){
+    if(e.target===coffeeModal){
+      coffeeModal.style.display='none';
+      pendingExport=null;
     }
   });
-  document.getElementById('btn-coffee').addEventListener('click',function(){pendingExport=null;document.getElementById('coffee-modal').style.display='flex';});
-  document.getElementById('btn-about').addEventListener('click',function(){document.getElementById('about-modal').style.display='flex';});
-  document.getElementById('about-close').addEventListener('click',function(){document.getElementById('about-modal').style.display='none';});
-  document.getElementById('about-modal').addEventListener('click',function(e){if(e.target===document.getElementById('about-modal'))document.getElementById('about-modal').style.display='none';});
+  var btnCoffee = byId('btn-coffee');
+  if (btnCoffee) btnCoffee.addEventListener('click',function(){pendingExport=null;byId('coffee-modal').style.display='flex';});
+  var btnAbout = byId('btn-about');
+  if (btnAbout) btnAbout.addEventListener('click',function(){ var m=byId('about-modal'); if(m) m.style.display='flex'; });
+  var aboutClose = byId('about-close');
+  if (aboutClose) aboutClose.addEventListener('click',function(){ var m=byId('about-modal'); if(m) m.style.display='none'; });
+  var aboutModal = byId('about-modal');
+  if (aboutModal) aboutModal.addEventListener('click',function(e){if(e.target===aboutModal) aboutModal.style.display='none';});
 
   // Dark mode
   var darkMode=false;
@@ -3479,7 +3520,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   // ── City Badge ──────────────────────────────────────────────────────────────
 
-  // Grid cell size (px) �?unified for text, map outline, and border stitches
+  // Grid cell size (px) �?unified for text, map outline, and border stitches
   var CB_CELL = 4;
   var CB_BF_W = 4, CB_BF_H = 6, CB_BF_GAP = 1;
   // Small 3×5 font for coordinates
@@ -3990,7 +4031,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
       img.draggable = false;
 
-      // Position at crop bottom-right, 16px inset �?wait for image to load
+      // Position at crop bottom-right, 16px inset �?wait for image to load
       img.style.left = '0px';
       img.style.top = '0px';
       captionLayer.appendChild(img);
