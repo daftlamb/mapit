@@ -1216,7 +1216,7 @@ function getTicketCopyLines() {
     meta.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+layout.dateY+"px;width:"+(layout.w * 0.2)+"px;color:"+ti+";pointer-events:none;font-family:'Perfograma','Bebas Neue',Outfit,sans-serif;font-weight:400;line-height:0.94;letter-spacing:.02em;";
     meta.innerHTML =
       '<div style="font-size:'+dateFs+'px;line-height:0.92;">'+dt.yearLine+'</div>' +
-      '<div style="font-size:'+dateFs+'px;margin-top:'+Math.round(layout.h * 0.04)+'px;line-height:0.92;">'+dt.dateLine+'</div>';
+      '<div style="font-size:'+dateFs+'px;margin-top:'+Math.round(layout.h * 0.04 * 0.85)+'px;line-height:0.92;">'+dt.dateLine+'</div>';
     frameOverlay.appendChild(meta);
 
     var cityTop = layout.dateY + dateFs * 2.25;
