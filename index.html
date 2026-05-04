@@ -3559,8 +3559,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     ctx.drawImage(barcodeCanvas, barBox.x, barBox.y + 20, barW, barH);
 
     var serialFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
-    // Export only: set barcode-side text scale to 1.0, keep same anchors.
-    serialFs = Math.max(6, Math.round(serialFs * 1.00));
+    // Export only: slightly reduce baseline text scale for PC overflow safety.
+    serialFs = Math.max(6, Math.round(serialFs * 0.90));
     var sideX = Math.max(serialFs + 4, barBox.x - 20);
 
     function fitVerticalFontSize(text, fs, maxLen) {
@@ -3575,8 +3575,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       return 6;
     }
 
-    // Keep shared size, but clamp to barcode height to prevent overflow on PC.
-    var targetLen = Math.max(0, barBox.h * 0.78);
+    // Keep shared size, but clamp harder for PC export overflow safety.
+    var targetLen = Math.max(0, barBox.h * 0.65);
     var fsTop = fitVerticalFontSize(serialText, serialFs, targetLen);
     var fsBottom = fitVerticalFontSize(coordsText, serialFs, targetLen);
     var sharedFs = Math.max(6, Math.min(fsTop, fsBottom));
