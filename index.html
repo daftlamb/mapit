@@ -3799,7 +3799,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return out;
   }
 
-  function doExportPng() {
+  async function doExportPng() {
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready; } catch(e) {}
+    }
     var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
     var a=document.createElement('a');
     a.href=out.toDataURL('image/png');
@@ -3807,7 +3810,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     a.click();
   }
 
-  function doExportSvg() {
+  async function doExportSvg() {
+    if (document.fonts && document.fonts.ready) {
+      try { await document.fonts.ready; } catch(e) {}
+    }
     var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
     var dataUrl = out.toDataURL('image/png');
     var w = out.width, h = out.height;
