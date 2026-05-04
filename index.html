@@ -3555,8 +3555,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var bctx = barcodeCanvas.getContext('2d');
     bctx.scale(2, 2);
     drawTicketBarcode(bctx, 0, 0, barW, barH, serialText, ti);
-    // Export only: move barcode down 20px.
-    ctx.drawImage(barcodeCanvas, barBox.x, barBox.y + 20, barW, barH);
+    // Export only: move barcode down on Windows (PC) by 23px.
+    var pcBarcodeYOffset = /Windows/i.test(navigator.userAgent) ? 23 : 0;
+    ctx.drawImage(barcodeCanvas, barBox.x, barBox.y + pcBarcodeYOffset, barW, barH);
 
     var serialFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
     // Export only: slightly reduce baseline text scale for PC overflow safety.
