@@ -10,6 +10,7 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
+@font-face{font-family:'Perfograma';src:url('file:///Users/mogsmini/Library/Fonts/Perfograma.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap;}
 :root{--bg:#f5f5f5;--panel-bg:#fff;--border:#e0e0e0;--text:#1a1a1a;--muted:#888;--accent:#39ff14;--header-bg:#fff;--canvas-bg:#eee;--header-h:44px}
 [data-theme="dark"]{--bg:#141414;--panel-bg:#1e1e1e;--border:#2a2a2a;--text:#f0f0f0;--muted:#666;--accent:#39ff14;--header-bg:#0e0e0e;--canvas-bg:#1a1a1a}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -704,6 +705,10 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <span class="color-label">Ink color</span>
           <input type="color" id="ticket-ink" value="#26211c" />
         </div>
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Ticket head</span>
+          <input type="color" id="ticket-head" value="#ea7a0a" />
+        </div>
         <div class="vignette-row" style="margin-bottom:8px">
           <span style="font-size:11px;color:var(--muted)">Serial</span>
           <input type="text" id="ticket-serial" value="4711885157422" style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:11px;outline:none;margin-left:8px" />
@@ -1003,7 +1008,7 @@ hello this is my txt design</textarea>
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-serial','ticket-copy'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-head','ticket-serial','ticket-copy'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.addEventListener('input', updateFrameOverlay);
   });
@@ -1048,7 +1053,7 @@ hello this is my txt design</textarea>
       orangeW: Math.max(5, ticketW * (10.9 / svgW)),
       orangeH: ticketH * (363.05 / svgH),
       dateX: x + ticketW * (58.22 / svgW),
-      dateY: y + ticketH * (20.53 / svgH),
+      dateY: y + ticketH * (43.61 / svgH),
       copyX: x + ticketW * (61.07 / svgW),
       copyY: y + ticketH * (370.2 / svgH),
       copyBottom: y + ticketH * ((20.53 + 393.57) / svgH),
@@ -1063,6 +1068,19 @@ hello this is my txt design</textarea>
       barW: ticketW * (104.04 / svgW),
       barH: ticketH * (348.16 / svgH)
     };
+  }
+
+
+  function getTicketBarBox(layout) {
+    var padX = Math.max(2, layout.w * 0.006);
+    var padY = Math.max(2, layout.h * 0.004);
+    var x = Math.max(layout.x + padX, layout.barX);
+    var y = Math.max(layout.y + padY, layout.barY);
+    var maxW = Math.max(8, (layout.x + layout.w - padX) - x);
+    var maxH = Math.max(24, (layout.y + layout.h - padY) - y);
+    var w = Math.max(18, Math.min(layout.barW, maxW));
+    var h = Math.max(80, Math.min(layout.barH, maxH));
+    return { x:x, y:y, w:w, h:h };
   }
 
   function buildTicketBodyPath(layout) {
@@ -1127,6 +1145,23 @@ hello this is my txt design</textarea>
       dateLine: now.getDate() + " " + months[now.getMonth()].toUpperCase()
     };
   }
+
+  function getTicketCoordsText() {
+    var c = map.getCenter();
+    return Math.abs(c.lat).toFixed(4) + " " + (c.lat >= 0 ? "N" : "S") + " " + Math.abs(c.lng).toFixed(4) + " " + (c.lng >= 0 ? "E" : "W");
+  }
+
+  function getTicketCityText() {
+    var city = "";
+    var s = document.getElementById('search-input');
+    if (s && s.value) city = String(s.value).trim();
+    if (!city) {
+      var c = map.getCenter();
+      city = c.lat.toFixed(2) + ", " + c.lng.toFixed(2);
+    }
+    return city.toUpperCase();
+  }
+
 function getTicketCopyLines() {
     var raw = (document.getElementById("ticket-copy").value || "").split("\r").join("");
     return raw.split("\n").slice(0, 3);
@@ -1138,6 +1173,8 @@ function getTicketCopyLines() {
     var serialText = (document.getElementById("ticket-serial").value || "63736716239819623").toUpperCase();
     var copyLines = getTicketCopyLines();
     var dt = getTicketDateParts();
+    var cityText = getTicketCityText();
+    var coordsText = getTicketCoordsText();
     var layout = getTicketLayout(cropRect.width, cropRect.height, cropRect.left, cropRect.top);
     var svgNS = "http://www.w3.org/2000/svg";
     var svg = document.createElementNS(svgNS, "svg");
@@ -1171,15 +1208,22 @@ function getTicketCopyLines() {
     frameOverlay.appendChild(svg);
 
     var orange = document.createElement("div");
-    orange.style.cssText = "position:absolute;left:"+layout.orangeX+"px;top:"+layout.orangeY+"px;width:"+layout.orangeW+"px;height:"+layout.orangeH+"px;background:#ea7a0a;pointer-events:none;";
+    orange.style.cssText = "position:absolute;left:"+layout.orangeX+"px;top:"+layout.orangeY+"px;width:"+layout.orangeW+"px;height:"+layout.orangeH+"px;background:"+document.getElementById('ticket-head').value+";pointer-events:none;";
     frameOverlay.appendChild(orange);
 
+    var dateFs = Math.round(layout.h * (73.11 / 435.01));
     var meta = document.createElement("div");
-    meta.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+layout.dateY+"px;width:"+(layout.w * 0.2)+"px;color:"+ti+";pointer-events:none;font-family:'Bebas Neue', Outfit, sans-serif;font-weight:400;line-height:0.94;letter-spacing:.02em;";
+    meta.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+layout.dateY+"px;width:"+(layout.w * 0.2)+"px;color:"+ti+";pointer-events:none;font-family:'Perfograma','Bebas Neue',Outfit,sans-serif;font-weight:400;line-height:0.94;letter-spacing:.02em;";
     meta.innerHTML =
-      '<div style="font-size:'+Math.round(layout.h * (73.11 / 435.01))+'px;">'+dt.yearLine+'</div>' +
-      '<div style="font-size:'+Math.round(layout.h * (73.11 / 435.01))+'px;margin-top:'+Math.round(layout.h * 0.03)+'px;">'+dt.dateLine+'</div>';
+      '<div style="font-size:'+dateFs+'px;line-height:0.92;">'+dt.yearLine+'</div>' +
+      '<div style="font-size:'+dateFs+'px;margin-top:'+Math.round(layout.h * 0.04)+'px;line-height:0.92;">'+dt.dateLine+'</div>';
     frameOverlay.appendChild(meta);
+
+    var cityTop = layout.dateY + dateFs * 2.25;
+    var city = document.createElement("div");
+    city.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+cityTop+"px;width:"+(layout.w * 0.24)+"px;color:"+ti+";pointer-events:none;font-family:'Bebas Neue', Outfit, sans-serif;font-size:"+Math.max(8, Math.round(layout.h * (16.02 / 435.01)))+"px;line-height:1.05;letter-spacing:.01em;";
+    city.textContent = cityText;
+    frameOverlay.appendChild(city);
 
     var copy = document.createElement("div");
     var copyFont = Math.round(layout.h * (16.02 / 435.01));
@@ -1191,20 +1235,56 @@ function getTicketCopyLines() {
     frameOverlay.appendChild(copy);
 
     var barcode = document.createElement("canvas");
-    var barW = Math.max(18, Math.round(layout.barW));
-    var barH = Math.max(80, Math.round(layout.barH));
+    var barBox = getTicketBarBox(layout);
+    var barW = Math.max(18, Math.round(barBox.w));
+    var barH = Math.max(80, Math.round(barBox.h));
     barcode.width = barW * 2;
     barcode.height = barH * 2;
-    barcode.style.cssText = "position:absolute;left:"+layout.barX+"px;top:"+layout.barY+"px;width:"+barW+"px;height:"+barH+"px;pointer-events:none;";
+    barcode.style.cssText = "position:absolute;left:"+barBox.x+"px;top:"+barBox.y+"px;width:"+barW+"px;height:"+barH+"px;pointer-events:none;";
     var bctx = barcode.getContext("2d");
     bctx.scale(2, 2);
     drawTicketBarcode(bctx, 0, 0, barW, barH, serialText, ti);
     frameOverlay.appendChild(barcode);
 
+    var sideFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
+    // Anchor to barcode with explicit offset (~20px in source SVG scale).
+    var sideGapPx = Math.round(20 * (layout.w / 1334.2));
+    var sideX = Math.max(layout.x + sideFs + 4, barBox.x - sideGapPx);
+
     var serial = document.createElement("div");
-    serial.style.cssText = "position:absolute;left:"+layout.serialX+"px;top:"+layout.serialY+"px;transform:rotate(-90deg);transform-origin:left top;font-family:'Bebas Neue', Outfit, sans-serif;font-size:"+Math.max(8, Math.round(layout.h * (16.02 / 435.01)))+"px;letter-spacing:.01em;color:"+ti+";pointer-events:none;line-height:1;";
+    serial.style.cssText = "position:absolute;left:"+sideX+"px;top:"+barBox.y+"px;transform:rotate(-90deg);transform-origin:left top;font-family:'Bebas Neue', Outfit, sans-serif;font-size:"+sideFs+"px;letter-spacing:.01em;color:"+ti+";pointer-events:none;line-height:1;white-space:nowrap;";
     serial.textContent = serialText;
     frameOverlay.appendChild(serial);
+
+    var coords = document.createElement("div");
+    coords.style.cssText = "position:absolute;left:"+sideX+"px;top:"+(barBox.y + barBox.h)+"px;transform:rotate(-90deg);transform-origin:left top;font-family:'Bebas Neue', Outfit, sans-serif;font-size:"+sideFs+"px;letter-spacing:.01em;color:"+ti+";pointer-events:none;line-height:1;white-space:nowrap;";
+    coords.textContent = coordsText;
+    frameOverlay.appendChild(coords);
+
+    requestAnimationFrame(function(){
+      var host = frameOverlay.getBoundingClientRect();
+      var sr = serial.getBoundingClientRect();
+      var cr = coords.getBoundingClientRect();
+      var sTop = parseFloat(serial.style.top) || 0;
+      var cTop = parseFloat(coords.style.top) || 0;
+      serial.style.top = (sTop + (barBox.y - (sr.top - host.top))) + 'px';
+      coords.style.top = (cTop + ((barBox.y + barBox.h) - (cr.bottom - host.top))) + 'px';
+
+      var sr2 = serial.getBoundingClientRect();
+      var cr2 = coords.getBoundingClientRect();
+      var maxLen = Math.max(1, barBox.h - 2);
+      var sScale = Math.min(1, maxLen / Math.max(1, sr2.height));
+      var cScale = Math.min(1, maxLen / Math.max(1, cr2.height));
+      if (sScale < 1) serial.style.fontSize = (sideFs * sScale) + 'px';
+      if (cScale < 1) coords.style.fontSize = (sideFs * cScale) + 'px';
+
+      var sr3 = serial.getBoundingClientRect();
+      var cr3 = coords.getBoundingClientRect();
+      sTop = parseFloat(serial.style.top) || 0;
+      cTop = parseFloat(coords.style.top) || 0;
+      serial.style.top = (sTop + (barBox.y - (sr3.top - host.top))) + 'px';
+      coords.style.top = (cTop + ((barBox.y + barBox.h) - (cr3.bottom - host.top))) + 'px';
+    });
 
     var logo = document.createElement("div");
     logo.style.cssText = "position:absolute;left:"+layout.logoX+"px;top:"+layout.logoY+"px;width:"+layout.logoSize+"px;height:"+layout.logoSize+"px;background:#111;color:#eaead6;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue', Outfit, sans-serif;font-size:"+Math.max(8, Math.round(layout.logoSize * 0.28))+"px;line-height:0.88;text-align:center;letter-spacing:.02em;pointer-events:none;";
@@ -3357,19 +3437,36 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function bakeTicketFrame(ctx, fw, fh) {
     var tc = document.getElementById("ticket-color").value;
     var ti = document.getElementById("ticket-ink").value;
+    var th = document.getElementById("ticket-head").value;
     var serialText = (document.getElementById("ticket-serial").value || "63736716239819623").toUpperCase();
     var copyLines = getTicketCopyLines();
     var dt = getTicketDateParts();
+    var cityText = getTicketCityText();
+    var coordsText = getTicketCoordsText();
     var layout = getTicketLayout(fw, fh, 0, 0);
+
+    // Snapshot map content before drawing ticket shell layers.
+    var preTicket = document.createElement('canvas');
+    preTicket.width = fw;
+    preTicket.height = fh;
+    var preTicketCtx = preTicket.getContext('2d');
+    preTicketCtx.drawImage(ctx.canvas, 0, 0);
 
     ctx.save();
     var dimPath = new Path2D(buildTicketDimPath(layout, fw, fh));
     ctx.fillStyle = 'rgba(0,0,0,0.44)';
     ctx.fill(dimPath, 'evenodd');
 
-    var shellPath = new Path2D(buildTicketShellPath(layout));
+    // Fill a solid ticket body first (no punched image hole here).
+    var bodyPath = new Path2D(buildTicketBodyPath(layout));
     ctx.fillStyle = tc;
-    ctx.fill(shellPath, 'evenodd');
+    ctx.fill(bodyPath);
+
+    // Re-draw map image window from pre-ticket snapshot (not from already-painted ctx).
+    ctx.drawImage(preTicket,
+      layout.imageX, layout.imageY, layout.imageSize, layout.imageSize,
+      layout.imageX, layout.imageY, layout.imageSize, layout.imageSize
+    );
 
     ctx.save();
     ctx.beginPath();
@@ -3381,15 +3478,25 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     ctx.stroke();
     ctx.restore();
 
-    ctx.fillStyle = '#ea7a0a';
+    ctx.fillStyle = th;
     ctx.fillRect(layout.orangeX, layout.orangeY, layout.orangeW, layout.orangeH);
 
     ctx.fillStyle = ti;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.font = Math.round(layout.h * (73.11 / 435.01)) + "px 'Bebas Neue', Outfit, sans-serif";
+    var dateFs = Math.round(layout.h * (73.11 / 435.01));
+    ctx.font = dateFs + "px 'Perfograma', 'Bebas Neue', Outfit, sans-serif";
     ctx.fillText(dt.yearLine, layout.dateX, layout.dateY);
-    ctx.fillText(dt.dateLine, layout.dateX, layout.dateY + layout.h * 0.16);
+    // Match DOM ticket spacing: first line height + explicit gap.
+    var dateLineGap = Math.round(layout.h * 0.04);
+    var dateLineY = layout.dateY + Math.round(dateFs * 0.92) + dateLineGap;
+    ctx.fillText(dt.dateLine, layout.dateX, dateLineY);
+
+    var cityFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
+    ctx.font = cityFs + "px 'Bebas Neue', Outfit, sans-serif";
+    // Keep city line below the new date layout to avoid overlap with date text.
+    var cityY = dateLineY + Math.round(dateFs * 0.92) + Math.round(layout.h * 0.03);
+    ctx.fillText(cityText, layout.dateX, cityY);
 
     var bakeCopyFont = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
     var bakeLines = copyLines.slice(0, 3);
@@ -3401,24 +3508,76 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.fillText(bakeLines[i] || '', layout.copyX, bakeCopyTop + i * bakeLineStep);
     }
 
-    var barW = Math.max(18, Math.round(layout.barW));
-    var barH = Math.max(80, Math.round(layout.barH));
+    var barBox = getTicketBarBox(layout);
+    var barW = Math.max(18, Math.round(barBox.w));
+    var barH = Math.max(80, Math.round(barBox.h));
     var barcodeCanvas = document.createElement('canvas');
     barcodeCanvas.width = barW * 2;
     barcodeCanvas.height = barH * 2;
     var bctx = barcodeCanvas.getContext('2d');
     bctx.scale(2, 2);
     drawTicketBarcode(bctx, 0, 0, barW, barH, serialText, ti);
-    ctx.drawImage(barcodeCanvas, layout.barX, layout.barY, barW, barH);
+    // Export only: move barcode down 20px.
+    ctx.drawImage(barcodeCanvas, barBox.x, barBox.y + 20, barW, barH);
 
-    ctx.save();
-    ctx.translate(layout.serialX, layout.serialY);
-    ctx.rotate(-Math.PI / 2);
-    ctx.font = Math.max(8, Math.round(layout.h * (16.02 / 435.01))) + "px 'Bebas Neue', Outfit, sans-serif";
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(serialText, 0, 0);
-    ctx.restore();
+    var serialFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
+    // Export only: text scale -35%, move left 20px.
+    serialFs = Math.max(6, Math.round(serialFs * 0.65));
+    var sideX = Math.max(serialFs + 4, barBox.x - 20);
+
+    function fitVerticalFontSize(text, fs, maxLen) {
+      var t = String(text || '');
+      var cur = fs;
+      while (cur > 6) {
+        ctx.font = cur + "px 'Bebas Neue', Outfit, sans-serif";
+        var m = ctx.measureText(t);
+        if ((m.width || 0) <= maxLen) return cur;
+        cur -= 1;
+      }
+      return 6;
+    }
+
+    // Keep shared size, but based on user-scaled base size.
+    var targetLen = Math.max(0, barBox.h * 0.92);
+    var fsTop = fitVerticalFontSize(serialText, serialFs, targetLen);
+    var fsBottom = fitVerticalFontSize(coordsText, serialFs, targetLen);
+    var sharedFs = Math.max(6, Math.min(fsTop, fsBottom));
+
+    function drawVerticalTopAligned(text, x, topY) {
+      ctx.save();
+      ctx.font = sharedFs + "px 'Bebas Neue', Outfit, sans-serif";
+      var m = ctx.measureText(text || '');
+      var h = (m.actualBoundingBoxAscent || sharedFs * 0.8) + (m.actualBoundingBoxDescent || sharedFs * 0.2);
+      var topPad = Math.max(1, barBox.h * 0.02);
+      // Export only: move serial text up 8px.
+      ctx.translate(x, topY + topPad + h - 8);
+      ctx.rotate(-Math.PI / 2);
+      // Right align so long serial grows away from barcode and stays in-frame.
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawVerticalBottomAligned(text, x, bottomY) {
+      ctx.save();
+      ctx.font = sharedFs + "px 'Bebas Neue', Outfit, sans-serif";
+      var m = ctx.measureText(text || '');
+      var h = (m.actualBoundingBoxAscent || sharedFs * 0.8) + (m.actualBoundingBoxDescent || sharedFs * 0.2);
+      var bottomPad = Math.max(1, barBox.h * 0.02);
+      // Export only: move barcode-side text down 50px,
+      // then lift coords line up 20px from that baseline,
+      // then move coords down extra 6px per user request.
+      ctx.translate(x, bottomY + 36 - bottomPad);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, 0, -h);
+      ctx.restore();
+    }
+
+    drawVerticalTopAligned(serialText, sideX, barBox.y);
+    drawVerticalBottomAligned(coordsText, sideX, barBox.y + barBox.h);
 
     ctx.fillStyle = '#111';
     ctx.fillRect(layout.logoX, layout.logoY, layout.logoSize, layout.logoSize);
@@ -3438,23 +3597,172 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   function getTicketOnlyCanvas(base) {
     if (frameStyle !== 'ticket') return base;
+
     var layout = getTicketLayout(base.width, base.height, 0, 0);
     var out = document.createElement('canvas');
     out.width = Math.max(1, Math.round(layout.w));
     out.height = Math.max(1, Math.round(layout.h));
     var ctx = out.getContext('2d');
-    var bodyPath = new Path2D(buildTicketBodyPath(layout));
+
+    // 1) crop bbox from baked export
+    ctx.drawImage(base, -layout.x, -layout.y);
+
+    // 2) stable alpha mask in local coords:
+    //    ticket body + left text lane + orange strip (no evenodd / no clip path union)
+    var local = getTicketLayout(out.width, out.height, 0, 0);
+    var barBox = getTicketBarBox(local);
+
+    var laneY = Math.max(local.y, barBox.y - 6);
+    var laneW = Math.min(local.x + local.w, barBox.x + 8) - local.x;
+    var laneH = Math.min(local.y + local.h, barBox.y + barBox.h + 12) - laneY;
+
+    var mask = document.createElement('canvas');
+    mask.width = out.width;
+    mask.height = out.height;
+    var mctx = mask.getContext('2d');
+    mctx.fillStyle = '#000';
+    mctx.fill(new Path2D(buildTicketBodyPath(local)));
+    mctx.fillRect(local.x, laneY, Math.max(0, laneW), Math.max(0, laneH));
+    mctx.fillRect(local.orangeX, local.orangeY, Math.max(0, local.orangeW), Math.max(0, local.orangeH));
+
     ctx.save();
-    ctx.translate(-layout.x, -layout.y);
-    ctx.clip(bodyPath);
-    ctx.drawImage(base, 0, 0);
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(mask, 0, 0);
     ctx.restore();
+
+    // 3) re-draw side vertical texts after mask so text remains intact
+    var ti = document.getElementById("ticket-ink").value;
+    var serialText = (document.getElementById("ticket-serial").value || "63736716239819623").toUpperCase();
+    var coordsText = getTicketCoordsText();
+    var serialFs = Math.max(8, Math.round(local.h * (16.02 / 435.01)));
+    var sideGap = local.w * 0.018;
+    var sideX = Math.max(serialFs + 4, barBox.x - sideGap);
+    var barTop = barBox.y;
+    var barBottom = barTop + barBox.h;
+
+    function fitVerticalFontSizeLocal(text, fs, maxLen) {
+      var t = String(text || '');
+      var cur = fs;
+      while (cur > 6) {
+        ctx.font = cur + "px 'Bebas Neue', Outfit, sans-serif";
+        var m = ctx.measureText(t);
+        if ((m.width || 0) <= maxLen) return cur;
+        cur -= 1;
+      }
+      return 6;
+    }
+
+    function drawVerticalTopAlignedLocal(text, x, topY) {
+      ctx.save();
+      var maxLen = Math.max(0, barBox.h - 2);
+      var fs = fitVerticalFontSizeLocal(text, serialFs, maxLen);
+      ctx.font = fs + "px 'Bebas Neue', Outfit, sans-serif";
+      ctx.fillStyle = ti;
+      var m = ctx.measureText(text || '');
+      var h = (m.actualBoundingBoxAscent || fs * 0.8) + (m.actualBoundingBoxDescent || fs * 0.2);
+      ctx.translate(x, topY + h);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    function drawVerticalBottomAlignedLocal(text, x, bottomY) {
+      ctx.save();
+      var maxLen = Math.max(0, barBox.h - 2);
+      var fs = fitVerticalFontSizeLocal(text, serialFs, maxLen);
+      ctx.font = fs + "px 'Bebas Neue', Outfit, sans-serif";
+      ctx.fillStyle = ti;
+      var m = ctx.measureText(text || '');
+      var h = (m.actualBoundingBoxAscent || fs * 0.8) + (m.actualBoundingBoxDescent || fs * 0.2);
+      ctx.translate(x, bottomY);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(text, 0, -h);
+      ctx.restore();
+    }
+
+    drawVerticalTopAlignedLocal(serialText, sideX, barTop);
+    drawVerticalBottomAlignedLocal(coordsText, sideX, barBottom);
+
+    return out;
+  }
+
+  function buildTicketExportCanvas() {
+    var base = buildExportCanvas();
+    var g = getTicketLayout(base.width, base.height, 0, 0);
+
+    var out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(g.w));
+    out.height = Math.max(1, Math.round(g.h));
+    var ctx = out.getContext('2d');
+
+    // Copy ticket bbox from fully baked export first.
+    ctx.drawImage(base, -g.x, -g.y);
+
+    // IMPORTANT: local layout must match the full output box exactly.
+    // Do NOT call getTicketLayout(out.width, out.height, 0, 0) here,
+    // because it applies 0.985 shrink again and causes inner clipping/layer loss.
+    var local = {
+      x: 0,
+      y: 0,
+      w: out.width,
+      h: out.height,
+      notchR: out.height * (35.98 / 435.01),
+      topLeftNotchX: out.width * (46.89 / 1334.2),
+      topMidNotchX: out.width * (877.60 / 1334.2),
+      topRightNotchX: out.width * (1298.21 / 1334.2),
+      imageX: out.width * (403.8 / 1334.2),
+      imageY: out.height * (20.53 / 435.01),
+      imageSize: out.height * (393.57 / 435.01),
+      dividerX: out.width * (876.28 / 1334.2),
+      orangeX: 0,
+      orangeY: out.height * (35.98 / 435.01),
+      orangeW: Math.max(5, out.width * (10.9 / 1334.2)),
+      orangeH: out.height * (363.05 / 435.01),
+      dateX: out.width * (58.22 / 1334.2),
+      dateY: out.height * (43.61 / 435.01),
+      copyX: out.width * (61.07 / 1334.2),
+      copyY: out.height * (370.2 / 435.01),
+      copyBottom: out.height * ((20.53 + 393.57) / 435.01),
+      copyW: out.width * (300 / 1334.2),
+      serialX: out.width * (948.18 / 1334.2),
+      serialY: out.height * (391.77 / 435.01),
+      logoX: out.width * (1234.57 / 1334.2),
+      logoY: out.height * (35.7 / 435.01),
+      logoSize: out.width * (57.82 / 1334.2),
+      barX: out.width * (960.59 / 1334.2),
+      barY: out.height * (43.61 / 435.01),
+      barW: out.width * (104.04 / 1334.2),
+      barH: out.height * (348.16 / 435.01)
+    };
+
+    var barBox = getTicketBarBox(local);
+    var laneY = Math.max(local.y, barBox.y - 6);
+    var laneW = Math.min(local.x + local.w, barBox.x + 8) - local.x;
+    var laneH = Math.min(local.y + local.h, barBox.y + barBox.h + 12) - laneY;
+
+    var mask = document.createElement('canvas');
+    mask.width = out.width;
+    mask.height = out.height;
+    var mctx = mask.getContext('2d');
+    mctx.fillStyle = '#000';
+    mctx.fill(new Path2D(buildTicketBodyPath(local)));
+    mctx.fillRect(local.x, laneY, Math.max(0, laneW), Math.max(0, laneH));
+    mctx.fillRect(local.orangeX, local.orangeY, Math.max(0, local.orangeW), Math.max(0, local.orangeH));
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(mask, 0, 0);
+    ctx.restore();
+
     return out;
   }
 
   function doExportPng() {
-    var out = buildExportCanvas();
-    out = getTicketOnlyCanvas(out);
+    var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
     var a=document.createElement('a');
     a.href=out.toDataURL('image/png');
     a.download='mapit-export.png';
@@ -3462,8 +3770,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   function doExportSvg() {
-    var out = buildExportCanvas();
-    out = getTicketOnlyCanvas(out);
+    var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
     var dataUrl = out.toDataURL('image/png');
     var w = out.width, h = out.height;
     var svg = '<?xml version="1.0" encoding="UTF-8"?>\n'
