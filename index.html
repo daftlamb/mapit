@@ -3575,8 +3575,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       return 6;
     }
 
-    // Keep shared size, but based on user-scaled base size.
-    var targetLen = Math.max(0, barBox.h * 1.10);
+    // Keep shared size, but clamp to barcode height to prevent overflow on PC.
+    var targetLen = Math.max(0, barBox.h * 0.78);
     var fsTop = fitVerticalFontSize(serialText, serialFs, targetLen);
     var fsBottom = fitVerticalFontSize(coordsText, serialFs, targetLen);
     var sharedFs = Math.max(6, Math.min(fsTop, fsBottom));
@@ -3586,8 +3586,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.font = sharedFs + "px 'Bebas Neue', Outfit, sans-serif";
       var m = ctx.measureText(text || '');
       var h = (m.actualBoundingBoxAscent || sharedFs * 0.8) + (m.actualBoundingBoxDescent || sharedFs * 0.2);
-      var topPad = Math.max(1, barBox.h * 0.02);
-      // Export only: move serial text up 28px total (previous -8, now extra -20).
+      var topPad = Math.max(2, barBox.h * 0.03);
+      // Export only: move serial text up 28px total and keep extra top padding.
       ctx.translate(x, topY + topPad + h - 28);
       ctx.rotate(-Math.PI / 2);
       // Right align so long serial grows away from barcode and stays in-frame.
@@ -3602,7 +3602,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.font = sharedFs + "px 'Bebas Neue', Outfit, sans-serif";
       var m = ctx.measureText(text || '');
       var h = (m.actualBoundingBoxAscent || sharedFs * 0.8) + (m.actualBoundingBoxDescent || sharedFs * 0.2);
-      var bottomPad = Math.max(1, barBox.h * 0.02);
+      var bottomPad = Math.max(2, barBox.h * 0.03);
       // Export only: move barcode-side text down 50px,
       // then lift coords line up 20px from that baseline,
       // then move coords down extra 6px per user request.
