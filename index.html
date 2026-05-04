@@ -3559,8 +3559,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     ctx.drawImage(barcodeCanvas, barBox.x, barBox.y + 20, barW, barH);
 
     var serialFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
-    // Export only: text scale -35%, move left 20px.
-    serialFs = Math.max(6, Math.round(serialFs * 0.65));
+    // Export only: set barcode-side text scale to 1.0, keep same anchors.
+    serialFs = Math.max(6, Math.round(serialFs * 1.00));
     var sideX = Math.max(serialFs + 4, barBox.x - 20);
 
     function fitVerticalFontSize(text, fs, maxLen) {
@@ -3587,8 +3587,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var m = ctx.measureText(text || '');
       var h = (m.actualBoundingBoxAscent || sharedFs * 0.8) + (m.actualBoundingBoxDescent || sharedFs * 0.2);
       var topPad = Math.max(1, barBox.h * 0.02);
-      // Export only: move serial text up 8px.
-      ctx.translate(x, topY + topPad + h - 8);
+      // Export only: move serial text up 28px total (previous -8, now extra -20).
+      ctx.translate(x, topY + topPad + h - 28);
       ctx.rotate(-Math.PI / 2);
       // Right align so long serial grows away from barcode and stays in-frame.
       ctx.textAlign = 'right';
