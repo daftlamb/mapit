@@ -40,6 +40,86 @@ header{height:var(--header-h);background:var(--header-bg);border-bottom:1px soli
 .search-result-item{padding:8px 10px;cursor:pointer;font-size:11px;line-height:1.4;border-bottom:1px solid var(--border)}
 .search-result-item:last-child{border-bottom:none}
 .search-result-item:hover{background:var(--bg)}
+.guide-link{display:inline-block;margin-top:8px;font-size:11px;color:var(--muted);text-decoration:none;cursor:pointer}
+.guide-link:hover{color:var(--text)}
+.support-prompt.hidden,.onboarding-float.hidden{display:none!important}
+.start-head{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.start-copy{font-size:11px;color:var(--text);line-height:1.6;display:flex;flex-direction:column;gap:3px}
+.quick-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.quick-preset{
+  background:var(--panel-bg);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:999px;
+  padding:5px 9px;
+  font-family:inherit;
+  font-size:11px;
+  cursor:pointer;
+  transition:border-color .15s,color .15s,background .15s;
+}
+.quick-preset:hover{border-color:var(--accent);color:var(--accent)}
+.guide-steps{font-size:11px;color:var(--text);line-height:1.7;display:flex;flex-direction:column;gap:2px}
+.guide-actions{display:flex;gap:6px;margin-top:10px}
+.onboarding-float{
+  position:absolute;
+  top:18px;
+  left:18px;
+  width:min(360px,calc(100% - 36px));
+  padding:14px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:rgba(255,255,255,.78);
+  color:var(--text);
+  z-index:1550;
+  box-shadow:0 14px 34px rgba(0,0,0,.10);
+  backdrop-filter:blur(12px);
+}
+[data-theme="dark"] .onboarding-float{background:rgba(28,28,28,.72)}
+.onboarding-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.onboarding-copy{flex:1;min-width:0}
+.onboarding-close{
+  background:none;
+  border:none;
+  color:var(--muted);
+  cursor:pointer;
+  font-size:14px;
+  line-height:1;
+  padding:0;
+  flex-shrink:0;
+}
+.onboarding-close:hover{color:var(--text)}
+.onboarding-subtle{font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px}
+.onboarding-divider{
+  height:1px;
+  background:var(--border);
+  opacity:.8;
+  margin:12px 0 10px;
+}
+.onboarding-label{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.support-prompt{
+  position:absolute;
+  right:18px;
+  bottom:18px;
+  width:min(320px,calc(100% - 36px));
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,.96);
+  color:var(--text);
+  z-index:1600;
+  box-shadow:0 10px 26px rgba(0,0,0,.12);
+}
+[data-theme="dark"] .support-prompt{background:rgba(20,20,20,.96)}
+.support-prompt-copy{font-size:12px;line-height:1.55;color:var(--text);margin-bottom:10px}
+.support-prompt-actions{display:flex;flex-wrap:wrap;gap:6px}
+.support-prompt-actions .btn{flex:1}
 /* Style presets */
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .style-card{border:2px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;transition:border-color .15s}
@@ -163,7 +243,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 <body>
 <header>
   <div class="brand">Map<span class="brand-it">It</span></div>
-  <button class="btn-icon" id="btn-darkmode">mode</button>
+  <button class="btn-icon" id="btn-darkmode" aria-label="Toggle theme">mode</button>
   <div class="header-spacer"></div>
   <button class="btn-icon" id="btn-coffee" style="color:#e07820;border-color:#e07820">support</button>
   <button class="btn-icon" id="btn-about">i</button>
@@ -181,6 +261,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn" id="search-btn">go</button>
       </div>
       <div id="search-results"></div>
+      <a href="#" id="show-guide-link" class="guide-link hidden">Show guide</a>
       <div id="wiki-box" style="display:none;margin-top:10px;padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
         <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase">About this place</div>
         <div id="wiki-text" style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px"></div>
@@ -407,7 +488,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <option value="inkland">Ink Land</option>
             <option value="mineral">Mineral</option>
             <option value="sunset">Sunset</option>
-            <option value="custom">Custom��</option>
+            <option value="custom">Custom</option>
           </select>
         </div>
         <div id="blob-custom-colors" style="display:none;gap:8px;flex-direction:column">
@@ -770,6 +851,34 @@ hello this is my txt design</textarea>
   <div id="map-area">
     <div id="map">
   <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:2000;background:rgba(26,26,26,0.9);border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;font-family:inherit;pointer-events:all;">🛰 Satellite</button></div>
+    <div id="onboarding-guide" class="onboarding-float">
+      <div class="onboarding-top">
+        <div class="onboarding-copy">
+          <div class="start-head">Start with a place</div>
+          <div class="start-copy">
+            <div>1. Search any city, street, river, or memory.</div>
+            <div>2. Choose a map style.</div>
+            <div>3. Export it as a poster, ticket, or SVG.</div>
+          </div>
+        </div>
+        <button id="onboarding-close" class="onboarding-close" type="button" aria-label="Close guide">×</button>
+      </div>
+      <div class="onboarding-divider"></div>
+      <div class="onboarding-label">Try a preset to get started</div>
+      <div class="quick-presets">
+        <button class="quick-preset" data-example="tokyo-night-grid" type="button">Tokyo Night Grid</button>
+        <button class="quick-preset" data-example="paris-archive-ticket" type="button">Paris Archive Ticket</button>
+        <button class="quick-preset" data-example="shanghai-river-lines" type="button">Shanghai River Lines</button>
+        <button class="quick-preset" data-example="new-york-blocks" type="button">New York Blocks</button>
+        <button class="quick-preset" data-example="kyoto-watercolor" type="button">Kyoto Watercolor</button>
+        <button class="quick-preset" data-example="london-field-notes" type="button">London Field Notes</button>
+      </div>
+      <div class="guide-actions">
+        <button class="btn" id="guide-got-it" type="button">Got it</button>
+        <button class="btn" id="guide-skip" type="button" style="color:var(--muted)">Skip</button>
+      </div>
+      <div class="onboarding-subtle">You can bring this back anytime with “Show guide”.</div>
+    </div>
     <div id="crop-overlay"></div>
     <div id="gradient-overlay"></div>
     <canvas id="dither-preview" style="position:absolute;pointer-events:none;z-index:16;display:none;image-rendering:pixelated"></canvas>
@@ -813,6 +922,15 @@ hello this is my txt design</textarea>
   </div>
 </div>
 
+<div id="support-prompt" class="support-prompt hidden">
+  <div class="support-prompt-copy">Map It is free. If it helped you make something nice, you can buy me a coffee.</div>
+  <div class="support-prompt-actions">
+    <button class="btn" id="support-prompt-skip" type="button" style="color:var(--muted)">Skip</button>
+    <button class="btn" id="support-prompt-download" type="button">Continue download</button>
+    <button class="btn" id="support-prompt-coffee" type="button" style="color:#e07820;border-color:#e07820">Buy me a coffee</button>
+  </div>
+</div>
+
 <script>
 (function() {
   var PRESETS = [
@@ -830,13 +948,74 @@ hello this is my txt design</textarea>
   var currentRatio = '1:1';
   var addingMarker = false;
   var markers = [];
-  var pendingExport = false;
+  var pendingDownload = null;
+  var hasStartedGuide = false;
+  var supportPromptShownThisSession = false;
+  var GUIDE_DISMISS_KEY = 'mapit.guideDismissed.v2';
+  var guideDismissed = localStorage.getItem(GUIDE_DISMISS_KEY) === '1';
+  var supportPromptDismissed = localStorage.getItem('mapit.supportPromptDismissed') === '1';
   var pendingMarkerLngLat = null;
   var selectedEmoji = '\u{1F4CD}';
   var captions = [];
   var selectedCaption = null;
   var layerVis = {labels:true,roadLabels:true,boundary:true,buildings:true,buildings3d:false};
   var snapThreshold = 10;
+  var EXAMPLE_PRESETS = {
+    'tokyo-night-grid': {
+      place: 'Tokyo',
+      center: [139.7671, 35.6812],
+      zoom: 12.6,
+      style: 'Night',
+      exportStyle: 'normal',
+      ratio: '1:1',
+      frame: 'none'
+    },
+    'paris-archive-ticket': {
+      place: 'Paris',
+      center: [2.3522, 48.8566],
+      zoom: 13,
+      style: 'Dusk',
+      exportStyle: 'normal',
+      ratio: '16:9',
+      frame: 'ticket'
+    },
+    'shanghai-river-lines': {
+      place: 'Shanghai',
+      center: [121.4905, 31.2334],
+      zoom: 12.5,
+      style: 'Ink',
+      exportStyle: 'blob',
+      ratio: '16:9',
+      frame: 'none'
+    },
+    'new-york-blocks': {
+      place: 'New York',
+      center: [-73.9857, 40.7484],
+      zoom: 13.1,
+      style: 'Ink',
+      exportStyle: 'normal',
+      ratio: '1:1',
+      frame: 'border'
+    },
+    'kyoto-watercolor': {
+      place: 'Kyoto',
+      center: [135.7681, 35.0116],
+      zoom: 13.2,
+      style: 'Sage',
+      exportStyle: 'watercolor',
+      ratio: '3:4',
+      frame: 'none'
+    },
+    'london-field-notes': {
+      place: 'London',
+      center: [-0.1276, 51.5072],
+      zoom: 12.6,
+      style: 'Cream',
+      exportStyle: 'normal',
+      ratio: '3:4',
+      frame: 'border'
+    }
+  };
 
   var LABEL_LAYERS    = ['place-village','place-town','place-city'];
   var ROADLBL_LAYERS  = ['road-label'];
@@ -997,14 +1176,7 @@ hello this is my txt design</textarea>
 
   document.querySelectorAll('[data-frame]').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      frameStyle = btn.dataset.frame;
-      document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.remove('active');});
-      btn.classList.add('active');
-      ['polaroid','border','ticket'].forEach(function(t){
-        document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
-      });
-      updateCropOverlay();
-      updateFrameOverlay();
+      setFrameStyle(btn.dataset.frame);
     });
   });
 
@@ -1451,19 +1623,92 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   PRESETS.forEach(function(p,i) {
     var card = document.createElement('div');
     card.className='style-card'+(i===0?' active':'');
+    card.dataset.presetName = p.name;
     card.innerHTML='<div class="style-swatch"><div class="style-swatch-seg" style="background:'+p.colors.land+'"></div><div class="style-swatch-seg" style="background:'+p.colors.water+'"></div><div class="style-swatch-seg" style="background:'+p.colors.road+'"></div></div><div class="style-name">'+p.name+'</div>';
     card.addEventListener('click',function(){
-      document.querySelectorAll('.style-card').forEach(function(c){c.classList.remove('active');});
-      card.classList.add('active');
-      currentColors=Object.assign({},p.colors);
-      map.setStyle(buildStyle(currentColors));
-      syncColorPickers();
-      // Sync vignette color to land color
-      document.getElementById('vig-color').value=p.colors.land;
-      updateGradientOverlay();
+      setStylePresetByName(p.name);
     });
     styleGrid.appendChild(card);
   });
+
+  function setStylePresetByName(name) {
+    var preset = PRESETS.find(function(p){ return p.name === name; }) || PRESETS[0];
+    document.querySelectorAll('.style-card').forEach(function(c){
+      c.classList.toggle('active', c.dataset.presetName === preset.name);
+    });
+    currentColors = Object.assign({}, preset.colors);
+    map.setStyle(buildStyle(currentColors));
+    syncColorPickers();
+    document.getElementById('vig-color').value = preset.colors.land;
+    updateGradientOverlay();
+  }
+
+  function setRatioPreset(ratio) {
+    currentRatio = ratio;
+    document.querySelectorAll('[data-ratio]').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.ratio === ratio);
+    });
+    updateCropOverlay();
+  }
+
+  function setFrameStyle(frame) {
+    frameStyle = frame;
+    document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.toggle('active', b.dataset.frame === frameStyle);});
+    ['polaroid','border','ticket'].forEach(function(t){
+      document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
+    });
+    updateCropOverlay();
+    updateFrameOverlay();
+  }
+
+  function setExportStyle(nextStyle) {
+    exportStyle = nextStyle;
+    document.querySelectorAll('[data-export-style]').forEach(function(b){b.classList.toggle('active', b.dataset.exportStyle === exportStyle);});
+    document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
+    document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
+    document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
+    document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
+    document.getElementById('watercolor-note').style.display = exportStyle==='watercolor' ? 'block' : 'none';
+    document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
+    document.getElementById('blob-options').style.display = exportStyle==='blob' ? 'flex' : 'none';
+    if (exportStyle==='normal') previewCanvas.style.display='none';
+    else schedulePreview();
+  }
+
+  function updateOnboardingVisibility(forceShow) {
+    var guideFloat = document.getElementById('onboarding-guide');
+    var showGuideLink = document.getElementById('show-guide-link');
+    var shouldShowStart = forceShow || !hasStartedGuide;
+    guideFloat.classList.toggle('hidden', !shouldShowStart || (guideDismissed && !forceShow));
+    showGuideLink.classList.toggle('hidden', shouldShowStart);
+  }
+
+  function dismissGuide(persist) {
+    if (persist) {
+      guideDismissed = true;
+      localStorage.setItem(GUIDE_DISMISS_KEY, '1');
+    }
+    document.getElementById('onboarding-guide').classList.add('hidden');
+    document.getElementById('show-guide-link').classList.remove('hidden');
+  }
+
+  function completeStartHere() {
+    hasStartedGuide = true;
+    updateOnboardingVisibility(false);
+  }
+
+  function runExamplePreset(key) {
+    var example = EXAMPLE_PRESETS[key];
+    if (!example) return;
+    if (example.place) document.getElementById('search-input').value = example.place;
+    if (example.style) setStylePresetByName(example.style);
+    if (example.exportStyle) setExportStyle(example.exportStyle);
+    if (example.ratio) setRatioPreset(example.ratio);
+    if (example.frame) setFrameStyle(example.frame);
+    map.flyTo({center: example.center, zoom: example.zoom, essential: true});
+    fetchWiki(example.place);
+    completeStartHere();
+  }
 
   function syncColorPickers() {
     document.getElementById('color-water').value=currentColors.water;
@@ -1472,6 +1717,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById('color-label-pick').value=currentColors.label;
   }
   syncColorPickers();
+  updateOnboardingVisibility(false);
 
   function onColorChange() {
     currentColors.water=document.getElementById('color-water').value;
@@ -1640,12 +1886,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   });
 
   // Size buttons
-  document.querySelectorAll('.size-btn').forEach(function(btn){
+  document.querySelectorAll('[data-ratio]').forEach(function(btn){
     btn.addEventListener('click',function(){
-      document.querySelectorAll('.size-btn').forEach(function(b){b.classList.remove('active');});
-      btn.classList.add('active');
-      currentRatio=btn.dataset.ratio;
-      updateCropOverlay();
+      setRatioPreset(btn.dataset.ratio);
     });
   });
 
@@ -1657,6 +1900,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function renderSearchResults(items) {
     searchResults.innerHTML='';
     if (!items || !items.length){searchResults.style.display='none';return;}
+    completeStartHere();
     items.forEach(function(item){
       var el=document.createElement('div');
       el.className='search-result-item';
@@ -1667,6 +1911,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         var placeName = item.display_name.split(',')[0];
         searchInput.value = placeName;
         fetchWiki(placeName);
+        completeStartHere();
       });
       searchResults.appendChild(el);
     });
@@ -1731,6 +1976,18 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   document.addEventListener('click',function(e){
     if(!e.target.closest('#search-results')&&e.target!==searchInput)searchResults.style.display='none';
   });
+  document.querySelectorAll('[data-example]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      runExamplePreset(btn.dataset.example);
+    });
+  });
+  document.getElementById('guide-got-it').addEventListener('click', function(){ dismissGuide(true); });
+  document.getElementById('guide-skip').addEventListener('click', function(){ dismissGuide(false); });
+  document.getElementById('onboarding-close').addEventListener('click', function(){ dismissGuide(false); });
+  document.getElementById('show-guide-link').addEventListener('click', function(e){
+    e.preventDefault();
+    updateOnboardingVisibility(true);
+  });
 
   // Wikipedia summary
   var wikiBox = document.getElementById('wiki-box');
@@ -1770,6 +2027,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   EMOJIS.forEach(function(em){
     var btn=document.createElement('div');
     btn.className='emoji-opt'+(em==='📍'?' selected':'');
+    btn.className='emoji-opt'+(em===selectedEmoji?' selected':'');
     btn.textContent=em;
     btn.addEventListener('click',function(){
       selectedEmoji=em;
@@ -1800,6 +2058,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     addingMarker=!addingMarker;
     btnAddMarker.classList.toggle('adding',addingMarker);
     btnAddMarker.textContent=addingMarker?'�?cancel':'+ add marker';
+    if (addingMarker) btnAddMarker.textContent='cancel';
     map.getCanvas().style.cursor=addingMarker?'crosshair':'';
   });
 
@@ -2187,18 +2446,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   document.querySelectorAll('[data-export-style]').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      exportStyle = btn.dataset.exportStyle;
-      document.querySelectorAll('[data-export-style]').forEach(function(b){b.classList.remove('active');});
-      btn.classList.add('active');
-      document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
-      document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
-      document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
-      document.getElementById('circuit-options').style.display = exportStyle==='circuit' ? 'flex' : 'none';
-      document.getElementById('watercolor-note').style.display = exportStyle==='watercolor' ? 'block' : 'none';
-      document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
-      document.getElementById('blob-options').style.display = exportStyle==='blob' ? 'flex' : 'none';
-      if (exportStyle==='normal') { previewCanvas.style.display='none'; }
-      else { schedulePreview(); }
+      setExportStyle(btn.dataset.exportStyle);
     });
   });
 
@@ -3615,9 +3863,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.restore();
     }
 
-    drawVerticalTopAligned(serialText, sideX, barBox.y);
-    drawVerticalBottomAligned(coordsText, sideX, barBox.y + barBox.h);
-
+    var barTopY = barBox.y + pcBarcodeYOffset;
+    drawVerticalTopAligned(serialText, sideX, barTopY);
+    drawVerticalBottomAligned(coordsText, sideX, barTopY + barBox.h);
     ctx.fillStyle = '#111';
     ctx.fillRect(layout.logoX, layout.logoY, layout.logoSize, layout.logoSize);
     ctx.fillStyle = '#eaead6';
@@ -3799,16 +4047,88 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
     return out;
   }
+  function triggerDownload(url, filename) {
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ if (a.parentNode) a.parentNode.removeChild(a); }, 0);
+  }
+
+  function canvasToBlob(canvas, type) {
+    return new Promise(function(resolve) {
+      canvas.toBlob(function(blob) { resolve(blob); }, type || 'image/png');
+    });
+  }
+
+  async function saveBlobAs(blob, filename, mimeType) {
+    if (!blob) return false;
+    var ext = '';
+    var dot = filename.lastIndexOf('.');
+    if (dot >= 0) ext = filename.slice(dot);
+    if (window.showSaveFilePicker) {
+      try {
+        var pickerTypes = [];
+        if (mimeType && ext) {
+          var accept = {};
+          accept[mimeType] = [ext];
+          pickerTypes.push({ description: 'Export file', accept: accept });
+        }
+        var handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: pickerTypes,
+          excludeAcceptAllOption: false
+        });
+        var writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return true;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return false;
+        console.warn('showSaveFilePicker failed, falling back to download link', err);
+      }
+    }
+    var url = URL.createObjectURL(blob);
+    triggerDownload(url, filename);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    return true;
+  }
+
+  function hideSupportPrompt() {
+    var prompt = byId('support-prompt');
+    if (prompt) prompt.classList.add('hidden');
+    pendingDownload = null;
+  }
+
+  async function continuePendingDownload() {
+    if (!pendingDownload) return;
+    var task = pendingDownload;
+    pendingDownload = null;
+    var prompt = byId('support-prompt');
+    if (prompt) prompt.classList.add('hidden');
+    await saveBlobAs(task.blob, task.filename, task.mimeType);
+  }
+
+  function maybeShowSupportPrompt(blob, filename, mimeType) {
+    if (supportPromptDismissed || supportPromptShownThisSession) {
+      return saveBlobAs(blob, filename, mimeType);
+    }
+    pendingDownload = { blob: blob, filename: filename, mimeType: mimeType };
+    supportPromptShownThisSession = true;
+    byId('support-prompt').classList.remove('hidden');
+    return Promise.resolve(true);
+  }
 
   async function doExportPng() {
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch(e) {}
     }
     var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
-    var a=document.createElement('a');
-    a.href=out.toDataURL('image/png');
-    a.download='mapit-export.png';
-    a.click();
+    var blob = await canvasToBlob(out, 'image/png');
+    await maybeShowSupportPrompt(blob, 'mapit-export.png', 'image/png');
   }
 
   async function doExportSvg() {
@@ -3824,41 +4144,45 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       +'  <image width="'+w+'" height="'+h+'" xlink:href="'+dataUrl+'" />\n'
       +'</svg>';
     var blob = new Blob([svg], {type:'image/svg+xml'});
-    var url = URL.createObjectURL(blob);
-    var a=document.createElement('a');
-    a.href=url;
-    a.download='mapit-export.svg';
-    a.click();
-    setTimeout(function(){URL.revokeObjectURL(url);},3000);
+    await maybeShowSupportPrompt(blob, 'mapit-export.svg', 'image/svg+xml');
   }
 
-  // Export / coffee modal
+  // Export / support
   document.getElementById('btn-export').addEventListener('click',function(){
-    pendingExport = null;
     doExportPng();
   });
-  document.getElementById('btn-export-svg').addEventListener('click',function(){pendingExport='svg';document.getElementById('coffee-modal').style.display='flex';});
+  document.getElementById('btn-export-svg').addEventListener('click',function(){ doExportSvg(); });
   function byId(id){ return document.getElementById(id); }
   var btnSkip = byId('btn-export-skip');
-  if (btnSkip) btnSkip.addEventListener('click',function(){
+  if (btnSkip) btnSkip.addEventListener('click',async function(){
     byId('coffee-modal').style.display='none';
-    var pe=pendingExport;pendingExport=null;
-    if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();
+    if (pendingDownload) await continuePendingDownload();
   });
   var coffeeClose = byId('coffee-close');
   if (coffeeClose) coffeeClose.addEventListener('click',function(){
     byId('coffee-modal').style.display='none';
-    pendingExport=null;
   });
   var coffeeModal = byId('coffee-modal');
   if (coffeeModal) coffeeModal.addEventListener('click',function(e){
     if(e.target===coffeeModal){
       coffeeModal.style.display='none';
-      pendingExport=null;
     }
   });
   var btnCoffee = byId('btn-coffee');
-  if (btnCoffee) btnCoffee.addEventListener('click',function(){pendingExport=null;byId('coffee-modal').style.display='flex';});
+  if (btnCoffee) btnCoffee.addEventListener('click',function(){byId('coffee-modal').style.display='flex';});
+  var supportSkip = byId('support-prompt-skip');
+  if (supportSkip) supportSkip.addEventListener('click', function(){
+    supportPromptDismissed = true;
+    localStorage.setItem('mapit.supportPromptDismissed', '1');
+    continuePendingDownload();
+  });
+  var supportDownload = byId('support-prompt-download');
+  if (supportDownload) supportDownload.addEventListener('click', function(){ continuePendingDownload(); });
+  var supportCoffee = byId('support-prompt-coffee');
+  if (supportCoffee) supportCoffee.addEventListener('click', function(){
+    byId('support-prompt').classList.add('hidden');
+    byId('coffee-modal').style.display='flex';
+  });
   var btnAbout = byId('btn-about');
   if (btnAbout) btnAbout.addEventListener('click',function(){ var m=byId('about-modal'); if(m) m.style.display='flex'; });
   var aboutClose = byId('about-close');
@@ -4496,8 +4820,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if(e.key==='Escape'){
       hideMarkerPopup();
       document.getElementById('about-modal').style.display='none';
+      var sp=document.getElementById('support-prompt');
+      if(sp)sp.classList.add('hidden');
       var cm=document.getElementById('coffee-modal');
-      if(cm.style.display==='flex'){cm.style.display='none';if(pendingExport){var pe=pendingExport;pendingExport=null;if(pe==='png')doExportPng();else if(pe==='svg')doExportSvg();}}
+      if(cm.style.display==='flex'){cm.style.display='none';}
       if(selectedCaption)selectCaption(null);
     }
     if((e.key==='Delete'||e.key==='Backspace')&&selectedCaption&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
