@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -148,7 +148,8 @@ input[type="color"]{width:36px;height:24px;border:1px solid var(--border);border
 /* Markers */
 .marker-item{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px}
 .marker-item:last-child{border-bottom:none}
-.marker-emoji{font-size:16px;line-height:1;flex-shrink:0}
+.marker-emoji{width:20px;height:20px;line-height:1;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.marker-emoji svg{width:100%;height:100%;display:block}
 .marker-name{flex:1;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .marker-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 2px;flex-shrink:0}
 .marker-del:hover{color:#e05050}
@@ -167,6 +168,10 @@ input[type="color"]{width:36px;height:24px;border:1px solid var(--border);border
 select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:11px;outline:none;cursor:pointer}
 .vig-opacity-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 #vig-opacity{flex:1;accent-color:var(--accent)}
+.slider-wrap{display:grid;grid-template-columns:68px minmax(0,1fr) 34px;align-items:center;column-gap:8px;font-size:12px;color:var(--text)}
+.slider-wrap label{color:var(--text);white-space:nowrap}
+.slider-wrap input[type="range"]{width:100%;min-width:0;accent-color:var(--accent)}
+.slider-wrap span{text-align:right;color:var(--text);font-size:12px}
 /* Map area */
 #map-area{flex:1;position:relative;overflow:hidden;background:var(--canvas-bg)}
 #map{position:absolute;inset:0}
@@ -185,7 +190,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 .marker-popup input[type="text"]{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:6px 8px;font-family:inherit;font-size:12px;outline:none;margin-bottom:8px}
 .marker-popup input[type="text"]:focus{border-color:var(--accent)}
 .emoji-grid{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-.emoji-opt{font-size:18px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:5px;border:2px solid transparent;transition:border-color .1s}
+.emoji-opt{cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;border:2px solid transparent;transition:border-color .1s;background:rgba(0,0,0,.03)}
+.emoji-opt svg{width:22px;height:22px;display:block}
 .emoji-opt:hover,.emoji-opt.selected{border-color:var(--accent);background:rgba(57,255,20,.1)}
 /* Modals */
 .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
@@ -323,14 +329,14 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <span style="font-size:11px;color:var(--muted)">Tilt</span>
           <div style="display:flex;align-items:center;gap:6px">
             <input type="range" id="map-pitch" min="0" max="85" value="0" style="width:120px">
-            <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:22px">0°</span>
+            <span id="map-pitch-val" style="font-size:11px;color:var(--muted);width:32px">0 deg</span>
           </div>
         </div>
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Rotation</span>
           <div style="display:flex;align-items:center;gap:6px">
             <input type="range" id="map-bearing" min="-180" max="180" value="0" style="width:120px">
-            <span id="map-bearing-val" style="font-size:11px;color:var(--muted);width:28px">0°</span>
+            <span id="map-bearing-val" style="font-size:11px;color:var(--muted);width:40px">0 deg</span>
           </div>
         </div>
       </div>
@@ -401,9 +407,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
             <select class="vig-select" id="route-curve">
               <option value="straight">Straight</option>
               <option value="curve">Curve</option>
-              <option value="road">🛣 Road (real)</option>
-              <option value="walk">🚶 Walking</option>
-              <option value="bike">🚲 Cycling</option>
+              <option value="road">Road (real)</option>
+              <option value="walk">Walking</option>
+              <option value="bike">Cycling</option>
             </select>
           </div>
           <div class="layer-toggle">
@@ -569,8 +575,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;padding-top:2px">Line colors</div>
         <div class="color-row"><span class="color-label" style="width:64px">Horizontal</span><input type="color" id="cir-h" value="#e8f0fe" /></div>
         <div class="color-row"><span class="color-label" style="width:64px">Vertical</span><input type="color" id="cir-v" value="#ffd166" /></div>
-        <div class="color-row"><span class="color-label" style="width:64px">Diag 45°</span><input type="color" id="cir-d1" value="#06d6a0" /></div>
-        <div class="color-row"><span class="color-label" style="width:64px">Diag 135°</span><input type="color" id="cir-d2" value="#ef476f" /></div>
+        <div class="color-row"><span class="color-label" style="width:64px">Diag 45 deg</span><input type="color" id="cir-d1" value="#06d6a0" /></div>
+        <div class="color-row"><span class="color-label" style="width:64px">Diag 135 deg</span><input type="color" id="cir-d2" value="#ef476f" /></div>
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Threshold</span>
           <div style="display:flex;align-items:center;gap:6px">
@@ -592,8 +598,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           <select class="vig-select" id="dither-algo">
             <option value="floyd">Floyd-Steinberg</option>
             <option value="atkinson">Atkinson</option>
-            <option value="ordered">Ordered 4×4</option>
-            <option value="ordered8">Ordered 8×8</option>
+            <option value="ordered">Ordered 4x4</option>
+            <option value="ordered8">Ordered 8x8</option>
           </select>
         </div>
         <div class="vignette-row">
@@ -755,6 +761,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-frame="polaroid">Polaroid</button>
         <button class="btn size-btn" data-frame="border">Border</button>
         <button class="btn size-btn" data-frame="ticket">Ticket</button>
+        <button class="btn size-btn" data-frame="postcard">Postcard</button>
       </div>
       <div id="frame-options-polaroid" style="display:none">
         <div class="color-row" style="margin-bottom:8px">
@@ -801,7 +808,54 @@ hello this is my txt design</textarea>
         </div>
 
       </div>
-      <!-- Coord stamp �?shown when frame != none -->
+      <div id="frame-options-postcard" style="display:none">
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Paper color</span>
+          <input type="color" id="postcard-paper" value="#ffffff" />
+        </div>
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Text color</span>
+          <input type="color" id="postcard-ink" value="#26211c" />
+        </div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Layout</span>
+          <select class="vig-select" id="postcard-layout">
+            <option value="vertical">Vertical</option>
+            <option value="split">Split</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="btn" id="btn-postcard-photo" style="flex:1;padding:7px">Upload photo</button>
+          <button class="btn" id="btn-postcard-clear" style="padding:7px 10px;font-size:11px;color:var(--muted)">Clear</button>
+        </div>
+        <input type="file" id="postcard-photo-input" accept="image/*" style="display:none" />
+        <div id="postcard-photo-name" style="font-size:11px;color:var(--muted);margin:-2px 0 8px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No photo selected</div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Photo fit</span>
+          <select class="vig-select" id="postcard-fit">
+            <option value="cover">Cover</option>
+            <option value="contain">Contain</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+          <div class="slider-wrap"><label>Photo X</label><input type="range" id="postcard-photo-x" min="-50" max="50" value="0"><span id="postcard-photo-x-val">0</span></div>
+          <div class="slider-wrap"><label>Photo Y</label><input type="range" id="postcard-photo-y" min="-50" max="50" value="0"><span id="postcard-photo-y-val">0</span></div>
+          <div class="slider-wrap"><label>Photo zoom</label><input type="range" id="postcard-photo-zoom" min="100" max="180" value="100"><span id="postcard-photo-zoom-val">100</span></div>
+        </div>
+        <div class="vignette-row" style="margin-bottom:8px">
+          <span style="font-size:11px;color:var(--muted)">Weather</span>
+          <input type="checkbox" id="postcard-weather" checked style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+        </div>
+        <div class="vignette-row">
+          <span style="font-size:11px;color:var(--muted)">Meta align</span>
+          <select class="vig-select" id="postcard-align">
+            <option value="left">Left</option>
+            <option value="center">Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+      </div>
+      <!-- Coord stamp 锟?shown when frame != none -->
       <div id="coord-stamp-options" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div class="vignette-row" style="margin-bottom:8px">
           <span style="font-size:11px;color:var(--muted)">Coordinates</span>
@@ -850,7 +904,7 @@ hello this is my txt design</textarea>
 
   <div id="map-area">
     <div id="map">
-  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:2000;background:rgba(26,26,26,0.9);border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;font-family:inherit;pointer-events:all;">🛰 Satellite</button></div>
+  <button id="btn-satellite" style="position:absolute;top:10px;right:10px;z-index:2000;background:rgba(26,26,26,0.9);border:1px solid #333;color:#ccc;padding:5px 10px;font-size:11px;cursor:pointer;border-radius:3px;font-family:inherit;pointer-events:all;">Satellite</button></div>
     <div id="onboarding-guide" class="onboarding-float">
       <div class="onboarding-top">
         <div class="onboarding-copy">
@@ -861,7 +915,7 @@ hello this is my txt design</textarea>
             <div>3. Export it as a poster, ticket, or SVG.</div>
           </div>
         </div>
-        <button id="onboarding-close" class="onboarding-close" type="button" aria-label="Close guide">×</button>
+        <button id="onboarding-close" class="onboarding-close" type="button" aria-label="Close guide">&times;</button>
       </div>
       <div class="onboarding-divider"></div>
       <div class="onboarding-label">Try a preset to get started</div>
@@ -877,7 +931,7 @@ hello this is my txt design</textarea>
         <button class="btn" id="guide-got-it" type="button">Got it</button>
         <button class="btn" id="guide-skip" type="button" style="color:var(--muted)">Skip</button>
       </div>
-      <div class="onboarding-subtle">You can bring this back anytime with “Show guide”.</div>
+      <div class="onboarding-subtle">You can bring this back anytime with "Show guide".</div>
     </div>
     <div id="crop-overlay"></div>
     <div id="gradient-overlay"></div>
@@ -889,8 +943,12 @@ hello this is my txt design</textarea>
 
 <!-- Marker popup -->
 <div id="marker-popup" class="marker-popup" style="display:none">
-  <div class="marker-popup-label">Emoji</div>
+  <div class="marker-popup-label">Marker icon</div>
   <div class="emoji-grid" id="emoji-grid"></div>
+  <div class="color-row" style="margin-bottom:8px">
+    <span class="color-label">Icon color</span>
+    <input type="color" id="popup-marker-color" value="#111111" />
+  </div>
   <div class="marker-popup-label">Name (optional)</div>
   <input type="text" id="popup-name" placeholder="e.g. Home, Coffee shop..." />
   <div style="display:flex;gap:6px">
@@ -942,7 +1000,20 @@ hello this is my txt design</textarea>
     {name:'Night', colors:{land:'#0d1117',water:'#0a1628',road:'#1c2a3a',building:'#151c28',label:'#c8a84b'}},
     {name:'Dawn',  colors:{land:'#1a0e2e',water:'#0e1a3a',road:'#2d1a3a',building:'#221433',label:'#e8b86d'}}
   ];
-  var EMOJIS = ['\u{1F4CD}','\u2B50','\u2764\uFE0F','\u{1F3E0}','\u2615','\u{1F35C}','\u{1F338}','\u{1F3B5}','\u{1F4F8}','\u{1F33F}','\u{1F3D4}\uFE0F','\u{1F30A}','\u2708\uFE0F','\u{1F3AF}','\u{1F4AB}','\u{1F3AA}','\u{1F3DB}\uFE0F','\u{1F306}','\u{1F43E}','\u{1F3A8}'];
+  var MARKER_ICONS = [
+    { id:'map-pin', label:'Map Pin', body:'<path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"></path><circle cx="12" cy="10" r="3"></circle>' },
+    { id:'star', label:'Star', body:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>' },
+    { id:'heart', label:'Heart', body:'<path d="M19.5 12.6 12 20l-7.5-7.4a5 5 0 0 1 7.1-7.1l.4.4.4-.4a5 5 0 0 1 7.1 7.1Z"></path>' },
+    { id:'house', label:'Home', body:'<path d="m3 10.5 9-7 9 7"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path>' },
+    { id:'store', label:'Store', body:'<path d="M3 7h18l-2 5H5L3 7Z"></path><path d="M5 12v8h14v-8"></path><path d="M9 20v-4h6v4"></path>' },
+    { id:'coffee', label:'Coffee', body:'<path d="M10 2v2"></path><path d="M14 2v2"></path><path d="M16 8H4v6a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4V8Z"></path><path d="M16 10h2a2 2 0 1 1 0 4h-2"></path><path d="M6 22h12"></path>' },
+    { id:'camera', label:'Camera', body:'<path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3h5Z"></path><circle cx="12" cy="13" r="3"></circle>' },
+    { id:'landmark', label:'Landmark', body:'<path d="M3 22h18"></path><path d="M6 18v-7"></path><path d="M10 18v-7"></path><path d="M14 18v-7"></path><path d="M18 18v-7"></path><path d="m12 2 9 5H3l9-5Z"></path>' },
+    { id:'mountain', label:'Mountain', body:'<path d="m8 21 4-7 3 5 2-3 4 5H8Z"></path><path d="M3 21 12 4l4 8"></path>' },
+    { id:'utensils', label:'Food', body:'<path d="M4 3v7"></path><path d="M8 3v7"></path><path d="M6 3v19"></path><path d="M12 3v8a4 4 0 0 0 4 4h1v7"></path><path d="M17 3v12"></path>' },
+    { id:'plane', label:'Plane', body:'<path d="M17.8 19.2 16 11l5-5a2 2 0 0 0-3-3l-5 5-8.2-1.8L3 8l6 4-4 4-3-.5L1 17l5 2 2 5 1.5-1-.5-3 4-4 4 6 1.8-2.8Z"></path>' },
+    { id:'tree', label:'Tree', body:'<path d="M12 22v-6"></path><path d="M7 16h10l-2.5-4h2L12 3 7.5 12h2L7 16Z"></path>' }
+  ];
 
   var currentColors = Object.assign({}, PRESETS[0].colors);
   var currentRatio = '1:1';
@@ -954,8 +1025,15 @@ hello this is my txt design</textarea>
   var GUIDE_DISMISS_KEY = 'mapit.guideDismissed.v2';
   var guideDismissed = localStorage.getItem(GUIDE_DISMISS_KEY) === '1';
   var supportPromptDismissed = localStorage.getItem('mapit.supportPromptDismissed') === '1';
+  var postcardPhoto = null;
+  var postcardPhotoName = '';
+  var postcardWeather = null;
+  var postcardWeatherTimer = null;
+  var postcardWeatherRequest = 0;
+  var postcardPlaceEnglish = '';
   var pendingMarkerLngLat = null;
-  var selectedEmoji = '\u{1F4CD}';
+  var selectedMarkerIcon = 'map-pin';
+  var selectedMarkerColor = '#111111';
   var captions = [];
   var selectedCaption = null;
   var layerVis = {labels:true,roadLabels:true,boundary:true,buildings:true,buildings3d:false};
@@ -1093,7 +1171,7 @@ hello this is my txt design</textarea>
     cropOverlay.style.top=r.top+'px';
     cropOverlay.style.width=r.width+'px';
     cropOverlay.style.height=r.height+'px';
-    if (frameStyle === 'ticket') {
+    if (frameStyle === 'ticket' || frameStyle === 'postcard') {
       cropOverlay.style.boxShadow='none';
       cropOverlay.style.border='none';
       cropOverlay.style.background='transparent';
@@ -1112,7 +1190,7 @@ hello this is my txt design</textarea>
   function updateGradientOverlay() {
     var dir = document.getElementById('vig-dir').value;
     var r = getCropRect();
-    if (frameStyle === 'ticket' || dir==='none') { gradOverlay.style.display='none'; return; }
+    if (frameStyle === 'ticket' || frameStyle === 'postcard' || dir==='none') { gradOverlay.style.display='none'; return; }
     gradOverlay.style.display='block';
     gradOverlay.style.left=r.left+'px';
     gradOverlay.style.top=r.top+'px';
@@ -1180,9 +1258,21 @@ hello this is my txt design</textarea>
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-head','ticket-serial','ticket-copy'].forEach(function(id) {
+  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-head','ticket-serial','ticket-copy','postcard-paper','postcard-ink','postcard-layout','postcard-fit','postcard-align','postcard-photo-x','postcard-photo-y','postcard-photo-zoom'].forEach(function(id) {
     var el = document.getElementById(id);
-    if (el) el.addEventListener('input', updateFrameOverlay);
+    if (el) {
+      el.addEventListener('input', updateFrameOverlay);
+      el.addEventListener('change', updateFrameOverlay);
+    }
+  });
+
+  ['postcard-photo-x','postcard-photo-y','postcard-photo-zoom'].forEach(function(id) {
+    var el = document.getElementById(id);
+    var out = document.getElementById(id + '-val');
+    if (!el || !out) return;
+    function syncPhotoValue() { out.textContent = el.value; }
+    el.addEventListener('input', syncPhotoValue);
+    syncPhotoValue();
   });
 
   function rectPathD(x, y, w, h) {
@@ -1334,6 +1424,409 @@ hello this is my txt design</textarea>
     return city.toUpperCase();
   }
 
+  function isAsciiPlaceText(text) {
+    return /^[\x00-\x7F\s.,'’\-()/&]+$/.test(text || '');
+  }
+
+  function getPostcardPlaceText() {
+    var city = '';
+    var s = document.getElementById('search-input');
+    if (s && s.value) city = String(s.value).trim();
+    if (city && isAsciiPlaceText(city)) return city;
+    if (postcardPlaceEnglish) return postcardPlaceEnglish;
+    var c = map.getCenter();
+    return c.lat.toFixed(2) + ', ' + c.lng.toFixed(2);
+  }
+
+  function getPostcardWeatherLabel(code) {
+    var mapCodes = {
+      0: 'Clear sky',
+      1: 'Mainly clear',
+      2: 'Partly cloudy',
+      3: 'Overcast',
+      45: 'Fog',
+      48: 'Rime fog',
+      51: 'Light drizzle',
+      53: 'Drizzle',
+      55: 'Dense drizzle',
+      56: 'Freezing drizzle',
+      57: 'Dense freezing drizzle',
+      61: 'Light rain',
+      63: 'Rain',
+      65: 'Heavy rain',
+      66: 'Freezing rain',
+      67: 'Heavy freezing rain',
+      71: 'Light snow',
+      73: 'Snow',
+      75: 'Heavy snow',
+      77: 'Snow grains',
+      80: 'Rain showers',
+      81: 'Heavy showers',
+      82: 'Violent showers',
+      85: 'Snow showers',
+      86: 'Heavy snow showers',
+      95: 'Thunderstorm',
+      96: 'Storm with hail',
+      99: 'Heavy hail storm'
+    };
+    return mapCodes[code] || 'Weather';
+  }
+
+  function getPostcardMetaLines() {
+    var place = getPostcardPlaceText();
+    var dateText = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '.');
+    var lines = [place.toUpperCase()];
+    if (document.getElementById('postcard-weather').checked) {
+      if (postcardWeather && !postcardWeather.error) {
+        var weatherLine = postcardWeather.label.toUpperCase() + ' · ' + postcardWeather.temp + '°C';
+        if (typeof postcardWeather.humidity === 'number') weatherLine += ' HUMIDITY ' + postcardWeather.humidity;
+        lines.push(weatherLine.toUpperCase());
+      } else if (postcardWeather && postcardWeather.error) {
+        lines.push('WEATHER UNAVAILABLE');
+      } else {
+        lines.push('LOADING WEATHER…');
+      }
+    }
+    lines.push(dateText.replace(/\./g, '-'));
+    return lines;
+  }
+
+  function syncPostcardPhotoName() {
+    var label = document.getElementById('postcard-photo-name');
+    if (!label) return;
+    label.textContent = postcardPhotoName || 'No photo selected';
+  }
+
+  function getPostcardPhotoAdjust() {
+    return {
+      x: parseInt(document.getElementById('postcard-photo-x').value, 10) || 0,
+      y: parseInt(document.getElementById('postcard-photo-y').value, 10) || 0,
+      zoom: (parseInt(document.getElementById('postcard-photo-zoom').value, 10) || 100) / 100
+    };
+  }
+
+  function drawImageFit(ctxRef, img, rect, mode) {
+    if (!img || !img.width || !img.height) return;
+    var adjust = getPostcardPhotoAdjust();
+    var dw = rect.w;
+    var dh = rect.h;
+    var sw = img.width;
+    var sh = img.height;
+    var scale = (mode === 'contain' ? Math.min(dw / sw, dh / sh) : Math.max(dw / sw, dh / sh)) * adjust.zoom;
+    var rw = sw * scale;
+    var rh = sh * scale;
+    var dx = rect.x + (dw - rw) * 0.5 + dw * adjust.x / 100;
+    var dy = rect.y + (dh - rh) * 0.5 + dh * adjust.y / 100;
+    ctxRef.drawImage(img, dx, dy, rw, rh);
+  }
+
+  function getPostcardLayout(frameW, frameH, offsetX, offsetY) {
+    offsetX = offsetX || 0;
+    offsetY = offsetY || 0;
+    var mode = (document.getElementById('postcard-layout').value || 'vertical');
+    var ratio = mode === 'split' ? 1.44 : 0.665;
+    var maxW = frameW * (mode === 'split' ? 0.84 : 0.53);
+    var maxH = frameH * 0.86;
+    var w = maxW;
+    var h = w / ratio;
+    if (h > maxH) {
+      h = maxH;
+      w = h * ratio;
+    }
+    var x = offsetX + (frameW - w) * 0.5;
+    var y = offsetY + (frameH - h) * 0.5;
+    var pad = Math.max(14, Math.round(Math.min(w, h) * 0.028));
+    var gap = Math.max(10, Math.round(Math.min(w, h) * 0.022));
+    var metaH = mode === 'split' ? Math.round(h * 0.19) : Math.round(h * 0.155);
+    var radius = 0;
+    var layout = {
+      x: x, y: y, w: w, h: h, pad: pad, gap: gap, radius: radius, mode: mode,
+      meta: null, photo: null, map: null
+    };
+    if (mode === 'split') {
+      var contentH = h - pad * 2 - metaH - gap;
+      var photoW = Math.round((w - pad * 2 - gap) * 0.5);
+      var mapW = w - pad * 2 - gap - photoW;
+      layout.photo = { x: x + pad, y: y + pad, w: photoW, h: contentH };
+      layout.map = { x: x + pad + photoW + gap, y: y + pad, w: mapW, h: contentH };
+      layout.meta = { x: x + pad, y: y + h - pad - metaH, w: w - pad * 2, h: metaH };
+    } else {
+      var contentW = w - pad * 2;
+      var contentH2 = h - pad * 2 - metaH - gap * 2;
+      var photoH = Math.round(contentH2 * 0.5);
+      var mapH = contentH2 - photoH;
+      layout.photo = { x: x + pad, y: y + pad, w: contentW, h: photoH };
+      layout.map = { x: x + pad, y: y + pad + photoH + gap, w: contentW, h: mapH };
+      layout.meta = { x: x + pad, y: y + h - pad - metaH, w: contentW, h: metaH };
+    }
+    layout.windowRadius = Math.max(10, Math.round(Math.min(w, h) * 0.018));
+    layout.stampSize = Math.max(60, Math.round(layout.meta.h * 0.96));
+    layout.metaPadX = 0;
+    layout.metaPadY = Math.max(10, Math.round(layout.meta.h * 0.16));
+    return layout;
+  }
+
+  function applyDottedTextStyle(el, color, dotSize) {
+    el.style.color = 'transparent';
+    el.style.webkitTextFillColor = 'transparent';
+    el.style.backgroundImage = 'radial-gradient(circle, ' + color + ' 1.2px, transparent 1.35px)';
+    el.style.backgroundSize = dotSize + 'px ' + dotSize + 'px';
+    el.style.webkitBackgroundClip = 'text';
+    el.style.backgroundClip = 'text';
+  }
+
+  function getMarkerIcon(id) {
+    return MARKER_ICONS.find(function(icon) { return icon.id === id; }) || MARKER_ICONS[0];
+  }
+
+  function markerSvg(id, size, color) {
+    var icon = getMarkerIcon(id);
+    var s = size || 24;
+    var stroke = color || '#111111';
+    return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" aria-hidden="true" focusable="false" fill="none" stroke="'+stroke+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+      + icon.body
+      + '</svg>';
+  }
+
+  function drawDottedTitleCanvas(ctx, text, x, y, font, color, align, maxWidth) {
+    ctx.save();
+    ctx.font = font;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'top';
+    var metrics = ctx.measureText(text);
+    var width = Math.min(maxWidth || metrics.width, metrics.width);
+    var height = (metrics.actualBoundingBoxAscent || 0) + (metrics.actualBoundingBoxDescent || 0) + 8;
+    var leftX = align === 'center' ? x - width * 0.5 : (align === 'right' ? x - width : x);
+    ctx.beginPath();
+    ctx.rect(leftX, y, width, height);
+    ctx.clip();
+    ctx.save();
+    ctx.font = font;
+    ctx.textAlign = align || 'left';
+    ctx.textBaseline = 'top';
+    ctx.beginPath();
+    ctx.fillText(text, x, y);
+    ctx.clip();
+    ctx.fillStyle = color;
+    var fontMatch = String(font).match(/(\d+)px/);
+    var fontPx = fontMatch ? parseInt(fontMatch[1], 10) : 24;
+    var dot = Math.max(4, Math.round(fontPx / 6));
+    for (var yy = y; yy < y + height + dot; yy += dot) {
+      for (var xx = leftX; xx < leftX + width + dot; xx += dot) {
+        ctx.beginPath();
+        ctx.arc(xx, yy, Math.max(1, dot * 0.17), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function drawRoundedRectPath(ctxRef, rect, radius) {
+    var r = Math.max(0, Math.min(radius, Math.min(rect.w, rect.h) * 0.5));
+    ctxRef.beginPath();
+    ctxRef.moveTo(rect.x + r, rect.y);
+    ctxRef.arcTo(rect.x + rect.w, rect.y, rect.x + rect.w, rect.y + rect.h, r);
+    ctxRef.arcTo(rect.x + rect.w, rect.y + rect.h, rect.x, rect.y + rect.h, r);
+    ctxRef.arcTo(rect.x, rect.y + rect.h, rect.x, rect.y, r);
+    ctxRef.arcTo(rect.x, rect.y, rect.x + rect.w, rect.y, r);
+    ctxRef.closePath();
+  }
+
+  function roundedRectPathD(rect, radius) {
+    var r = Math.max(0, Math.min(radius, Math.min(rect.w, rect.h) * 0.5));
+    if (r <= 0) {
+      return [
+        'M', rect.x, rect.y,
+        'H', (rect.x + rect.w),
+        'V', (rect.y + rect.h),
+        'H', rect.x,
+        'Z'
+      ].join(' ');
+    }
+    return [
+      'M', (rect.x + r), rect.y,
+      'H', (rect.x + rect.w - r),
+      'A', r, r, 0, 0, 1, (rect.x + rect.w), (rect.y + r),
+      'V', (rect.y + rect.h - r),
+      'A', r, r, 0, 0, 1, (rect.x + rect.w - r), (rect.y + rect.h),
+      'H', (rect.x + r),
+      'A', r, r, 0, 0, 1, rect.x, (rect.y + rect.h - r),
+      'V', (rect.y + r),
+      'A', r, r, 0, 0, 1, (rect.x + r), rect.y,
+      'Z'
+    ].join(' ');
+  }
+
+  function renderPostcardFrameDOM(cropRect, hostW, hostH) {
+    var paper = document.getElementById('postcard-paper').value;
+    var ink = document.getElementById('postcard-ink').value || '#26211c';
+    var layout = getPostcardLayout(cropRect.width, cropRect.height, cropRect.left, cropRect.top);
+
+    [
+      { left: 0, top: 0, width: hostW, height: layout.y },
+      { left: 0, top: layout.y, width: layout.x, height: layout.h },
+      { left: layout.x + layout.w, top: layout.y, width: hostW - (layout.x + layout.w), height: layout.h },
+      { left: 0, top: layout.y + layout.h, width: hostW, height: hostH - (layout.y + layout.h) }
+    ].forEach(function(rect) {
+      if (rect.width <= 0 || rect.height <= 0) return;
+      var dim = document.createElement('div');
+      dim.style.cssText = 'position:absolute;left:'+rect.left+'px;top:'+rect.top+'px;width:'+rect.width+'px;height:'+rect.height+'px;background:rgba(0,0,0,0.24);pointer-events:none;';
+      frameOverlay.appendChild(dim);
+    });
+
+    var shellSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    shellSvg.setAttribute('width', hostW);
+    shellSvg.setAttribute('height', hostH);
+    shellSvg.setAttribute('viewBox', '0 0 ' + hostW + ' ' + hostH);
+    shellSvg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible;';
+    var shellPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    shellPath.setAttribute('fill', paper);
+    shellPath.setAttribute('fill-rule', 'evenodd');
+    shellPath.setAttribute('stroke', 'rgba(36,31,24,0.18)');
+    shellPath.setAttribute('stroke-width', '1');
+    shellPath.setAttribute('d',
+      roundedRectPathD({ x: layout.x, y: layout.y, w: layout.w, h: layout.h }, layout.radius) + ' ' +
+      roundedRectPathD(layout.map, layout.windowRadius)
+    );
+    shellSvg.appendChild(shellPath);
+    frameOverlay.appendChild(shellSvg);
+
+    function makePanel(rect, opts) {
+      var panel = document.createElement('div');
+      panel.style.cssText = 'position:absolute;left:'+rect.x+'px;top:'+rect.y+'px;width:'+rect.w+'px;height:'+rect.h+'px;border-radius:'+opts.radius+'px;overflow:hidden;pointer-events:none;'+(opts.extra || '');
+      return panel;
+    }
+
+    var photoPanel = makePanel(layout.photo, { radius: layout.windowRadius });
+    photoPanel.style.background = '#f4f0ea';
+    photoPanel.style.boxShadow = 'inset 0 0 0 1px rgba(36,31,24,0.10)';
+    if (postcardPhoto) {
+      var img = document.createElement('img');
+      img.src = postcardPhoto.src;
+      img.alt = '';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = document.getElementById('postcard-fit').value || 'cover';
+      var adjust = getPostcardPhotoAdjust();
+      img.style.transformOrigin = 'center center';
+      img.style.transform = 'translate(' + (adjust.x * 0.35) + '%, ' + (adjust.y * 0.35) + '%) scale(' + adjust.zoom + ')';
+      img.style.display = 'block';
+      photoPanel.appendChild(img);
+    } else {
+      photoPanel.style.display = 'flex';
+      photoPanel.style.alignItems = 'center';
+      photoPanel.style.justifyContent = 'center';
+      photoPanel.style.color = 'rgba(36,31,24,0.45)';
+      photoPanel.style.fontSize = '12px';
+      photoPanel.style.letterSpacing = '.06em';
+      photoPanel.textContent = 'UPLOAD A PHOTO';
+    }
+    frameOverlay.appendChild(photoPanel);
+
+    var mapBorder = makePanel(layout.map, { radius: layout.windowRadius });
+    mapBorder.style.boxShadow = 'inset 0 0 0 1px rgba(36,31,24,0.10)';
+    mapBorder.style.background = 'rgba(255,255,255,0.08)';
+    frameOverlay.appendChild(mapBorder);
+
+    var metaPanel = makePanel(layout.meta, { radius: Math.max(8, Math.round(layout.radius * 0.7)) });
+    metaPanel.style.background = 'transparent';
+    metaPanel.style.display = 'flex';
+    metaPanel.style.flexDirection = 'column';
+    metaPanel.style.justifyContent = 'center';
+    metaPanel.style.boxSizing = 'border-box';
+    var metaPadX = layout.metaPadX;
+    var metaPadY = layout.metaPadY;
+    metaPanel.style.padding = metaPadY + 'px ' + metaPadX + 'px';
+    metaPanel.style.color = ink;
+    metaPanel.style.textAlign = document.getElementById('postcard-align').value || 'left';
+    var metaLines = getPostcardMetaLines();
+    metaLines.forEach(function(line, idx) {
+      var row = document.createElement('div');
+      row.textContent = line;
+      row.style.fontFamily = idx === 0 ? "'Perfograma','Bebas Neue',Outfit,sans-serif" : "'Bebas Neue','Outfit',sans-serif";
+      row.style.fontSize = (idx === 0 ? Math.max(22, Math.round(layout.meta.h * 0.3)) : (idx === 1 ? Math.max(11, Math.round(layout.meta.h * 0.105)) : Math.max(10, Math.round(layout.meta.h * 0.1)))) + 'px';
+      row.style.fontWeight = idx === 0 ? '400' : '500';
+      row.style.lineHeight = idx === 0 ? '0.96' : '1.1';
+      row.style.letterSpacing = idx === 0 ? '0' : '.02em';
+      row.style.textTransform = 'uppercase';
+      row.style.opacity = idx === 1 ? '0.96' : '1';
+      row.style.marginBottom = idx === 0 ? Math.max(7, Math.round(layout.meta.h * 0.09)) + 'px' : '0';
+      metaPanel.appendChild(row);
+    });
+    frameOverlay.appendChild(metaPanel);
+  }
+
+  function syncPostcardWeather() {
+    if (frameStyle !== 'postcard') return;
+    if (!document.getElementById('postcard-weather').checked) {
+      postcardWeather = null;
+      syncPostcardPlaceEnglish();
+      updateFrameOverlay();
+      return;
+    }
+    if (postcardWeatherTimer) clearTimeout(postcardWeatherTimer);
+    postcardWeatherTimer = setTimeout(fetchPostcardWeather, 220);
+  }
+
+  async function syncPostcardPlaceEnglish() {
+    var inputVal = (document.getElementById('search-input').value || '').trim();
+    if (inputVal && isAsciiPlaceText(inputVal)) {
+      postcardPlaceEnglish = '';
+      return;
+    }
+    var reqId = ++postcardWeatherRequest;
+    var center = map.getCenter();
+    var reverseUrl = 'https://nominatim.openstreetmap.org/reverse?lat=' + center.lat.toFixed(4) + '&lon=' + center.lng.toFixed(4) + '&format=jsonv2&zoom=10&accept-language=en';
+    try {
+      var res = await fetch(reverseUrl, { cache: 'no-store', headers: { 'Accept-Language': 'en' } });
+      if (!res.ok) throw new Error('place http ' + res.status);
+      var data = await res.json();
+      if (reqId !== postcardWeatherRequest) return;
+      var addr = data && data.address ? data.address : {};
+      postcardPlaceEnglish = String(addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state || data.name || '').trim();
+    } catch (err) {
+      if (reqId !== postcardWeatherRequest) return;
+      postcardPlaceEnglish = '';
+    }
+    updateFrameOverlay();
+  }
+
+  async function fetchPostcardWeather() {
+    if (frameStyle !== 'postcard' || !document.getElementById('postcard-weather').checked) return;
+    var reqId = ++postcardWeatherRequest;
+    var center = map.getCenter();
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + center.lat.toFixed(4) + '&longitude=' + center.lng.toFixed(4) + '&current=temperature_2m,relative_humidity_2m,weather_code&timezone=auto';
+    var inputVal = (document.getElementById('search-input').value || '').trim();
+    var reverseUrl = 'https://nominatim.openstreetmap.org/reverse?lat=' + center.lat.toFixed(4) + '&lon=' + center.lng.toFixed(4) + '&format=jsonv2&zoom=10&accept-language=en';
+    try {
+      var requests = [fetch(url, { cache: 'no-store' })];
+      if (!inputVal || !isAsciiPlaceText(inputVal)) requests.push(fetch(reverseUrl, { cache: 'no-store', headers: { 'Accept-Language': 'en' } }));
+      var results = await Promise.all(requests);
+      var res = results[0];
+      if (!res.ok) throw new Error('weather http ' + res.status);
+      var data = await res.json();
+      if (reqId !== postcardWeatherRequest) return;
+      var cur = data && data.current ? data.current : null;
+      if (!cur) throw new Error('weather payload');
+      postcardWeather = {
+        temp: Math.round(cur.temperature_2m),
+        humidity: typeof cur.relative_humidity_2m === 'number' ? Math.round(cur.relative_humidity_2m) : null,
+        label: getPostcardWeatherLabel(cur.weather_code)
+      };
+      if (results[1] && results[1].ok) {
+        var placeData = await results[1].json();
+        if (reqId !== postcardWeatherRequest) return;
+        var addr = placeData && placeData.address ? placeData.address : {};
+        postcardPlaceEnglish = String(addr.city || addr.town || addr.village || addr.municipality || addr.county || addr.state || placeData.name || '').trim();
+      }
+    } catch (err) {
+      if (reqId !== postcardWeatherRequest) return;
+      postcardWeather = { error: true };
+    }
+    updateFrameOverlay();
+  }
+
 function getTicketCopyLines() {
     var raw = (document.getElementById("ticket-copy").value || "").split("\r").join("");
     return raw.split("\n").slice(0, 3);
@@ -1466,7 +1959,7 @@ function getTicketCopyLines() {
 
   function updateFrameOverlay() {
     var r = getCropRect();
-    var overlayRect = frameStyle === 'ticket'
+    var overlayRect = (frameStyle === 'ticket' || frameStyle === 'postcard')
       ? { left: 0, top: 0, width: mapArea.clientWidth, height: mapArea.clientHeight }
       : r;
     frameOverlay.style.left = overlayRect.left+'px';
@@ -1478,8 +1971,8 @@ function getTicketCopyLines() {
     frameOverlay.style.borderRadius = '';
     frameOverlay.style.overflow = 'visible';
     var badgeImgLive = captionLayer.querySelector('img.city-badge-img');
-    if (badgeImgLive) badgeImgLive.style.display = frameStyle==='ticket' ? 'none' : 'block';
-    document.getElementById('coord-stamp-options').style.display = (frameStyle==='none' || frameStyle==='ticket') ? 'none' : 'block';
+    if (badgeImgLive) badgeImgLive.style.display = (frameStyle==='ticket' || frameStyle==='postcard') ? 'none' : 'block';
+    document.getElementById('coord-stamp-options').style.display = (frameStyle==='none' || frameStyle==='ticket' || frameStyle==='postcard') ? 'none' : 'block';
     if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
     frameOverlay.style.display = 'block';
     if (frameStyle === 'polaroid') {
@@ -1514,6 +2007,8 @@ function getTicketCopyLines() {
       frameOverlay.style.boxShadow = 'inset 0 0 0 '+bw+'px '+bc;
     } else if (frameStyle === 'ticket') {
       renderTicketFrameDOM(r, overlayRect.width, overlayRect.height);
+    } else if (frameStyle === 'postcard') {
+      renderPostcardFrameDOM(r, overlayRect.width, overlayRect.height);
     }
     renderCoordStampDOM(r);
   }
@@ -1521,7 +2016,7 @@ function getTicketCopyLines() {
   function renderCoordStampDOM(r) {
     var old = frameOverlay.querySelector('.coord-stamp');
     if (old) old.parentNode.removeChild(old);
-    if (frameStyle === 'ticket') return;
+    if (frameStyle === 'ticket' || frameStyle === 'postcard') return;
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
@@ -1616,7 +2111,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       setTimeout(function(){ dragging = false; }, 50);
     });
   })();
-  map.on('moveend', function(){ if(frameStyle!=='none') updateFrameOverlay(); });
+  map.on('moveend', function(){ if(frameStyle!=='none') updateFrameOverlay(); if (frameStyle==='postcard') syncPostcardWeather(); });
 
   // Style grid
   var styleGrid = document.getElementById('style-grid');
@@ -1654,11 +2149,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   function setFrameStyle(frame) {
     frameStyle = frame;
     document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.toggle('active', b.dataset.frame === frameStyle);});
-    ['polaroid','border','ticket'].forEach(function(t){
+    ['polaroid','border','ticket','postcard'].forEach(function(t){
       document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
     });
     updateCropOverlay();
     updateFrameOverlay();
+    if (frameStyle === 'postcard') syncPostcardWeather();
   }
 
   function setExportStyle(nextStyle) {
@@ -1717,6 +2213,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById('color-label-pick').value=currentColors.label;
   }
   syncColorPickers();
+  syncPostcardPhotoName();
   updateOnboardingVisibility(false);
 
   function onColorChange() {
@@ -1728,6 +2225,38 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
   ['color-water','color-land','color-road','color-label-pick'].forEach(function(id){
     document.getElementById(id).addEventListener('input',onColorChange);
+  });
+
+  document.getElementById('btn-postcard-photo').addEventListener('click', function() {
+    document.getElementById('postcard-photo-input').click();
+  });
+  document.getElementById('btn-postcard-clear').addEventListener('click', function() {
+    postcardPhoto = null;
+    postcardPhotoName = '';
+    document.getElementById('postcard-photo-input').value = '';
+    syncPostcardPhotoName();
+    updateFrameOverlay();
+  });
+  document.getElementById('postcard-photo-input').addEventListener('change', function(e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    postcardPhotoName = file.name;
+    syncPostcardPhotoName();
+    var reader = new FileReader();
+    reader.onload = function(evt) {
+      var img = new Image();
+      img.onload = function() {
+        postcardPhoto = img;
+        updateFrameOverlay();
+      };
+      img.src = evt.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('postcard-weather').addEventListener('change', function() {
+    if (!this.checked) postcardWeather = null;
+    updateFrameOverlay();
+    if (this.checked) syncPostcardWeather();
   });
 
   // Layer toggles
@@ -1766,7 +2295,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var t = (h - 19) / 2;
       return [lerpColor('#ff9944','#8822aa',t), lerpColor('#b85520','#441166',t), 0.5];
     } else {
-      // Late evening �?night
+      // Late evening 锟?night
       var t = (h - 21) / 1;
       return [lerpColor('#8822aa','#1a2035',t), lerpColor('#441166','#0d1220',t), 0.6];
     }
@@ -1788,7 +2317,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       var hour = parseFloat(document.getElementById('sun-time').value) || 15;
       var sc = getSunColors(hour);
       var lightCol = sc[0], shadowCol = sc[1], ao = sc[2];
-      // Top faces get light color, base gets shadow �?via height interpolation
+      // Top faces get light color, base gets shadow 锟?via height interpolation
       map.setPaintProperty('building-3d','fill-extrusion-color',[
         'interpolate',['linear'],
         ['coalesce',['get','height'],['*',['+',2,['%',['coalesce',['id'],1],22]],3.5]],
@@ -2020,17 +2549,17 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById('caption-text').value = lastWikiText;
   });
 
-  // Coord helper �?used by bakeFrame
+  // Coord helper 锟?used by bakeFrame
   // getCoordStr inlined in bakeCoordOnMap / renderCoordStampDOM
 
   var emojiGrid=document.getElementById('emoji-grid');
-  EMOJIS.forEach(function(em){
+  MARKER_ICONS.forEach(function(icon){
     var btn=document.createElement('div');
-    btn.className='emoji-opt'+(em==='📍'?' selected':'');
-    btn.className='emoji-opt'+(em===selectedEmoji?' selected':'');
-    btn.textContent=em;
+    btn.className='emoji-opt'+(icon.id===selectedMarkerIcon?' selected':'');
+    btn.title=icon.label;
+    btn.innerHTML=markerSvg(icon.id, 24);
     btn.addEventListener('click',function(){
-      selectedEmoji=em;
+      selectedMarkerIcon=icon.id;
       emojiGrid.querySelectorAll('.emoji-opt').forEach(function(b){b.classList.remove('selected');});
       btn.classList.add('selected');
     });
@@ -2040,11 +2569,13 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   // Marker popup
   var markerPopup=document.getElementById('marker-popup');
   var popupName=document.getElementById('popup-name');
+  var popupMarkerColor=document.getElementById('popup-marker-color');
   var btnAddMarker=document.getElementById('btn-add-marker');
   var markerList=document.getElementById('marker-list');
 
   function showMarkerPopup(screenX,screenY) {
     popupName.value='';
+    popupMarkerColor.value=selectedMarkerColor;
     markerPopup.style.display='block';
     var pw=230,ph=240,vw=window.innerWidth,vh=window.innerHeight;
     markerPopup.style.left=Math.min(screenX+10,vw-pw-8)+'px';
@@ -2057,8 +2588,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if(markers.length>=10){alert('Max 10 markers');return;}
     addingMarker=!addingMarker;
     btnAddMarker.classList.toggle('adding',addingMarker);
-    btnAddMarker.textContent=addingMarker?'�?cancel':'+ add marker';
-    if (addingMarker) btnAddMarker.textContent='cancel';
+    btnAddMarker.textContent=addingMarker?'cancel':'+ add marker';
     map.getCanvas().style.cursor=addingMarker?'crosshair':'';
   });
 
@@ -2077,15 +2607,17 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   document.getElementById('popup-confirm').addEventListener('click',function(){
     if(!pendingMarkerLngLat){hideMarkerPopup();return;}
     var name=popupName.value.trim();
-    var emoji=selectedEmoji;
+    var iconId=selectedMarkerIcon;
+    var iconColor=popupMarkerColor.value || selectedMarkerColor;
+    selectedMarkerColor=iconColor;
     var lnglat=pendingMarkerLngLat;
 
     var el=document.createElement('div');
     el.style.cssText='display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:all;transform:translateX(-50%)';
-    var emojiEl=document.createElement('div');
-    emojiEl.style.cssText='font-size:22px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.35))';
-    emojiEl.textContent=emoji;
-    el.appendChild(emojiEl);
+    var iconEl=document.createElement('div');
+    iconEl.style.cssText='width:25px;height:25px;line-height:1';
+    iconEl.innerHTML=markerSvg(iconId, 25, iconColor);
+    el.appendChild(iconEl);
     if(name){
       var tag=document.createElement('div');
       tag.style.cssText='font-family:Outfit,sans-serif;font-size:11px;font-weight:500;color:#1a1a1a;background:rgba(255,255,255,.88);border-radius:4px;padding:1px 6px;margin-top:2px;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px rgba(0,0,0,.18)';
@@ -2094,7 +2626,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     }
 
     var m=new mapboxgl.Marker({element:el,anchor:'bottom',draggable:true}).setLngLat(lnglat).addTo(map);
-    var markerObj={mapMarker:m,name:name,emoji:emoji,lnglat:lnglat};
+    var markerObj={mapMarker:m,name:name,icon:iconId,color:iconColor,lnglat:lnglat};
     markers.push(markerObj);
     m.on('dragend',function(){
       markerObj.lnglat=Object.values(m.getLngLat());
@@ -2115,9 +2647,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     markers.forEach(function(m,i){
       var row=document.createElement('div');
       row.className='marker-item';
-      row.innerHTML='<div class="marker-emoji">'+m.emoji+'</div>'
+      row.innerHTML='<div class="marker-emoji">'+markerSvg(m.icon || 'map-pin', 20, m.color || '#111111')+'</div>'
         +'<div class="marker-name">'+(m.name||(m.lnglat[1].toFixed(3)+', '+m.lnglat[0].toFixed(3)))+'</div>'
-        +'<button class="marker-del" data-idx="'+i+'">�?/button>';
+        +'<button class="marker-del" data-idx="'+i+'" aria-label="Delete marker">&times;</button>';
       row.querySelector('.marker-del').addEventListener('click',function(){
         var idx=parseInt(this.dataset.idx);
         markers[idx].mapMarker.remove();
@@ -2384,17 +2916,17 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var scale = previewScale;
     if (exportStyle === 'watercolor') scale = Math.min(scale, 0.7);
     if (exportStyle === 'blob') scale = Math.min(scale, 0.8);
-    var isTicket = frameStyle === 'ticket';
-    var hostLeft = isTicket ? 0 : r.left;
-    var hostTop = isTicket ? 0 : r.top;
-    var hostWidth = isTicket ? mapArea.clientWidth : r.width;
-    var hostHeight = isTicket ? mapArea.clientHeight : r.height;
+    var isFullFramePreview = frameStyle === 'ticket' || frameStyle === 'postcard';
+    var hostLeft = isFullFramePreview ? 0 : r.left;
+    var hostTop = isFullFramePreview ? 0 : r.top;
+    var hostWidth = isFullFramePreview ? mapArea.clientWidth : r.width;
+    var hostHeight = isFullFramePreview ? mapArea.clientHeight : r.height;
     var sw = Math.max(1, Math.round(hostWidth * scale));
     var sh = Math.max(1, Math.round(hostHeight * scale));
-    var srcX = isTicket ? 0 : Math.round(r.left * mapCanvas.width / mapArea.clientWidth);
-    var srcY = isTicket ? 0 : Math.round(r.top * mapCanvas.height / mapArea.clientHeight);
-    var srcW = isTicket ? mapCanvas.width : Math.round(r.width * mapCanvas.width / mapArea.clientWidth);
-    var srcH = isTicket ? mapCanvas.height : Math.round(r.height * mapCanvas.height / mapArea.clientHeight);
+    var srcX = isFullFramePreview ? 0 : Math.round(r.left * mapCanvas.width / mapArea.clientWidth);
+    var srcY = isFullFramePreview ? 0 : Math.round(r.top * mapCanvas.height / mapArea.clientHeight);
+    var srcW = isFullFramePreview ? mapCanvas.width : Math.round(r.width * mapCanvas.width / mapArea.clientWidth);
+    var srcH = isFullFramePreview ? mapCanvas.height : Math.round(r.height * mapCanvas.height / mapArea.clientHeight);
 
     previewCanvas.style.left = hostLeft + 'px';
     previewCanvas.style.top = hostTop + 'px';
@@ -2406,7 +2938,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     previewCtx.clearRect(0,0,sw,sh);
     previewCtx.drawImage(mapCanvas, srcX, srcY, srcW, srcH, 0, 0, sw, sh);
     var dir=document.getElementById('vig-dir').value;
-    if(dir!=='none'){
+    if(dir!=='none' && frameStyle !== 'ticket' && frameStyle !== 'postcard'){
       var vigColor=document.getElementById('vig-color').value;
       var vigOp=parseInt(document.getElementById('vig-opacity').value)/100;
       var hr=parseInt(vigColor.slice(1,3),16),hg=parseInt(vigColor.slice(3,5),16),hb=parseInt(vigColor.slice(5,7),16);
@@ -2806,9 +3338,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     function lum(i){ return d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114; }
     function idx(x,y){ return (Math.max(0,Math.min(h-1,y))*w + Math.max(0,Math.min(w-1,x)))*4; }
 
-    // Directional Sobel kernels �?4 edge maps
-    // gH: horizontal edges (vertical lines) [�?,0,1] across rows
-    // gV: vertical edges (horizontal lines) [�?,0,1] down cols
+    // Directional Sobel kernels 锟?4 edge maps
+    // gH: horizontal edges (vertical lines) [锟?,0,1] across rows
+    // gV: vertical edges (horizontal lines) [锟?,0,1] down cols
     // gD1: 45° diagonal  NE-SW
     // gD2: 135° diagonal NW-SE
     var gH  = new Float32Array(w*h);
@@ -2850,7 +3382,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       od[i*4]=bgRgb[0];od[i*4+1]=bgRgb[1];od[i*4+2]=bgRgb[2];od[i*4+3]=255;
     }
 
-    // Blend each directional edge �?strongest direction wins, additive if similar strength
+    // Blend each directional edge 锟?strongest direction wins, additive if similar strength
     for (var y2=0;y2<h;y2++) {
       for (var x2=0;x2<w;x2++) {
         var p2=y2*w+x2;
@@ -3555,7 +4087,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return imageData;
   }
 
-  // Export �?bakes map + gradient + captions
+  // Export 锟?bakes map + gradient + captions
   function buildExportCanvas() {
     var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
     var ratio=ratioMap[currentRatio]||1;
@@ -3641,7 +4173,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     bakeFrame(ctx, out.width, out.height);
     // Draw city badge if present
     var badgeImg = captionLayer.querySelector('img.city-badge-img');
-    if (badgeImg && frameStyle !== 'ticket') {
+    if (badgeImg && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
       var bLeft = parseFloat(badgeImg.style.left) || 0;
       var bTop  = parseFloat(badgeImg.style.top)  || 0;
       var bW    = parseFloat(badgeImg.style.width) || badgeImg.naturalWidth;
@@ -3688,13 +4220,15 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       ctx.strokeRect(0,0,fw,fh);
     } else if (frameStyle==='ticket') {
       bakeTicketFrame(ctx, fw, fh);
+    } else if (frameStyle==='postcard') {
+      bakePostcardFrame(ctx, fw, fh);
     }
-    // Coord stamp �?baked onto map image at bottom edge
+    // Coord stamp 锟?baked onto map image at bottom edge
     bakeCoordOnMap(ctx, fw, fh);
   }
 
   function bakeCoordOnMap(ctx, fw, fh) {
-    if (frameStyle==='ticket') return;
+    if (frameStyle==='ticket' || frameStyle==='postcard') return;
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
@@ -3877,6 +4411,87 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     ctx.restore();
   }
 
+  function bakePostcardFrame(ctx, fw, fh) {
+    var paper = document.getElementById('postcard-paper').value;
+    var align = document.getElementById('postcard-align').value || 'left';
+    var layout = getPostcardLayout(fw, fh, 0, 0);
+    var metaLines = getPostcardMetaLines();
+    var fit = document.getElementById('postcard-fit').value || 'cover';
+    var ink = document.getElementById('postcard-ink').value || '#26211c';
+
+    var pre = document.createElement('canvas');
+    pre.width = fw;
+    pre.height = fh;
+    pre.getContext('2d').drawImage(ctx.canvas, 0, 0);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.24)';
+    ctx.fillRect(0, 0, fw, fh);
+
+    ctx.fillStyle = paper;
+    drawRoundedRectPath(ctx, { x: layout.x, y: layout.y, w: layout.w, h: layout.h }, layout.radius);
+    ctx.fill();
+
+    ctx.save();
+    drawRoundedRectPath(ctx, layout.map, layout.windowRadius);
+    ctx.clip();
+    ctx.drawImage(pre,
+      layout.map.x, layout.map.y, layout.map.w, layout.map.h,
+      layout.map.x, layout.map.y, layout.map.w, layout.map.h
+    );
+    ctx.restore();
+
+    if (postcardPhoto) {
+      ctx.save();
+      drawRoundedRectPath(ctx, layout.photo, layout.windowRadius);
+      ctx.clip();
+      drawImageFit(ctx, postcardPhoto, layout.photo, fit);
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.fillStyle = 'rgba(36,31,24,0.06)';
+      drawRoundedRectPath(ctx, layout.photo, layout.windowRadius);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(36,31,24,0.42)';
+      ctx.font = Math.max(11, Math.round(layout.photo.h * 0.06)) + "px Outfit,sans-serif";
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('UPLOAD A PHOTO', layout.photo.x + layout.photo.w * 0.5, layout.photo.y + layout.photo.h * 0.5);
+      ctx.restore();
+    }
+
+    ctx.strokeStyle = 'rgba(36,31,24,0.18)';
+    ctx.lineWidth = 1;
+    drawRoundedRectPath(ctx, { x: layout.x, y: layout.y, w: layout.w, h: layout.h }, layout.radius);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(36,31,24,0.12)';
+    drawRoundedRectPath(ctx, layout.photo, layout.windowRadius);
+    ctx.stroke();
+    drawRoundedRectPath(ctx, layout.map, layout.windowRadius);
+    ctx.stroke();
+
+    ctx.save();
+    var padX = layout.metaPadX;
+    var padY = layout.metaPadY;
+    ctx.fillStyle = ink;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = align;
+    var textRightLimit = layout.meta.x + layout.meta.w - padX;
+    var tx = align === 'center' ? layout.meta.x + layout.meta.w * 0.5 : (align === 'right' ? layout.meta.x + layout.meta.w - padX : layout.meta.x + padX);
+    var textY = layout.meta.y + padY;
+    metaLines.forEach(function(line, idx) {
+      var fs = idx === 0 ? Math.max(22, Math.round(layout.meta.h * 0.3)) : (idx === 1 ? Math.max(11, Math.round(layout.meta.h * 0.105)) : Math.max(10, Math.round(layout.meta.h * 0.1)));
+      var font = (idx === 0 ? '400 ' : '500 ') + fs + "px " + (idx === 0 ? "'Perfograma','Bebas Neue',Outfit,sans-serif" : "'Bebas Neue','Outfit',sans-serif");
+      ctx.font = font;
+      ctx.globalAlpha = idx === 1 ? 0.82 : 1;
+      ctx.fillText(line, tx, textY);
+      textY += idx === 0 ? fs * 1.24 : fs * 1.12;
+    });
+    ctx.restore();
+
+    ctx.restore();
+  }
+
   function isLightColor(hex) {
     var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
     return (r*0.299+g*0.587+b*0.114) > 160;
@@ -4047,6 +4662,24 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
     return out;
   }
+
+  function buildPostcardExportCanvas() {
+    var base = buildExportCanvas();
+    var g = getPostcardLayout(base.width, base.height, 0, 0);
+    var out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(g.w));
+    out.height = Math.max(1, Math.round(g.h));
+    var ctx = out.getContext('2d');
+    ctx.drawImage(base, -g.x, -g.y);
+    return out;
+  }
+
+  function buildFramedExportCanvas() {
+    if (frameStyle === 'ticket') return buildTicketExportCanvas();
+    if (frameStyle === 'postcard') return buildPostcardExportCanvas();
+    return buildExportCanvas();
+  }
+
   function triggerDownload(url, filename) {
     var a = document.createElement('a');
     a.href = url;
@@ -4126,7 +4759,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch(e) {}
     }
-    var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
+    var out = buildFramedExportCanvas();
     var blob = await canvasToBlob(out, 'image/png');
     await maybeShowSupportPrompt(blob, 'mapit-export.png', 'image/png');
   }
@@ -4135,7 +4768,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (document.fonts && document.fonts.ready) {
       try { await document.fonts.ready; } catch(e) {}
     }
-    var out = (frameStyle === 'ticket') ? buildTicketExportCanvas() : buildExportCanvas();
+    var out = buildFramedExportCanvas();
     var dataUrl = out.toDataURL('image/png');
     var w = out.width, h = out.height;
     var svg = '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -4194,12 +4827,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   var darkMode=false;
   document.getElementById('btn-darkmode').addEventListener('click',function(){darkMode=!darkMode;document.documentElement.setAttribute('data-theme',darkMode?'dark':'');});
 
-  // ── City Badge ──────────────────────────────────────────────────────────────
+  // 鈹€鈹€ City Badge 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
-  // Grid cell size (px) �?unified for text, map outline, and border stitches
+  // Grid cell size (px) 锟?unified for text, map outline, and border stitches
   var CB_CELL = 4;
   var CB_BF_W = 4, CB_BF_H = 6, CB_BF_GAP = 1;
-  // Small 3×5 font for coordinates
+  // Small 3脳5 font for coordinates
   var CB_SFONT = {
     '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],
     '2':['111','001','111','100','111'],'3':['111','001','111','001','111'],
@@ -4707,7 +5340,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       img.style.boxShadow = '0 2px 12px rgba(0,0,0,0.25)';
       img.draggable = false;
 
-      // Position at crop bottom-right, 16px inset �?wait for image to load
+      // Position at crop bottom-right, 16px inset 锟?wait for image to load
       img.style.left = '0px';
       img.style.top = '0px';
       captionLayer.appendChild(img);
@@ -4836,4 +5469,5 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 </script>
 </body>
 </html>
+
 
