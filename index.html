@@ -895,8 +895,16 @@ hello this is my txt design</textarea>
     </div>
 
     <div id="panel-export" style="display:flex;flex-direction:column;gap:8px">
+      <div class="vignette-row" style="margin-bottom:2px">
+        <span style="font-size:11px;color:var(--muted)">Export size</span>
+        <select class="vig-select" id="export-scale" style="height:28px">
+          <option value="1">1x</option>
+          <option value="2" selected>2x</option>
+          <option value="3">3x</option>
+          <option value="4">4x</option>
+        </select>
+      </div>
       <button class="btn btn-wide" id="btn-export">export png</button>
-      <button class="btn btn-wide" id="btn-export-svg" style="color:var(--muted);font-size:11px">export svg</button>
     </div>
 
     </div> <!-- /panel-inner -->
@@ -4088,14 +4096,129 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   // Export 锟?bakes map + gradient + captions
-  function buildExportCanvas() {
+  function getExportScale() {
+    var el = document.getElementById('export-scale');
+    var scale = el ? parseInt(el.value, 10) : 1;
+    return Math.max(1, Math.min(scale || 1, 4));
+  }
+
+  function drawExportIcon(ctx, id, x, y, size, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(size / 24, size / 24);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = 'none';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    function line(points) {
+      ctx.beginPath();
+      points.forEach(function(p, i){ if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+      ctx.stroke();
+    }
+    if (id === 'star') {
+      line([[12,2],[15.09,8.26],[22,9.27],[17,14.14],[18.18,21.02],[12,17.77],[5.82,21.02],[7,14.14],[2,9.27],[8.91,8.26],[12,2]]);
+    } else if (id === 'heart') {
+      ctx.beginPath();
+      ctx.moveTo(19.5,12.6);
+      ctx.bezierCurveTo(22,10.1,21.5,6.6,19.1,5.2);
+      ctx.bezierCurveTo(16.9,3.9,14.2,4.6,12,6.9);
+      ctx.bezierCurveTo(9.8,4.6,7.1,3.9,4.9,5.2);
+      ctx.bezierCurveTo(2.5,6.6,2,10.1,4.5,12.6);
+      ctx.lineTo(12,20);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (id === 'house') {
+      line([[3,10.5],[12,3.5],[21,10.5]]);
+      line([[5,10],[5,20],[19,20],[19,10]]);
+      line([[9,20],[9,14],[15,14],[15,20]]);
+    } else if (id === 'store') {
+      line([[3,7],[21,7],[19,12],[5,12],[3,7]]);
+      line([[5,12],[5,20],[19,20],[19,12]]);
+      line([[9,20],[9,16],[15,16],[15,20]]);
+    } else if (id === 'camera') {
+      line([[5,7],[8,7],[9.5,4],[14.5,4],[16,7],[19,7],[21,9],[21,18],[19,20],[5,20],[3,18],[3,9],[5,7]]);
+      ctx.beginPath(); ctx.arc(12,13,3,0,Math.PI*2); ctx.stroke();
+    } else if (id === 'landmark') {
+      line([[3,22],[21,22]]);
+      [6,10,14,18].forEach(function(v){ line([[v,18],[v,11]]); });
+      line([[3,7],[12,2],[21,7],[3,7]]);
+    } else if (id === 'mountain') {
+      line([[3,21],[12,4],[16,12]]);
+      line([[8,21],[12,14],[15,19],[17,16],[21,21],[8,21]]);
+    } else if (id === 'plane') {
+      line([[2,16],[8,17],[17,3],[21,3],[13,12],[17,21],[15,22],[10,15],[6,19],[3,18],[7,14],[2,16]]);
+    } else if (id === 'tree') {
+      line([[12,22],[12,16]]);
+      line([[7,16],[17,16],[14.5,12],[16.5,12],[12,3],[7.5,12],[9.5,12],[7,16]]);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(20,10);
+      ctx.bezierCurveTo(20,15,14.5,20.2,12.6,21.8);
+      ctx.bezierCurveTo(12.25,22.05,11.75,22.05,11.4,21.8);
+      ctx.bezierCurveTo(9.5,20.2,4,15,4,10);
+      ctx.bezierCurveTo(4,5.6,7.6,2,12,2);
+      ctx.bezierCurveTo(16.4,2,20,5.6,20,10);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(12,10,3,0,Math.PI*2);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawExportMarkers(ctx, sourceMap, crop, scaleX, scaleY, uiScaleX, uiScaleY) {
+    uiScaleX = uiScaleX || scaleX;
+    uiScaleY = uiScaleY || uiScaleX;
+    var container = sourceMap.getContainer && sourceMap.getContainer();
+    var canvas = sourceMap.getCanvas();
+    var pixelRatioX = container && container.clientWidth ? canvas.width / container.clientWidth : 1;
+    var pixelRatioY = container && container.clientHeight ? canvas.height / container.clientHeight : pixelRatioX;
+    markers.forEach(function(marker) {
+      var pt = sourceMap.project(marker.lnglat);
+      var x = (pt.x * pixelRatioX - crop.x) * scaleX;
+      var y = (pt.y * pixelRatioY - crop.y) * scaleY;
+      if (x < -80 || x > ctx.canvas.width + 80 || y < -80 || y > ctx.canvas.height + 80) return;
+      var color = marker.color || '#111111';
+      var size = 25 * uiScaleX;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.22)';
+      ctx.shadowBlur = Math.max(2, 2.5 * uiScaleX);
+      ctx.shadowOffsetY = Math.max(1, 1.5 * uiScaleY);
+      drawExportIcon(ctx, marker.icon || 'map-pin', x - size * 0.5, y - size, size, color);
+      ctx.restore();
+      if (marker.name) {
+        var fs = 11 * uiScaleX;
+        ctx.save();
+        ctx.font = '500 '+fs+'px Outfit,sans-serif';
+        var padX = 6 * uiScaleX;
+        var labelW = Math.max(30 * uiScaleX, ctx.measureText(marker.name).width + padX * 2);
+        var labelH = 18 * uiScaleY;
+        var lx = x - labelW * 0.5;
+        var ly = y + 2 * uiScaleY;
+        ctx.fillStyle = 'rgba(255,255,255,0.88)';
+        drawRoundedRectPath(ctx, {x:lx, y:ly, w:labelW, h:labelH}, 4 * uiScaleX);
+        ctx.fill();
+        ctx.fillStyle = '#1a1a1a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(marker.name, x, ly + labelH * 0.56);
+        ctx.restore();
+      }
+    });
+  }
+
+  function buildExportCanvas(exportScale, sourceMap) {
+    exportScale = Math.max(1, Math.min(exportScale || 1, 4));
+    sourceMap = sourceMap || map;
     var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
     var ratio=ratioMap[currentRatio]||1;
-    var mapCanvas=map.getCanvas();
+    var mapCanvas=sourceMap.getCanvas();
     var mw=mapCanvas.width,mh=mapCanvas.height;
     var cw,ch;
     if(mw/mh>ratio){ch=mh*.9;cw=ch*ratio;}else{cw=mw*.9;ch=cw/ratio;}
     var cx=(mw-cw)/2,cy=(mh-ch)/2;
+    var mapCrop = {x:cx, y:cy, w:cw, h:ch};
     var out=document.createElement('canvas');
     out.width=Math.round(cw);out.height=Math.round(ch);
     var ctx=out.getContext('2d');
@@ -4127,6 +4250,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var r=getCropRect();
     var scaleX=out.width/r.width;
     var scaleY=out.height/r.height;
+    drawExportMarkers(ctx, sourceMap, mapCrop, out.width/cw, out.height/ch, scaleX, scaleY);
     captions.forEach(function(cap){
       var relX=(cap.x-r.left)*scaleX;
       var relY=(cap.y-r.top)*scaleY;
@@ -4592,8 +4716,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return out;
   }
 
-  function buildTicketExportCanvas() {
-    var base = buildExportCanvas();
+  function buildTicketExportCanvas(exportScale, sourceMap) {
+    var base = buildExportCanvas(exportScale, sourceMap);
     var g = getTicketLayout(base.width, base.height, 0, 0);
 
     var out = document.createElement('canvas');
@@ -4663,8 +4787,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return out;
   }
 
-  function buildPostcardExportCanvas() {
-    var base = buildExportCanvas();
+  function buildPostcardExportCanvas(exportScale, sourceMap) {
+    var base = buildExportCanvas(exportScale, sourceMap);
     var g = getPostcardLayout(base.width, base.height, 0, 0);
     var out = document.createElement('canvas');
     out.width = Math.max(1, Math.round(g.w));
@@ -4674,10 +4798,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return out;
   }
 
-  function buildFramedExportCanvas() {
-    if (frameStyle === 'ticket') return buildTicketExportCanvas();
-    if (frameStyle === 'postcard') return buildPostcardExportCanvas();
-    return buildExportCanvas();
+  function buildFramedExportCanvas(exportScale, sourceMap) {
+    if (frameStyle === 'ticket') return buildTicketExportCanvas(exportScale, sourceMap);
+    if (frameStyle === 'postcard') return buildPostcardExportCanvas(exportScale, sourceMap);
+    return buildExportCanvas(exportScale, sourceMap);
   }
 
   function triggerDownload(url, filename) {
@@ -4695,6 +4819,51 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return new Promise(function(resolve) {
       canvas.toBlob(function(blob) { resolve(blob); }, type || 'image/png');
     });
+  }
+
+  function waitForSpecificMapIdle(targetMap) {
+    return new Promise(function(resolve) {
+      if (!targetMap || !targetMap.once) return resolve();
+      var done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        resolve();
+      }
+      targetMap.once('idle', finish);
+      setTimeout(finish, 3000);
+    });
+  }
+
+  async function buildHiResFramedExportCanvas(scale) {
+    scale = Math.max(1, Math.min(scale || 1, 4));
+    if (scale <= 1) return buildFramedExportCanvas(1, map);
+
+    var areaRect = mapArea.getBoundingClientRect();
+    var offscreen = document.createElement('div');
+    offscreen.style.cssText = 'position:fixed;left:-100000px;top:0;width:'+Math.round(areaRect.width*scale)+'px;height:'+Math.round(areaRect.height*scale)+'px;overflow:hidden;pointer-events:none;';
+    document.body.appendChild(offscreen);
+
+    var hiMap = null;
+    try {
+      hiMap = new mapboxgl.Map({
+        container: offscreen,
+        style: map.getStyle(),
+        center: map.getCenter(),
+        zoom: map.getZoom() + Math.log2(scale),
+        bearing: map.getBearing(),
+        pitch: map.getPitch(),
+        preserveDrawingBuffer: true,
+        interactive: false,
+        attributionControl: false
+      });
+      await waitForSpecificMapIdle(hiMap);
+      await new Promise(function(resolve){ requestAnimationFrame(function(){ requestAnimationFrame(resolve); }); });
+      return buildFramedExportCanvas(1, hiMap);
+    } finally {
+      if (hiMap) hiMap.remove();
+      if (offscreen.parentNode) offscreen.parentNode.removeChild(offscreen);
+    }
   }
 
   async function saveBlobAs(blob, filename, mimeType) {
@@ -4756,35 +4925,618 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   async function doExportPng() {
-    if (document.fonts && document.fonts.ready) {
-      try { await document.fonts.ready; } catch(e) {}
+    var btn = document.getElementById('btn-export');
+    var prevText = btn ? btn.textContent : '';
+    try {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'exporting...';
+      }
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch(e) {}
+      }
+      var scale = getExportScale();
+      var out = await buildHiResFramedExportCanvas(scale);
+      var blob = await canvasToBlob(out, 'image/png');
+      await maybeShowSupportPrompt(blob, 'mapit-export-'+scale+'x.png', 'image/png');
+    } catch (err) {
+      console.error('PNG export failed', err);
+      alert('Export failed: ' + ((err && err.message) || err));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevText || 'export png';
+      }
     }
-    var out = buildFramedExportCanvas();
-    var blob = await canvasToBlob(out, 'image/png');
-    await maybeShowSupportPrompt(blob, 'mapit-export.png', 'image/png');
+  }
+
+  function svgEscape(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function svgNumber(value) {
+    return Number(value || 0).toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function svgAttrs(attrs) {
+    return Object.keys(attrs).map(function(key) {
+      if (attrs[key] == null || attrs[key] === false) return '';
+      return ' '+key+'="'+svgEscape(attrs[key])+'"';
+    }).join('');
+  }
+
+  function waitForMapIdle() {
+    return new Promise(function(resolve) {
+      if (!map || !map.once) return resolve();
+      var done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        resolve();
+      }
+      map.once('idle', finish);
+      setTimeout(finish, 900);
+    });
+  }
+
+  function setRouteLayerVisibility(visible) {
+    ['route-line-case', 'route-line', 'route-dist'].forEach(function(id) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+    });
+  }
+
+  function getMapTextLayerIds() {
+    var style = map.getStyle && map.getStyle();
+    if (!style || !style.layers) return [];
+    return style.layers.filter(function(layer) {
+      return layer.type === 'symbol' && layer.layout && layer.layout['text-field'];
+    }).map(function(layer) {
+      return layer.id;
+    });
+  }
+
+  function setMapLayersVisibility(ids, visible) {
+    ids.forEach(function(id) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
+    });
+  }
+
+  function captureLayerVisibilities(ids) {
+    var state = {};
+    ids.forEach(function(id) {
+      if (map.getLayer(id)) state[id] = map.getLayoutProperty(id, 'visibility') || 'visible';
+    });
+    return state;
+  }
+
+  function restoreLayerVisibilities(state) {
+    Object.keys(state).forEach(function(id) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', state[id]);
+    });
+  }
+
+  function evaluateMapboxTextField(field, props) {
+    if (typeof field === 'string') {
+      return field.replace(/\{([^}]+)\}/g, function(_, key) {
+        return props && props[key] != null ? props[key] : '';
+      });
+    }
+    if (Array.isArray(field)) {
+      if (field[0] === 'get') return props && props[field[1]] != null ? props[field[1]] : '';
+      if (field[0] === 'coalesce') {
+        for (var i=1; i<field.length; i++) {
+          var value = evaluateMapboxTextField(field[i], props);
+          if (value) return value;
+        }
+      }
+      if (field[0] === 'concat') {
+        return field.slice(1).map(function(part){ return evaluateMapboxTextField(part, props); }).join('');
+      }
+      if (field[0] === 'literal') return field[1] || '';
+      if (typeof field[field.length - 1] === 'string') return field[field.length - 1];
+    }
+    return '';
+  }
+
+  function numericStyleValue(value, fallback) {
+    if (typeof value === 'number') return value;
+    if (Array.isArray(value)) {
+      for (var i=value.length-1; i>=0; i--) {
+        if (typeof value[i] === 'number') return value[i];
+      }
+    }
+    return fallback;
+  }
+
+  function colorStyleValue(value, fallback) {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+      for (var i=value.length-1; i>=0; i--) {
+        if (typeof value[i] === 'string' && value[i].charAt(0) === '#') return value[i];
+      }
+    }
+    return fallback;
+  }
+
+  function featureLngLat(feature) {
+    var g = feature && feature.geometry;
+    if (!g || !g.coordinates) return null;
+    if (g.type === 'Point') return g.coordinates;
+    if (g.type === 'LineString') return g.coordinates[Math.floor(g.coordinates.length / 2)];
+    if (g.type === 'MultiLineString' && g.coordinates[0]) {
+      var line = g.coordinates[Math.floor(g.coordinates.length / 2)] || g.coordinates[0];
+      return line[Math.floor(line.length / 2)];
+    }
+    if (g.type === 'Polygon' && g.coordinates[0]) return g.coordinates[0][Math.floor(g.coordinates[0].length / 2)];
+    if (g.type === 'MultiPolygon' && g.coordinates[0] && g.coordinates[0][0]) return g.coordinates[0][0][Math.floor(g.coordinates[0][0].length / 2)];
+    return null;
+  }
+
+  function collectMapTextLabels() {
+    var ids = getMapTextLayerIds();
+    if (!ids.length) return [];
+    var r = getCropRect();
+    var features = [];
+    try {
+      features = map.queryRenderedFeatures(
+        [[r.left, r.top], [r.right, r.bottom]],
+        {layers: ids}
+      );
+    } catch(e) {
+      features = [];
+    }
+    var seen = {};
+    var labels = [];
+    features.forEach(function(feature) {
+      var layer = feature.layer || {};
+      var layout = layer.layout || {};
+      var paint = layer.paint || {};
+      var text = evaluateMapboxTextField(layout['text-field'], feature.properties || {});
+      text = String(text || '').trim();
+      if (!text || text.length > 80) return;
+      var coord = featureLngLat(feature);
+      if (!coord) return;
+      var pt = map.project(coord);
+      if (pt.x < r.left - 40 || pt.x > r.right + 40 || pt.y < r.top - 40 || pt.y > r.bottom + 40) return;
+      var key = layer.id + '|' + text + '|' + Math.round(pt.x / 8) + '|' + Math.round(pt.y / 8);
+      if (seen[key]) return;
+      seen[key] = true;
+      labels.push({
+        text:text,
+        x:pt.x,
+        y:pt.y,
+        color:colorStyleValue(paint['text-color'], '#252525'),
+        halo:colorStyleValue(paint['text-halo-color'], '#ffffff'),
+        haloWidth:numericStyleValue(paint['text-halo-width'], 0),
+        size:numericStyleValue(layout['text-size'], 11),
+        weight:(layer.id && /place|settlement|country|state/i.test(layer.id)) ? 600 : 400
+      });
+    });
+    return labels.slice(0, 650);
+  }
+
+  function collectSourceMapTextLabels(existingLabels) {
+    var r = getCropRect();
+    var seen = {};
+    (existingLabels || []).forEach(function(label) {
+      seen[label.text + '|' + Math.round(label.x / 8) + '|' + Math.round(label.y / 8)] = true;
+    });
+    var labels = [];
+    function addFeatureLabel(feature, kind) {
+      var props = feature.properties || {};
+      var text = String(props.name || props.name_en || props.name_int || props.ref || '').trim();
+      if (!text || text.length > 80) return;
+      var coord = featureLngLat(feature);
+      if (!coord) return;
+      var pt = map.project(coord);
+      if (pt.x < r.left - 60 || pt.x > r.right + 60 || pt.y < r.top - 60 || pt.y > r.bottom + 60) return;
+      var key = text + '|' + Math.round(pt.x / 8) + '|' + Math.round(pt.y / 8);
+      if (seen[key]) return;
+      seen[key] = true;
+      var isRoad = kind === 'road';
+      var isCity = /city|town|village|suburb|neighbourhood/i.test(String(props.class || ''));
+      labels.push({
+        text:text,
+        x:pt.x,
+        y:pt.y,
+        color:currentColors.label || '#252525',
+        halo:currentColors.land || '#ffffff',
+        haloWidth:isRoad ? 1 : (isCity ? 1.7 : 1.2),
+        size:isRoad ? 9 : (isCity ? 13 : 10),
+        weight:isRoad ? 400 : 600
+      });
+    }
+    if (layerVis.labels) {
+      try {
+        map.querySourceFeatures('ofm', {sourceLayer:'place'}).forEach(function(feature) {
+          addFeatureLabel(feature, 'place');
+        });
+      } catch(e) {}
+    }
+    if (layerVis.roadLabels) {
+      try {
+        map.querySourceFeatures('ofm', {sourceLayer:'transportation_name'}).forEach(function(feature) {
+          addFeatureLabel(feature, 'road');
+        });
+      } catch(e) {}
+    }
+    return labels.slice(0, 650);
+  }
+
+  function safeCollectMapTextLabels() {
+    var labels = [];
+    var errors = [];
+    try {
+      labels = collectMapTextLabels();
+    } catch(e) {
+      errors.push('rendered:'+((e && e.message) || e));
+      labels = [];
+    }
+    try {
+      labels = labels.concat(collectSourceMapTextLabels(labels));
+    } catch(e2) {
+      errors.push('source:'+((e2 && e2.message) || e2));
+    }
+    return {labels:labels, errors:errors};
+  }
+
+  function buildMapBaseExportCanvas() {
+    var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
+    var ratio=ratioMap[currentRatio]||1;
+    var mapCanvas=map.getCanvas();
+    var mw=mapCanvas.width,mh=mapCanvas.height;
+    var cw,ch;
+    if(mw/mh>ratio){ch=mh*.9;cw=ch*ratio;}else{cw=mw*.9;ch=cw/ratio;}
+    var cx=(mw-cw)/2,cy=(mh-ch)/2;
+    var mapCrop = {x:cx, y:cy, w:cw, h:ch};
+    var out=document.createElement('canvas');
+    out.width=Math.round(cw * exportScale);out.height=Math.round(ch * exportScale);
+    var ctx=out.getContext('2d');
+    ctx.drawImage(mapCanvas,cx,cy,cw,ch,0,0,out.width,out.height);
+
+    var dir=document.getElementById('vig-dir').value;
+    if(dir!=='none'){
+      var vigColor=document.getElementById('vig-color').value;
+      var vigOp=parseInt(document.getElementById('vig-opacity').value)/100;
+      var hr=parseInt(vigColor.slice(1,3),16),hg=parseInt(vigColor.slice(3,5),16),hb=parseInt(vigColor.slice(5,7),16);
+      var c0='rgba('+hr+','+hg+','+hb+','+vigOp+')',ct='rgba(0,0,0,0)';
+      var grad;
+      if(dir==='bottom')grad=ctx.createLinearGradient(0,out.height,0,0);
+      else if(dir==='top')grad=ctx.createLinearGradient(0,0,0,out.height);
+      else if(dir==='left')grad=ctx.createLinearGradient(0,0,out.width,0);
+      else if(dir==='right')grad=ctx.createLinearGradient(out.width,0,0,0);
+      else if(dir==='radial')grad=ctx.createRadialGradient(out.width/2,out.height/2,out.width*.2,out.width/2,out.height/2,out.width*.7);
+      if(grad){
+        if(dir==='radial'){grad.addColorStop(0,ct);grad.addColorStop(1,c0);}
+        else{grad.addColorStop(0,c0);grad.addColorStop(0.55,ct);}
+        ctx.fillStyle=grad;
+        ctx.fillRect(0,0,out.width,out.height);
+      }
+    }
+
+    if (exportStyle==='dither') {
+      var algo = document.getElementById('dither-algo').value;
+      var density = parseInt(document.getElementById('dither-density').value)||0;
+      var imgData = ctx.getImageData(0,0,out.width,out.height);
+      applyDither(imgData, algo, getActivePalette(), density);
+      ctx.putImageData(imgData,0,0);
+    } else if (exportStyle==='halftone') {
+      var htDensity = parseInt(document.getElementById('ht-density').value)||0;
+      applyHalftone(ctx, out.width, out.height, getActivePalette(), htDensity);
+    } else if (exportStyle==='duotone') {
+      var dtDark = document.getElementById('duotone-dark').value;
+      var dtLight = document.getElementById('duotone-light').value;
+      var imgData2 = ctx.getImageData(0,0,out.width,out.height);
+      applyDuotone(imgData2, dtDark, dtLight);
+      ctx.putImageData(imgData2,0,0);
+    } else if (exportStyle==='circuit') {
+      applyCircuit(ctx, out.width, out.height);
+    } else if (exportStyle==='watercolor') {
+      applyWatercolor(ctx, out.width, out.height);
+    } else if (exportStyle==='blob') {
+      applyBlob(ctx, out.width, out.height);
+    }
+    return out;
+  }
+
+  function svgExportMetrics(canvas) {
+    var r=getCropRect();
+    return {
+      crop:r,
+      clip:null,
+      scaleX:canvas.width/r.width,
+      scaleY:canvas.height/r.height,
+      x:function(v){ return (v-r.left) * (canvas.width/r.width); },
+      y:function(v){ return (v-r.top) * (canvas.height/r.height); },
+      sx:function(v){ return v * (canvas.width/r.width); },
+      sy:function(v){ return v * (canvas.height/r.height); }
+    };
+  }
+
+  function svgFramedExportMetrics(canvas, baseMapCanvas) {
+    var metrics = svgExportMetrics(baseMapCanvas || canvas);
+    if (frameStyle !== 'ticket' && frameStyle !== 'postcard') return metrics;
+
+    var baseW = baseMapCanvas.width;
+    var baseH = baseMapCanvas.height;
+    var layout = frameStyle === 'ticket'
+      ? getTicketLayout(baseW, baseH, 0, 0)
+      : getPostcardLayout(baseW, baseH, 0, 0);
+    var windowBox = frameStyle === 'ticket' ? {
+      x: layout.imageX,
+      y: layout.imageY,
+      w: layout.imageSize,
+      h: layout.imageSize
+    } : layout.map;
+    var outBox = {
+      x: layout.x || 0,
+      y: layout.y || 0,
+      w: canvas.width,
+      h: canvas.height
+    };
+    metrics.clip = {
+      x: Math.max(0, windowBox.x - outBox.x),
+      y: Math.max(0, windowBox.y - outBox.y),
+      w: Math.max(1, windowBox.w),
+      h: Math.max(1, windowBox.h)
+    };
+    metrics.x = function(v){ return (v - metrics.crop.left) * metrics.scaleX - outBox.x; };
+    metrics.y = function(v){ return (v - metrics.crop.top) * metrics.scaleY - outBox.y; };
+    metrics.sx = function(v){ return v * metrics.scaleX; };
+    metrics.sy = function(v){ return v * metrics.scaleY; };
+    return metrics;
+  }
+
+  function markerIconSvgElement(marker, x, y, iconSize) {
+    var icon = getMarkerIcon(marker.icon || 'map-pin');
+    var color = marker.color || '#111111';
+    return '<svg'+svgAttrs({
+      x: svgNumber(x - iconSize * 0.5),
+      y: svgNumber(y - iconSize),
+      width: svgNumber(iconSize),
+      height: svgNumber(iconSize),
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: color,
+      'stroke-width': 2,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round'
+    })+'>'+icon.body+'</svg>';
+  }
+
+  function routeCoordsForSvg() {
+    var src = map.getSource('route');
+    var data = src && src._data;
+    if (data && data.geometry && data.geometry.coordinates) return data.geometry.coordinates;
+    if (data && data.features && data.features[0] && data.features[0].geometry) return data.features[0].geometry.coordinates || [];
+    return markers.map(function(m){ return m.lnglat; });
+  }
+
+  function svgPathFromLngLats(coords, metrics) {
+    var d = [];
+    coords.forEach(function(coord, i) {
+      var pt = map.project(coord);
+      var x = metrics.x(pt.x);
+      var y = metrics.y(pt.y);
+      d.push((i ? 'L ' : 'M ') + svgNumber(x) + ' ' + svgNumber(y));
+    });
+    return d.join(' ');
+  }
+
+  function buildVectorOverlaySvg(canvas, mapTextLabels, metrics, options) {
+    options = options || {};
+    metrics = metrics || svgExportMetrics(canvas);
+    var parts = [];
+    var clipId = null;
+    if (metrics.clip) {
+      clipId = 'mapit-map-window-clip';
+      parts.push('<defs><clipPath id="'+clipId+'"><rect'+svgAttrs({
+        x:svgNumber(metrics.clip.x),
+        y:svgNumber(metrics.clip.y),
+        width:svgNumber(metrics.clip.w),
+        height:svgNumber(metrics.clip.h)
+      })+' /></clipPath></defs>');
+      parts.push('<g clip-path="url(#'+clipId+')">');
+    }
+
+    (mapTextLabels || []).forEach(function(label) {
+      var x = metrics.x(label.x);
+      var y = metrics.y(label.y);
+      var fs = Math.max(7, label.size * metrics.scaleX);
+      var haloWidth = Math.max(0, label.haloWidth * metrics.scaleX);
+      parts.push('<text'+svgAttrs({
+        x:svgNumber(x),
+        y:svgNumber(y),
+        'font-family':'Outfit, Noto Sans SC, Arial, sans-serif',
+        'font-size':svgNumber(fs),
+        'font-weight':label.weight,
+        fill:label.color,
+        stroke:haloWidth ? label.halo : null,
+        'stroke-width':haloWidth ? svgNumber(haloWidth) : null,
+        'paint-order':haloWidth ? 'stroke' : null,
+        'stroke-linejoin':haloWidth ? 'round' : null,
+        'text-anchor':'middle',
+        'dominant-baseline':'central'
+      })+'>'+svgEscape(label.text)+'</text>');
+    });
+
+    if (routeOn && markers.length >= 2) {
+      var coords = routeCoordsForSvg();
+      var d = svgPathFromLngLats(coords, metrics);
+      if (d) {
+        var color = document.getElementById('route-color').value;
+        var width = (parseInt(document.getElementById('route-width').value) || 2) * metrics.scaleX;
+        var dash = document.getElementById('route-dash').value;
+        var dashAttr = dash === 'dashed' ? (width * 4)+' '+(width * 3) : (dash === 'dotted' ? (width * 1)+' '+(width * 2) : null);
+        parts.push('<path'+svgAttrs({d:d, fill:'none', stroke:'#ffffff', 'stroke-opacity':0.5, 'stroke-width':svgNumber(width+3*metrics.scaleX), 'stroke-linecap':'round', 'stroke-linejoin':'round'})+' />');
+        parts.push('<path'+svgAttrs({d:d, fill:'none', stroke:color, 'stroke-width':svgNumber(width), 'stroke-dasharray':dashAttr, 'stroke-linecap':'round', 'stroke-linejoin':'round'})+' />');
+      }
+      var showDist = document.getElementById('route-show-dist') ? document.getElementById('route-show-dist').checked : false;
+      if (showDist) {
+        for (var ri=0; ri<markers.length-1; ri++) {
+          var a = markers[ri].lnglat;
+          var b = markers[ri+1].lnglat;
+          var mid = [(a[0]+b[0])/2, (a[1]+b[1])/2];
+          var dLat = (b[1]-a[1]) * Math.PI/180;
+          var dLng = (b[0]-a[0]) * Math.PI/180;
+          var s = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                  Math.cos(a[1]*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*
+                  Math.sin(dLng/2)*Math.sin(dLng/2);
+          var km = 6371 * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1-s));
+          var label = km >= 10 ? Math.round(km)+'km' : km.toFixed(1)+'km';
+          var pt = map.project(mid);
+          var lx = metrics.x(pt.x);
+          var ly = metrics.y(pt.y) - 11 * metrics.scaleX;
+          var fsd = 11 * metrics.scaleX;
+          parts.push('<text'+svgAttrs({x:svgNumber(lx), y:svgNumber(ly), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(fsd), 'font-weight':600, fill:color, stroke:'#ffffff', 'stroke-width':svgNumber(3*metrics.scaleX), 'paint-order':'stroke', 'text-anchor':'middle'})+'>'+svgEscape(label)+'</text>');
+        }
+      }
+    }
+
+    markers.forEach(function(marker) {
+      var pt = map.project(marker.lnglat);
+      var x = metrics.x(pt.x);
+      var y = metrics.y(pt.y);
+      var size = 25 * metrics.scaleX;
+      parts.push('<g class="mapit-marker">');
+      parts.push(markerIconSvgElement(marker, x, y, size));
+      if (marker.name) {
+        var label = svgEscape(marker.name);
+        var fs = 11 * metrics.scaleX;
+        var padX = 6 * metrics.scaleX;
+        var labelW = Math.max(30 * metrics.scaleX, marker.name.length * fs * 0.58 + padX * 2);
+        var labelH = 18 * metrics.scaleX;
+        var ly = y + 2 * metrics.scaleX;
+        parts.push('<rect'+svgAttrs({x:svgNumber(x-labelW/2), y:svgNumber(ly), width:svgNumber(labelW), height:svgNumber(labelH), rx:svgNumber(4*metrics.scaleX), fill:'#ffffff', 'fill-opacity':0.88})+' />');
+        parts.push('<text'+svgAttrs({x:svgNumber(x), y:svgNumber(ly + labelH*0.68), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(fs), 'font-weight':500, fill:'#1a1a1a', 'text-anchor':'middle'})+'>'+label+'</text>');
+      }
+      parts.push('</g>');
+    });
+
+    if (clipId) parts.push('</g>');
+
+    if (!options.skipCaptions) captions.forEach(function(cap) {
+      var x = metrics.x(cap.x);
+      var y = metrics.y(cap.y);
+      var fs = cap.size * metrics.scaleX;
+      var anchor = cap.align === 'center' ? 'middle' : (cap.align === 'right' ? 'end' : 'start');
+      var textX = x;
+      if (cap.align === 'center') textX = x + (cap.el.offsetWidth * metrics.scaleX / 2);
+      else if (cap.align === 'right') textX = x + cap.el.offsetWidth * metrics.scaleX;
+      parts.push('<text'+svgAttrs({x:svgNumber(textX), y:svgNumber(y + fs), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(fs), 'font-weight':500, fill:cap.color, 'text-anchor':anchor})+'>');
+      cap.text.split('\n').forEach(function(line, i) {
+        parts.push('<tspan'+svgAttrs({x:svgNumber(textX), dy:i ? svgNumber(fs*1.35) : 0})+'>'+svgEscape(line)+'</tspan>');
+      });
+      parts.push('</text>');
+    });
+
+    var badgeImg = captionLayer.querySelector('img.city-badge-img');
+    if (!options.skipCaptions && badgeImg && badgeImg.src && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
+      var bLeft = parseFloat(badgeImg.style.left) || 0;
+      var bTop  = parseFloat(badgeImg.style.top)  || 0;
+      var bW    = parseFloat(badgeImg.style.width) || badgeImg.naturalWidth;
+      var aspect = badgeImg.naturalHeight / (badgeImg.naturalWidth || 1);
+      parts.push('<image'+svgAttrs({x:svgNumber(metrics.x(bLeft)), y:svgNumber(metrics.y(bTop)), width:svgNumber(metrics.sx(bW)), height:svgNumber(metrics.sy(bW*aspect)), href:badgeImg.src, 'xlink:href':badgeImg.src})+' />');
+    }
+
+    if (!options.skipFrame && frameStyle === 'border') {
+      var bc = document.getElementById('border-color').value;
+      var bw = (parseInt(document.getElementById('border-width').value)||16) * canvas.width / 400;
+      parts.push('<rect'+svgAttrs({x:svgNumber(bw/2), y:svgNumber(bw/2), width:svgNumber(canvas.width-bw), height:svgNumber(canvas.height-bw), fill:'none', stroke:bc, 'stroke-width':svgNumber(bw)})+' />');
+    } else if (!options.skipFrame && frameStyle === 'polaroid') {
+      var fc = document.getElementById('frame-color').value;
+      var bottomH = Math.max(48, canvas.height*0.14);
+      var sideW = Math.max(10, canvas.width*0.04);
+      var topH = Math.max(10, canvas.height*0.04);
+      parts.push('<path'+svgAttrs({d:'M0 0H'+svgNumber(canvas.width)+'V'+svgNumber(canvas.height)+'H0ZM'+svgNumber(sideW)+' '+svgNumber(topH)+'H'+svgNumber(canvas.width-sideW)+'V'+svgNumber(canvas.height-bottomH)+'H'+svgNumber(sideW)+'Z', fill:fc, 'fill-rule':'evenodd'})+' />');
+      var capText = document.getElementById('frame-caption').value;
+      if (capText) {
+        parts.push('<text'+svgAttrs({x:svgNumber(canvas.width/2), y:svgNumber(canvas.height-bottomH/2), 'font-family':'Outfit, sans-serif', 'font-size':svgNumber(Math.round(bottomH*0.32)), 'font-weight':300, fill:isLightColor(fc)?'#444':'#ddd', 'text-anchor':'middle', 'dominant-baseline':'middle'})+'>'+svgEscape(capText)+'</text>');
+      }
+    }
+
+    if (!options.skipFrame && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
+      var pos = document.getElementById('coord-pos').value;
+      if (pos !== 'none') {
+        var c = map.getCenter();
+        var coordStr = Math.abs(c.lat).toFixed(4)+' '+(c.lat>=0?'N':'S')+'  '+Math.abs(c.lng).toFixed(4)+' '+(c.lng>=0?'E':'W');
+        var color = document.getElementById('coord-color').value;
+        var baseFontSize = parseInt(document.getElementById('coord-size').value) || 11;
+        var fs2 = Math.max(8, Math.min(baseFontSize * (canvas.width / 600), 32));
+        var pad = Math.max(8, fs2);
+        var bottomH2 = frameStyle==='polaroid' ? Math.max(48, canvas.height*0.14) : 0;
+        var borderW = frameStyle==='border' ? Math.round((parseInt(document.getElementById('border-width').value)||16) * canvas.width / 400) : 0;
+        var y2 = canvas.height - bottomH2 - borderW - pad;
+        var sideInset = (frameStyle==='polaroid' ? Math.max(10, canvas.width*0.04) : borderW) + pad;
+        var x2 = pos === 'left' ? sideInset : (pos === 'right' ? canvas.width-sideInset : canvas.width/2);
+        var anchor2 = pos === 'left' ? 'start' : (pos === 'right' ? 'end' : 'middle');
+        parts.push('<text'+svgAttrs({x:svgNumber(x2), y:svgNumber(y2), 'font-family':'Outfit, sans-serif', 'font-size':svgNumber(fs2), 'font-weight':300, fill:color, 'text-anchor':anchor2})+'>'+svgEscape(coordStr)+'</text>');
+      }
+    }
+
+    return parts.join('\n');
   }
 
   async function doExportSvg() {
-    if (document.fonts && document.fonts.ready) {
-      try { await document.fonts.ready; } catch(e) {}
+    try {
+      if (document.fonts && document.fonts.ready) {
+        try { await document.fonts.ready; } catch(e) {}
+      }
+      var out;
+      var baseMapCanvas;
+      var useFramedCanvas = frameStyle === 'ticket' || frameStyle === 'postcard';
+      var labelResult = safeCollectMapTextLabels();
+      var mapTextLabels = labelResult.labels;
+      var mapTextLayerIds = getMapTextLayerIds();
+      var mapTextVisibility = captureLayerVisibilities(mapTextLayerIds);
+      setRouteLayerVisibility(false);
+      setMapLayersVisibility(mapTextLayerIds, false);
+      try {
+        await waitForMapIdle();
+        baseMapCanvas = buildMapBaseExportCanvas();
+        out = useFramedCanvas ? buildFramedExportCanvas() : baseMapCanvas;
+      } finally {
+        restoreLayerVisibilities(mapTextVisibility);
+        setRouteLayerVisibility(true);
+        if (routeOn && markers.length >= 2) updateRoute();
+      }
+      var dataUrl = out.toDataURL('image/png');
+      var w = out.width, h = out.height;
+      var metrics = useFramedCanvas ? svgFramedExportMetrics(out, baseMapCanvas) : svgExportMetrics(out);
+      var vectorOverlay = buildVectorOverlaySvg(out, mapTextLabels, metrics, {
+        skipCaptions: useFramedCanvas,
+        skipFrame: useFramedCanvas
+      });
+      var svg = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+        +'width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">\n'
+        +'  <!-- mapit-svg-vector-overlay labels="'+mapTextLabels.length+'" markers="'+markers.length+'" captions="'+captions.length+'" errors="'+svgEscape(labelResult.errors.join(' | '))+'" -->\n'
+        +'  <image width="'+w+'" height="'+h+'" href="'+dataUrl+'" xlink:href="'+dataUrl+'" />\n'
+        + vectorOverlay + '\n'
+        +'</svg>';
+      var blob = new Blob([svg], {type:'image/svg+xml'});
+      await maybeShowSupportPrompt(blob, 'mapit-export.svg', 'image/svg+xml');
+    } catch(exportError) {
+      var message = 'Mapit SVG export failed: '+((exportError && exportError.message) || exportError);
+      console.error(message, exportError);
+      var errorSvg = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        +'<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300">\n'
+        +'<rect width="1200" height="300" fill="#fff"/>\n'
+        +'<text x="40" y="80" font-family="monospace" font-size="24" fill="#c00">'+svgEscape(message)+'</text>\n'
+        +'</svg>';
+      var errorBlob = new Blob([errorSvg], {type:'image/svg+xml'});
+      await maybeShowSupportPrompt(errorBlob, 'mapit-export.svg', 'image/svg+xml');
     }
-    var out = buildFramedExportCanvas();
-    var dataUrl = out.toDataURL('image/png');
-    var w = out.width, h = out.height;
-    var svg = '<?xml version="1.0" encoding="UTF-8"?>\n'
-      +'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
-      +'width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">\n'
-      +'  <image width="'+w+'" height="'+h+'" xlink:href="'+dataUrl+'" />\n'
-      +'</svg>';
-    var blob = new Blob([svg], {type:'image/svg+xml'});
-    await maybeShowSupportPrompt(blob, 'mapit-export.svg', 'image/svg+xml');
   }
 
   // Export / support
   document.getElementById('btn-export').addEventListener('click',function(){
     doExportPng();
   });
-  document.getElementById('btn-export-svg').addEventListener('click',function(){ doExportSvg(); });
   function byId(id){ return document.getElementById(id); }
   var btnSkip = byId('btn-export-skip');
   if (btnSkip) btnSkip.addEventListener('click',async function(){
