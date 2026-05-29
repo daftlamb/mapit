@@ -1899,10 +1899,11 @@ function getTicketCopyLines() {
 
     var dateFs = getTicketDateFontSize(layout, dt);
     var meta = document.createElement("div");
-    meta.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+layout.dateY+"px;width:"+(layout.dividerX - layout.dateX - layout.w * 0.03)+"px;color:"+ti+";pointer-events:none;font-family:'Perfograma','Bebas Neue',Outfit,sans-serif;font-weight:400;line-height:0.94;letter-spacing:.02em;white-space:nowrap;overflow:hidden;";
+    var datePad = Math.max(4, Math.round(dateFs * 0.18));
+    meta.style.cssText = "position:absolute;left:"+layout.dateX+"px;top:"+(layout.dateY - datePad)+"px;width:"+(layout.dividerX - layout.dateX - layout.w * 0.03)+"px;color:"+ti+";pointer-events:none;font-family:'Perfograma','Bebas Neue',Outfit,sans-serif;font-weight:400;line-height:1;letter-spacing:.02em;white-space:nowrap;overflow:visible;padding-top:"+datePad+"px;padding-bottom:"+datePad+"px;";
     meta.innerHTML =
-      '<div style="font-size:'+dateFs+'px;line-height:0.92;white-space:nowrap;">'+dt.yearLine+'</div>' +
-      '<div style="font-size:'+dateFs+'px;margin-top:'+Math.round(layout.h * 0.035)+'px;line-height:0.92;letter-spacing:0;white-space:nowrap;">'+dt.dateLine+'</div>';
+      '<div style="font-size:'+dateFs+'px;line-height:1.02;white-space:nowrap;">'+dt.yearLine+'</div>' +
+      '<div style="font-size:'+dateFs+'px;margin-top:'+Math.round(layout.h * 0.035)+'px;line-height:1.02;letter-spacing:0;white-space:nowrap;">'+dt.dateLine+'</div>';
     frameOverlay.appendChild(meta);
 
     var cityTop = layout.dateY + Math.round(dateFs * 0.92) + Math.round(layout.h * 0.035) + Math.round(dateFs * 0.92) + Math.round(layout.h * 0.045);
@@ -4440,17 +4441,19 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
     ctx.fillStyle = ti;
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
+    ctx.textBaseline = 'alphabetic';
     var dateFs = getTicketDateFontSize(layout, dt);
     ctx.font = dateFs + "px 'Perfograma', 'Bebas Neue', Outfit, sans-serif";
-    ctx.fillText(dt.yearLine, layout.dateX, layout.dateY);
+    var dateBaseline = layout.dateY + Math.round(dateFs * 0.88);
+    ctx.fillText(dt.yearLine, layout.dateX, dateBaseline);
     // Match DOM ticket spacing: first line height + explicit gap.
     var dateLineGap = Math.round(layout.h * 0.035);
-    var dateLineY = layout.dateY + Math.round(dateFs * 0.92) + dateLineGap;
+    var dateLineY = dateBaseline + Math.round(dateFs * 1.02) + dateLineGap;
     ctx.fillText(dt.dateLine, layout.dateX, dateLineY);
 
     var cityFs = Math.max(8, Math.round(layout.h * (16.02 / 435.01)));
     ctx.font = cityFs + "px 'Bebas Neue', Outfit, sans-serif";
+    ctx.textBaseline = 'top';
     // Keep city line below the new date layout to avoid overlap with date text.
     var cityY = dateLineY + Math.round(dateFs * 0.92) + Math.round(layout.h * 0.045);
     ctx.fillText(cityText, layout.dateX, cityY);
