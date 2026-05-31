@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Map It - Make Map Posters</title>
+<title>MapIt Pro - Make Map Posters</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet" />
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=Lora:wght@400;500;600;700&family=Merriweather:wght@400;700&family=Montserrat:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@400;600&family=Oswald:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.17.0/mapbox-gl.js"></script>
 <style>
 @font-face{font-family:'Perfograma';src:url('./assets/fonts/Perfograma.otf') format('opentype');font-weight:400;font-style:normal;font-display:swap;}
 :root{--bg:#f5f5f5;--panel-bg:#fff;--border:#e0e0e0;--text:#1a1a1a;--muted:#888;--accent:#39ff14;--header-bg:#fff;--canvas-bg:#eee;--header-h:44px}
@@ -24,6 +24,7 @@ header{height:var(--header-h);background:var(--header-bg);border-bottom:1px soli
 .btn-icon:hover{border-color:var(--accent);color:var(--accent)}
 #btn-darkmode{width:18px;height:18px;min-width:18px;padding:0;border-radius:50%;font-size:0;line-height:0;background:linear-gradient(90deg,#111 50%,#f5f5f5 50%);border:1px solid var(--border)}
 [data-theme="dark"] #btn-darkmode{background:linear-gradient(90deg,#f5f5f5 50%,#111 50%);}
+#btn-help{color:#e07820;border-color:#e07820}
 #app{display:flex;flex:1;min-height:0}
 #panel{width:300px;flex-shrink:0;background:var(--panel-bg);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .panel-section{padding:14px 16px;border-bottom:1px solid var(--border)}
@@ -42,7 +43,7 @@ header{height:var(--header-h);background:var(--header-bg);border-bottom:1px soli
 .search-result-item:hover{background:var(--bg)}
 .guide-link{display:inline-block;margin-top:8px;font-size:11px;color:var(--muted);text-decoration:none;cursor:pointer}
 .guide-link:hover{color:var(--text)}
-.support-prompt.hidden,.onboarding-float.hidden{display:none!important}
+.onboarding-float.hidden{display:none!important}
 .start-head{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .start-copy{font-size:11px;color:var(--text);line-height:1.6;display:flex;flex-direction:column;gap:3px}
 .quick-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
@@ -103,23 +104,6 @@ header{height:var(--header-h);background:var(--header-bg);border-bottom:1px soli
   color:var(--muted);
   margin-bottom:8px;
 }
-.support-prompt{
-  position:absolute;
-  right:18px;
-  bottom:18px;
-  width:min(320px,calc(100% - 36px));
-  padding:12px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:rgba(255,255,255,.96);
-  color:var(--text);
-  z-index:1600;
-  box-shadow:0 10px 26px rgba(0,0,0,.12);
-}
-[data-theme="dark"] .support-prompt{background:rgba(20,20,20,.96)}
-.support-prompt-copy{font-size:12px;line-height:1.55;color:var(--text);margin-bottom:10px}
-.support-prompt-actions{display:flex;flex-wrap:wrap;gap:6px}
-.support-prompt-actions .btn{flex:1}
 /* Style presets */
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .style-card{border:2px solid var(--border);border-radius:8px;padding:8px;cursor:pointer;transition:border-color .15s}
@@ -160,6 +144,7 @@ input[type="color"]{width:36px;height:24px;border:1px solid var(--border);border
 #caption-text:focus{border-color:var(--accent)}
 .cap-controls{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .cap-size-input{width:52px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px;font-family:inherit;font-size:12px;outline:none}
+.cap-font-select{width:132px;height:28px}
 /* Gradient vignette */
 .vignette-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px}
 .vignette-row:last-child{margin-bottom:0}
@@ -179,7 +164,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 #gradient-overlay{position:absolute;pointer-events:none;z-index:15;display:none}
 #caption-layer{position:absolute;inset:0;pointer-events:none;z-index:20}
 .caption-el{position:absolute;pointer-events:all;cursor:move;user-select:none;line-height:1.35;white-space:pre-wrap;word-break:break-word}
-.caption-el.selected{outline:2px dashed rgba(57,255,20,.75);outline-offset:4px}
+.caption-el.selected{outline:none}
 /* Snap guide */
 .snap-guide{position:absolute;pointer-events:none;background:rgba(57,255,20,.5);z-index:25}
 .snap-guide.h{height:1px;left:0;right:0}
@@ -202,7 +187,17 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 .modal-box p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px}
 .modal-box a{color:var(--text)}
 .modal-box a:hover{color:var(--accent)}
+.license-form{display:grid;gap:10px;margin-top:12px;text-align:left}
+.license-form label{display:grid;gap:5px;font-size:12px;color:var(--muted)}
+.license-form input,.license-form textarea{width:100%;border:1px solid var(--border);border-radius:7px;background:var(--bg);padding:9px;color:var(--text);font-family:inherit}
+.license-form textarea{min-height:96px;resize:vertical;font-family:'Outfit','Noto Sans SC',sans-serif;font-size:12px;line-height:1.45;white-space:pre;overflow-wrap:normal;overflow-x:auto}
+.license-actions{display:flex;gap:8px;flex-wrap:wrap}
+.license-status{min-height:18px;font-size:12px;color:var(--muted)}
 #panel-export{padding:14px 16px;margin-top:auto;border-top:1px solid var(--border)}
+.help-grid{display:grid;gap:12px;margin-top:14px}
+.help-item{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--bg)}
+.help-item h4{font-size:12px;margin:0 0 6px;color:var(--text);letter-spacing:.08em;text-transform:uppercase}
+.help-item p{font-size:12px;line-height:1.55;margin:0;color:var(--muted)}
 @media(max-width:700px){
   #app{flex-direction:column;position:relative}
   #map-area{width:100%;flex:1;min-height:0}
@@ -248,11 +243,13 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
 </head>
 <body>
 <header>
-  <div class="brand">Map<span class="brand-it">It</span></div>
+  <div class="brand">Map<span class="brand-it">It</span> Pro</div>
   <button class="btn-icon" id="btn-darkmode" aria-label="Toggle theme">mode</button>
   <div class="header-spacer"></div>
-  <button class="btn-icon" id="btn-coffee" style="color:#e07820;border-color:#e07820">support</button>
-  <button class="btn-icon" id="btn-about">i</button>
+  <button class="btn-icon" id="btn-open-project" type="button">Open</button>
+  <button class="btn-icon" id="btn-save-project" type="button">Save</button>
+  <button class="btn-icon" id="btn-lang" type="button">中文</button>
+  <button class="btn-icon" id="btn-help" type="button">Help</button>
 </header>
 
 <div id="app">
@@ -268,11 +265,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       </div>
       <div id="search-results"></div>
       <a href="#" id="show-guide-link" class="guide-link hidden">Show guide</a>
-      <div id="wiki-box" style="display:none;margin-top:10px;padding:8px;background:var(--bg);border-radius:6px;border:1px solid var(--border)">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;letter-spacing:.06em;text-transform:uppercase">About this place</div>
-        <div id="wiki-text" style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px"></div>
-        <button class="btn" id="btn-wiki-insert" style="padding:3px 8px;font-size:10px;color:var(--muted)">add as caption</button>
-      </div>
     </div>
 
     <div class="panel-section">
@@ -305,7 +297,57 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="layer-toggle"><span>3D Buildings</span>
         <label class="toggle-switch"><input type="checkbox" id="tog-buildings-3d" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
       </div>
+      <div class="layer-toggle"><span>3D Pro</span>
+        <label class="toggle-switch"><input type="checkbox" id="tog-standard-3d" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+      </div>
       <div id="building-3d-options" style="display:none;padding-left:4px;margin-top:6px;display:none;flex-direction:column;gap:8px">
+        <div id="standard-3d-options" style="display:none;flex-direction:column;gap:8px">
+          <div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">3D Preset</div>
+            <div id="standard-preset-buttons" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <button class="btn size-btn active" data-standard-preset="mono-poster" style="font-size:10px;padding:5px 6px">Mono Poster</button>
+              <button class="btn size-btn" data-standard-preset="golden-dusk" style="font-size:10px;padding:5px 6px">Golden Dusk</button>
+              <button class="btn size-btn" data-standard-preset="soft-day" style="font-size:10px;padding:5px 6px">Soft Day</button>
+              <button class="btn size-btn" data-standard-preset="blue-night" style="font-size:10px;padding:5px 6px">Blue Night</button>
+            </div>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Standard light</span>
+            <select class="vig-select" id="standard-light" style="width:120px;font-size:11px;height:28px">
+              <option value="day">Day</option>
+              <option value="dawn">Dawn</option>
+              <option value="dusk" selected>Dusk</option>
+              <option value="night">Night</option>
+            </select>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Theme</span>
+            <select class="vig-select" id="standard-theme" style="width:120px;font-size:11px;height:28px">
+              <option value="default">Default</option>
+              <option value="faded">Faded</option>
+              <option value="monochrome" selected>Monochrome</option>
+            </select>
+          </div>
+          <div class="vignette-row">
+            <span style="font-size:11px;color:var(--muted)">Color mood</span>
+            <select class="vig-select" id="standard-color-mood" style="width:120px;font-size:11px;height:28px">
+              <option value="mono" selected>Mono Stone</option>
+              <option value="warm">Warm Stone</option>
+              <option value="cool">Cool Concrete</option>
+              <option value="clay">Soft Clay</option>
+              <option value="ink">Ink Model</option>
+            </select>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px">Camera</div>
+            <div id="camera-preset-buttons" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+              <button class="btn size-btn active" data-camera-preset="poster" style="font-size:10px;padding:5px 6px">Poster 3D</button>
+              <button class="btn size-btn" data-camera-preset="isometric" style="font-size:10px;padding:5px 6px">Isometric</button>
+              <button class="btn size-btn" data-camera-preset="aerial" style="font-size:10px;padding:5px 6px">Aerial</button>
+              <button class="btn size-btn" data-camera-preset="street" style="font-size:10px;padding:5px 6px">Street Tilt</button>
+            </div>
+          </div>
+        </div>
         <div class="color-row">
           <span class="color-label">Building color</span>
           <input type="color" id="building-3d-color" value="#d4c8b8" />
@@ -324,6 +366,9 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         </div>
         <div class="layer-toggle"><span style="font-size:11px">Wide angle</span>
           <label class="toggle-switch"><input type="checkbox" id="tog-wideangle" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+        </div>
+        <div class="layer-toggle"><span style="font-size:11px">Miniature</span>
+          <label class="toggle-switch"><input type="checkbox" id="tog-miniature" /><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
         </div>
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Tilt</span>
@@ -347,8 +392,11 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="size-btns">
         <button class="btn size-btn active" data-ratio="1:1">Square</button>
         <button class="btn size-btn" data-ratio="3:4">Portrait</button>
+        <button class="btn size-btn" data-ratio="2:3">Poster</button>
+        <button class="btn size-btn" data-ratio="3:2">Poster W</button>
         <button class="btn size-btn" data-ratio="9:16">Phone</button>
         <button class="btn size-btn" data-ratio="16:9">Wide</button>
+        <button class="btn size-btn" data-ratio="21:9">Ultra Wide</button>
       </div>
     </div>
 
@@ -357,8 +405,8 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
       <div class="vignette-row">
         <span>Direction</span>
         <select class="vig-select" id="vig-dir">
-          <option value="none">off</option>
-          <option value="bottom" selected>bottom fade</option>
+          <option value="none" selected>off</option>
+          <option value="bottom">bottom fade</option>
           <option value="top">top fade</option>
           <option value="left">left fade</option>
           <option value="right">right fade</option>
@@ -418,24 +466,6 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="panel-section">
-      <div class="section-title">Caption</div>
-      <div class="cap-row">
-        <textarea id="caption-text" placeholder="Add text to your map..." rows="2"></textarea>
-      </div>
-      <div class="cap-controls">
-        <input class="cap-size-input" type="number" id="cap-size" value="24" min="8" max="120" title="Font size (px)" />
-        <input type="color" id="cap-color" value="#333333" title="Text color" style="width:32px;height:28px" />
-        <select class="vig-select" id="cap-align" title="Alignment" style="font-size:12px;height:28px">
-          <option value="left">left</option>
-          <option value="center" selected>center</option>
-          <option value="right">right</option>
-        </select>
-        <button class="btn" id="btn-add-caption" style="padding:5px 10px;font-size:11px">+ add</button>
-      </div>
-      <div style="margin-top:8px;font-size:10px;color:var(--muted)">Drag to move · right-click or Del to remove</div>
     </div>
 
     <div class="panel-section">
@@ -762,6 +792,7 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <button class="btn size-btn" data-frame="border">Border</button>
         <button class="btn size-btn" data-frame="ticket">Ticket</button>
         <button class="btn size-btn" data-frame="postcard">Postcard</button>
+        <button class="btn size-btn" data-frame="stamp">Stamp</button>
       </div>
       <div id="frame-options-polaroid" style="display:none">
         <div class="color-row" style="margin-bottom:8px">
@@ -771,6 +802,30 @@ select.vig-select{background:var(--bg);border:1px solid var(--border);color:var(
         <div class="vignette-row">
           <span style="font-size:11px;color:var(--muted)">Caption</span>
           <input type="text" id="frame-caption" placeholder="write something..." style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 8px;font-family:inherit;font-size:11px;outline:none;margin-left:8px" />
+        </div>
+        <div class="vignette-row" style="margin-top:8px">
+          <span style="font-size:11px;color:var(--muted)">Font</span>
+          <select class="vig-select" id="frame-caption-font" style="width:150px">
+            <option value="outfit" selected>Outfit</option>
+            <option value="inter">Inter</option>
+            <option value="poppins">Poppins</option>
+            <option value="montserrat">Montserrat</option>
+            <option value="space">Space Grotesk</option>
+            <option value="oswald">Oswald</option>
+            <option value="bebas">Bebas Neue</option>
+            <option value="playfair">Playfair</option>
+            <option value="lora">Lora</option>
+            <option value="merriweather">Merriweather</option>
+            <option value="cormorant">Cormorant</option>
+            <option value="perfograma">Dot / Ticket</option>
+            <option value="notoSans">Noto Sans SC</option>
+            <option value="notoSerif">思源宋体</option>
+          </select>
+        </div>
+        <div class="vignette-row vig-opacity-row" style="margin-top:8px">
+          <span>Font size</span>
+          <input type="range" id="frame-caption-size" min="18" max="90" value="36" style="flex:1;accent-color:var(--accent)" />
+          <span id="frame-caption-size-val" style="width:28px;text-align:right">36</span>
         </div>
       </div>
       <div id="frame-options-border" style="display:none">
@@ -855,6 +910,16 @@ hello this is my txt design</textarea>
           </select>
         </div>
       </div>
+      <div id="frame-options-stamp" style="display:none">
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Paper color</span>
+          <input type="color" id="stamp-paper" value="#fffaf0" />
+        </div>
+        <div class="color-row" style="margin-bottom:8px">
+          <span class="color-label">Ink color</span>
+          <input type="color" id="stamp-ink" value="#111111" />
+        </div>
+      </div>
       <!-- Coord stamp 锟?shown when frame != none -->
       <div id="coord-stamp-options" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <div class="vignette-row" style="margin-bottom:8px">
@@ -902,6 +967,8 @@ hello this is my txt design</textarea>
           <option value="2" selected>2x</option>
           <option value="3">3x</option>
           <option value="4">4x</option>
+          <option value="6">6x Pro</option>
+          <option value="8">8x Pro</option>
         </select>
       </div>
       <button class="btn btn-wide" id="btn-export">export png</button>
@@ -933,6 +1000,7 @@ hello this is my txt design</textarea>
         <button class="quick-preset" data-example="shanghai-river-lines" type="button">Shanghai River Lines</button>
         <button class="quick-preset" data-example="new-york-blocks" type="button">New York Blocks</button>
         <button class="quick-preset" data-example="kyoto-watercolor" type="button">Kyoto Watercolor</button>
+        <button class="quick-preset" data-example="kyoto-red-stamp" type="button">Kyoto Red Stamp</button>
         <button class="quick-preset" data-example="london-field-notes" type="button">London Field Notes</button>
       </div>
       <div class="guide-actions">
@@ -965,35 +1033,35 @@ hello this is my txt design</textarea>
   </div>
 </div>
 
-<!-- Coffee modal -->
-<div class="modal-backdrop" id="coffee-modal">
-  <div class="modal-box" style="text-align:center;max-width:360px">
-    <button class="modal-close" id="coffee-close">&#10005;</button>
-    <h3>Support Map It</h3>
-    <p style="margin-bottom:8px">Map It is free. If it helps, you can scan to support the project.</p>
-    <p style="margin-bottom:8px">Create elegant map posters for journals, travel notes, and wallpapers.</p>
-    <p style="margin-bottom:10px">contact: <a href="mailto:mog@mogmogmog.com">mog@mogmogmog.com</a></p>
-    <img src="support-qr.jpg" alt="support qr" style="width:160px;height:160px;display:block;margin:0 auto 8px auto;object-fit:contain;border-radius:6px;border:1px solid var(--border)">
-    <p style="margin-top:8px;font-size:11px">Also try: <a href="https://badgeitapp.com/" target="_blank">Badge It</a> | <a href="https://griditapp.com/" target="_blank">Grid It</a> | <a href="https://ditheritapp.com/" target="_blank">Dither It</a></p>
-    <p style="margin-top:8px;font-size:10px;color:var(--muted)">Map data (c) <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors | Mapbox | OpenStreetMap</p>
-    <button class="btn btn-wide" id="btn-export-skip" style="margin-top:10px">download free</button>
+<div class="modal-backdrop" id="help-modal">
+  <div class="modal-box" style="max-width:680px">
+    <button class="modal-close" id="help-close">&#10005;</button>
+    <h3 data-i18n="helpTitle">MapIt Pro Help</h3>
+    <p data-i18n="helpIntro">Search a place, choose a style, adjust camera/framing, then export PNG artwork.</p>
+    <div class="help-grid">
+      <div class="help-item"><h4 data-i18n="helpStartTitle">Quick Start</h4><p data-i18n="helpStartBody">Search a city or landmark, choose a palette, set the camera, then pick a frame or export style.</p></div>
+      <div class="help-item"><h4 data-i18n="help3dTitle">3D Pro</h4><p data-i18n="help3dBody">Enable 3D Pro for Mapbox Standard 3D, then choose light, theme, color mood, and camera presets. Place labels and road names stay controlled by the layer switches.</p></div>
+      <div class="help-item"><h4 data-i18n="helpFrameTitle">Frames</h4><p data-i18n="helpFrameBody">Use Poster, Ticket, Postcard, or Stamp for different publishing formats. Stamp automatically uses the current place and season text.</p></div>
+      <div class="help-item"><h4 data-i18n="helpProjectTitle">Projects</h4><p data-i18n="helpProjectBody">Save a .mapit file to keep the place, camera, style, layers, markers, captions, frame, and export settings for later editing.</p></div>
+      <div class="help-item"><h4 data-i18n="helpExportTitle">Export</h4><p data-i18n="helpExportBody">Use 2x or 4x for most work. 6x and 8x Pro create larger poster files and may take longer, especially with 3D Pro or heavy effects.</p></div>
+      <div class="help-item"><h4 data-i18n="helpLicenseTitle">License</h4><p data-i18n="helpLicenseBody">Activate once with your purchase email and license code. The app stores activation locally and verifies it offline.</p></div>
+    </div>
   </div>
 </div>
 
-<div class="modal-backdrop" id="about-modal">
-  <div class="modal-box" style="text-align:center">
-    <button class="modal-close" id="about-close">&#10005;</button>
-    <h3>About Map It</h3>
-    <p>Create elegant map posters for journals, travel notes, and wallpapers.</p>
-  </div>
-</div>
-
-<div id="support-prompt" class="support-prompt hidden">
-  <div class="support-prompt-copy">Map It is free. If it helped you make something nice, you can buy me a coffee.</div>
-  <div class="support-prompt-actions">
-    <button class="btn" id="support-prompt-skip" type="button" style="color:var(--muted)">Skip</button>
-    <button class="btn" id="support-prompt-download" type="button">Continue download</button>
-    <button class="btn" id="support-prompt-coffee" type="button" style="color:#e07820;border-color:#e07820">Buy me a coffee</button>
+<div class="modal-backdrop" id="license-modal">
+  <div class="modal-box" style="max-width:520px">
+    <h3 data-i18n="licenseTitle">Activate MapIt Pro</h3>
+    <p data-i18n="licenseText">Enter your purchase email and license code to unlock the desktop version.</p>
+    <div class="license-form">
+      <label><span data-i18n="licenseEmail">Email</span><input id="license-email" type="email" autocomplete="email" spellcheck="false"></label>
+      <label><span data-i18n="licenseCode">License Code</span><textarea id="license-code" spellcheck="false"></textarea></label>
+      <div class="license-actions">
+        <button class="btn active" id="license-activate" type="button" data-i18n="licenseActivate">Activate</button>
+        <button class="btn" id="license-clear" type="button" data-i18n="licenseClear">Clear License</button>
+      </div>
+      <div class="license-status" id="license-status"></div>
+    </div>
   </div>
 </div>
 
@@ -1027,12 +1095,9 @@ hello this is my txt design</textarea>
   var currentRatio = '1:1';
   var addingMarker = false;
   var markers = [];
-  var pendingDownload = null;
   var hasStartedGuide = false;
-  var supportPromptShownThisSession = false;
   var GUIDE_DISMISS_KEY = 'mapit.guideDismissed.v2';
   var guideDismissed = localStorage.getItem(GUIDE_DISMISS_KEY) === '1';
-  var supportPromptDismissed = localStorage.getItem('mapit.supportPromptDismissed') === '1';
   var postcardPhoto = null;
   var postcardPhotoName = '';
   var postcardWeather = null;
@@ -1045,6 +1110,28 @@ hello this is my txt design</textarea>
   var captions = [];
   var selectedCaption = null;
   var layerVis = {labels:true,roadLabels:true,boundary:true,buildings:true,buildings3d:false};
+  var currentLang = localStorage.getItem('mapit.pro.lang') || 'en';
+  var licenseUnlocked = !window.licenseApi;
+  var standard3dMode = false;
+  var satelliteLayerVisible = false;
+  var STANDARD_3D_SAFE_EXPORT_STYLES = ['normal','dither','halftone','duotone'];
+  var miniatureMode = false;
+  var CAPTION_FONTS = {
+    outfit: "'Outfit','Noto Sans SC',sans-serif",
+    inter: "'Inter','Noto Sans SC',sans-serif",
+    poppins: "'Poppins','Noto Sans SC',sans-serif",
+    montserrat: "'Montserrat','Noto Sans SC',sans-serif",
+    oswald: "'Oswald','Noto Sans SC',sans-serif",
+    playfair: "'Playfair Display','Noto Serif SC',serif",
+    lora: "'Lora','Noto Serif SC',serif",
+    cormorant: "'Cormorant Garamond','Noto Serif SC',serif",
+    merriweather: "'Merriweather','Noto Serif SC',serif",
+    space: "'Space Grotesk','Noto Sans SC',sans-serif",
+    bebas: "'Bebas Neue','Noto Sans SC',sans-serif",
+    perfograma: "'Perfograma','Bebas Neue','Noto Sans SC',sans-serif",
+    notoSans: "'Noto Sans SC',sans-serif",
+    notoSerif: "'Noto Serif SC',serif"
+  };
   var snapThreshold = 10;
   var EXAMPLE_PRESETS = {
     'tokyo-night-grid': {
@@ -1092,6 +1179,23 @@ hello this is my txt design</textarea>
       ratio: '3:4',
       frame: 'none'
     },
+    'kyoto-red-stamp': {
+      place: 'Kyoto',
+      center: [135.7681, 35.0116],
+      zoom: 13.2,
+      style: 'Ink',
+      exportStyle: 'halftone',
+      ratio: '2:3',
+      frame: 'stamp',
+      stampTitle: 'KYOTO POST',
+      stampValue: '98c',
+      stampPaper: '#fffaf0',
+      stampInk: '#111111',
+      stampBorder: 18,
+      htPalette: 'rose',
+      htSize: 5,
+      htDensity: 45
+    },
     'london-field-notes': {
       place: 'London',
       center: [-0.1276, 51.5072],
@@ -1108,6 +1212,51 @@ hello this is my txt design</textarea>
   var BOUNDARY_LAYERS = ['boundary'];
   var BUILDING_LAYERS = ['building'];
   var BUILDING3D_LAYERS = ['building-3d'];
+  var MAPBOX_STANDARD_STYLE = 'mapbox://styles/mapbox/standard';
+  var STANDARD_3D_PRESETS = {
+    'mono-poster': {theme:'monochrome', light:'dusk', camera:'poster', mood:'mono'},
+    'golden-dusk': {theme:'default', light:'dusk', camera:'poster', mood:'warm'},
+    'soft-day': {theme:'faded', light:'day', camera:'aerial', mood:'cool'},
+    'blue-night': {theme:'monochrome', light:'night', camera:'street', mood:'ink'}
+  };
+  var STANDARD_COLOR_MOODS = {
+    mono: {
+      colorRoads:'#9da1a8', colorRoadLabels:'#f2f0e8', colorPlaceLabels:'#f2f0e8',
+      colorWater:'#23384f', colorGreenspace:'#546756', colorAdminBoundaries:'#77716d',
+      colorLand:'#4a4740', colorBuildings:'#b9b5aa',
+      colorBuildingHighlight:'#d8d2c2', colorBuildingSelect:'#d8d2c2'
+    },
+    warm: {
+      colorRoads:'#c9baa5', colorRoadLabels:'#fff3df', colorPlaceLabels:'#fff3df',
+      colorWater:'#203a55', colorGreenspace:'#66744f', colorAdminBoundaries:'#9a7a58',
+      colorLand:'#6b5646', colorBuildings:'#c6a78c',
+      colorBuildingHighlight:'#edc58f', colorBuildingSelect:'#edc58f'
+    },
+    cool: {
+      colorRoads:'#aeb8c7', colorRoadLabels:'#eef5ff', colorPlaceLabels:'#eef5ff',
+      colorWater:'#8fbdd0', colorGreenspace:'#a8c7a0', colorAdminBoundaries:'#8f9bab',
+      colorLand:'#e9dfcf', colorBuildings:'#d8d6cf',
+      colorBuildingHighlight:'#eef3f5', colorBuildingSelect:'#eef3f5'
+    },
+    clay: {
+      colorRoads:'#b79a86', colorRoadLabels:'#fff4e6', colorPlaceLabels:'#fff4e6',
+      colorWater:'#7ba7b4', colorGreenspace:'#97ad7e', colorAdminBoundaries:'#a06f5e',
+      colorLand:'#b18f74', colorBuildings:'#ad7662',
+      colorBuildingHighlight:'#d7956f', colorBuildingSelect:'#d7956f'
+    },
+    ink: {
+      colorRoads:'#566176', colorRoadLabels:'#e9ecf4', colorPlaceLabels:'#e9ecf4',
+      colorWater:'#0e2340', colorGreenspace:'#263a34', colorAdminBoundaries:'#485061',
+      colorLand:'#111827', colorBuildings:'#293044',
+      colorBuildingHighlight:'#59647d', colorBuildingSelect:'#59647d'
+    }
+  };
+  var CAMERA_PRESETS = {
+    poster: {pitch:72, bearing:35, zoomDelta:0},
+    isometric: {pitch:60, bearing:45, zoomDelta:0},
+    aerial: {pitch:42, bearing:0, zoomDelta:0},
+    street: {pitch:78, bearing:20, zoomDelta:0.4}
+  };
 
   // Build MapLibre style
   function buildStyle(c) {
@@ -1151,11 +1300,151 @@ hello this is my txt design</textarea>
 
   function applyLayerVis() {
     if (!map.isStyleLoaded()) return;
+    if (standard3dMode) {
+      applyStandard3dConfig();
+      return;
+    }
     LABEL_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.labels?'visible':'none');});
     ROADLBL_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.roadLabels?'visible':'none');});
     BOUNDARY_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.boundary?'visible':'none');});
     BUILDING_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.buildings?'visible':'none');});
     BUILDING3D_LAYERS.forEach(function(id){if(map.getLayer(id))map.setLayoutProperty(id,'visibility',layerVis.buildings3d?'visible':'none');});
+  }
+
+  function applyStandardLabelFallback() {
+    if (!standard3dMode || !map.isStyleLoaded()) return;
+    var style = map.getStyle();
+    var layers = style && style.layers ? style.layers : [];
+    layers.forEach(function(layer) {
+      if (!layer || layer.type !== 'symbol' || !map.getLayer(layer.id)) return;
+      var id = String(layer.id || '').toLowerCase();
+      var source = String(layer.source || '').toLowerCase();
+      var sourceLayer = String(layer['source-layer'] || '').toLowerCase();
+      var meta = layer.metadata ? JSON.stringify(layer.metadata).toLowerCase() : '';
+      var layerKey = [id, source, sourceLayer, meta].join(' ');
+      var layout = layer.layout || {};
+      var hasText = layout['text-field'] != null;
+      if (!hasText) return;
+      var isRoad = /road|shield|route|motorway|highway|street|ferry|path|transportation|label-road/.test(layerKey);
+      var isPlace = /place|poi|airport|transit|station|settlement|country|state|admin|water|natural|label-place|label-poi|label-transit/.test(layerKey);
+      var visible = true;
+      if (!layerVis.labels && !layerVis.roadLabels) visible = false;
+      if (isRoad && !layerVis.roadLabels) visible = false;
+      if (!isRoad && !layerVis.labels) visible = false;
+      if (isPlace && !layerVis.labels) visible = false;
+      try { map.setLayoutProperty(layer.id, 'visibility', visible ? 'visible' : 'none'); } catch (err) {}
+    });
+  }
+
+  function scheduleStandardLabelSync() {
+    if (!standard3dMode) return;
+    applyStandardLabelFallback();
+    setTimeout(applyStandardLabelFallback, 120);
+    setTimeout(applyStandardLabelFallback, 420);
+    setTimeout(applyStandardLabelFallback, 900);
+    setTimeout(applyStandardLabelFallback, 1800);
+    setTimeout(applyStandardLabelFallback, 3200);
+  }
+
+  function setStandardConfig(name, value) {
+    if (!map.setConfigProperty) return;
+    try { map.setConfigProperty('basemap', name, value); } catch (err) {}
+  }
+
+  function applyStandardColorMood() {
+    var moodName = document.getElementById('standard-color-mood').value || 'mono';
+    var mood = STANDARD_COLOR_MOODS[moodName] || STANDARD_COLOR_MOODS.mono;
+    Object.keys(mood).forEach(function(key){ setStandardConfig(key, mood[key]); });
+  }
+
+  function applyStandard3dConfig() {
+    if (!standard3dMode || !map.isStyleLoaded()) return;
+    var light = document.getElementById('standard-light').value || 'dusk';
+    var theme = document.getElementById('standard-theme').value || 'monochrome';
+    setStandardConfig('theme', theme);
+    setStandardConfig('lightPreset', light);
+    applyStandardColorMood();
+    setStandardConfig('showPlaceLabels', layerVis.labels);
+    setStandardConfig('showRoadLabels', layerVis.roadLabels);
+    setStandardConfig('showPointOfInterestLabels', layerVis.labels);
+    setStandardConfig('showTransitLabels', layerVis.roadLabels);
+    setStandardConfig('show3dObjects', true);
+    setStandardConfig('show3dBuildings', layerVis.buildings3d);
+    setStandardConfig('showAdminBoundaries', layerVis.boundary);
+    scheduleStandardLabelSync();
+  }
+
+  function ensureSatelliteLayer() {
+    if (standard3dMode || !map.isStyleLoaded() || map.getLayer('satellite-layer')) return;
+    if (!map.getSource('satellite')) {
+      map.addSource('satellite', {type:'raster',url:'mapbox://mapbox.satellite',tileSize:256});
+    }
+    map.addLayer({id:'satellite-layer',type:'raster',source:'satellite',layout:{visibility:satelliteLayerVisible?'visible':'none'},paint:{'raster-opacity':0.85}}, map.getLayer('water') ? 'water' : undefined);
+  }
+
+  function setMapToCustomStyle() {
+    map.setStyle(buildStyle(currentColors));
+  }
+
+  function setMapToStandard3d() {
+    var light = document.getElementById('standard-light').value || 'dusk';
+    var theme = document.getElementById('standard-theme').value || 'monochrome';
+    var moodName = document.getElementById('standard-color-mood').value || 'mono';
+    var mood = STANDARD_COLOR_MOODS[moodName] || STANDARD_COLOR_MOODS.mono;
+    var styleOptions = {config:{basemap:{
+      theme:theme,
+      lightPreset:light,
+      colorRoads:mood.colorRoads,
+      colorRoadLabels:mood.colorRoadLabels,
+      colorPlaceLabels:mood.colorPlaceLabels,
+      colorWater:mood.colorWater,
+      colorGreenspace:mood.colorGreenspace,
+      colorAdminBoundaries:mood.colorAdminBoundaries,
+      colorLand:mood.colorLand,
+      colorBuildings:mood.colorBuildings,
+      colorBuildingHighlight:mood.colorBuildingHighlight,
+      colorBuildingSelect:mood.colorBuildingSelect,
+      showPlaceLabels:layerVis.labels,
+      showRoadLabels:layerVis.roadLabels,
+      showPointOfInterestLabels:layerVis.labels,
+      showTransitLabels:layerVis.roadLabels,
+      showAdminBoundaries:layerVis.boundary,
+      show3dObjects:true,
+      show3dBuildings:layerVis.buildings3d
+    }}};
+    try { map.setStyle(MAPBOX_STANDARD_STYLE, styleOptions); }
+    catch (err) { map.setStyle(MAPBOX_STANDARD_STYLE); }
+  }
+
+  function setActivePresetButton(selector, attr, value) {
+    document.querySelectorAll(selector).forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute(attr) === value);
+    });
+  }
+
+  function applyCameraPreset(name, duration) {
+    var preset = CAMERA_PRESETS[name] || CAMERA_PRESETS.poster;
+    setActivePresetButton('[data-camera-preset]', 'data-camera-preset', name);
+    document.getElementById('map-pitch').value = preset.pitch;
+    document.getElementById('map-pitch-val').textContent = preset.pitch+'°';
+    document.getElementById('map-bearing').value = preset.bearing;
+    document.getElementById('map-bearing-val').textContent = preset.bearing+'°';
+    map.easeTo({
+      pitch:preset.pitch,
+      bearing:preset.bearing,
+      zoom:Math.max(1, Math.min(22, map.getZoom()+preset.zoomDelta)),
+      duration:duration == null ? 650 : duration
+    });
+  }
+
+  function applyStandardPreset(name, options) {
+    var preset = STANDARD_3D_PRESETS[name] || STANDARD_3D_PRESETS['mono-poster'];
+    setActivePresetButton('[data-standard-preset]', 'data-standard-preset', name);
+    document.getElementById('standard-light').value = preset.light;
+    document.getElementById('standard-theme').value = preset.theme;
+    document.getElementById('standard-color-mood').value = preset.mood || 'mono';
+    applyCameraPreset(preset.camera, options && options.instant ? 0 : 650);
+    if (standard3dMode) applyStandard3dConfig();
   }
 
   // Crop overlay
@@ -1164,7 +1453,7 @@ hello this is my txt design</textarea>
   var gradOverlay = document.getElementById('gradient-overlay');
 
   function getCropRect() {
-    var ratioMap = {'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
+    var ratioMap = {'1:1':1,'3:4':0.75,'2:3':2/3,'3:2':1.5,'9:16':9/16,'16:9':16/9,'21:9':21/9};
     var ratio = ratioMap[currentRatio]||1;
     var aW = mapArea.clientWidth, aH = mapArea.clientHeight;
     var w,h;
@@ -1179,7 +1468,7 @@ hello this is my txt design</textarea>
     cropOverlay.style.top=r.top+'px';
     cropOverlay.style.width=r.width+'px';
     cropOverlay.style.height=r.height+'px';
-    if (frameStyle === 'ticket' || frameStyle === 'postcard') {
+    if (frameStyle === 'ticket' || frameStyle === 'postcard' || frameStyle === 'stamp') {
       cropOverlay.style.boxShadow='none';
       cropOverlay.style.border='none';
       cropOverlay.style.background='transparent';
@@ -1191,14 +1480,14 @@ hello this is my txt design</textarea>
     cropOverlay.style.borderRadius='2px';
     cropOverlay.style.pointerEvents='none';
     updateGradientOverlay();
-    if (exportStyle !== 'normal') schedulePreview();
+    if (exportStyle !== 'normal' || miniatureMode || frameStyle === 'stamp') schedulePreview();
     if (frameStyle !== 'none') updateFrameOverlay();
   }
 
   function updateGradientOverlay() {
     var dir = document.getElementById('vig-dir').value;
     var r = getCropRect();
-    if (frameStyle === 'ticket' || frameStyle === 'postcard' || dir==='none') { gradOverlay.style.display='none'; return; }
+    if (frameStyle === 'ticket' || frameStyle === 'postcard' || frameStyle === 'stamp' || dir==='none') { gradOverlay.style.display='none'; return; }
     gradOverlay.style.display='block';
     gradOverlay.style.left=r.left+'px';
     gradOverlay.style.top=r.top+'px';
@@ -1266,12 +1555,15 @@ hello this is my txt design</textarea>
     });
   });
 
-  ['frame-color','frame-caption','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-head','ticket-serial','ticket-copy','postcard-paper','postcard-ink','postcard-layout','postcard-fit','postcard-align','postcard-photo-x','postcard-photo-y','postcard-photo-zoom'].forEach(function(id) {
+  ['frame-color','frame-caption','frame-caption-font','frame-caption-size','border-color','coord-pos','coord-color','coord-shadow','ticket-color','ticket-ink','ticket-head','ticket-serial','ticket-copy','postcard-paper','postcard-ink','postcard-layout','postcard-fit','postcard-align','postcard-photo-x','postcard-photo-y','postcard-photo-zoom','stamp-paper','stamp-ink'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) {
       el.addEventListener('input', updateFrameOverlay);
       el.addEventListener('change', updateFrameOverlay);
     }
+  });
+  document.getElementById('frame-caption-size').addEventListener('input', function(){
+    document.getElementById('frame-caption-size-val').textContent = this.value;
   });
 
   ['postcard-photo-x','postcard-photo-y','postcard-photo-zoom'].forEach(function(id) {
@@ -1289,6 +1581,297 @@ hello this is my txt design</textarea>
 
   function circlePathD(cx, cy, r) {
     return 'M '+(cx-r)+' '+cy+' a '+r+' '+r+' 0 1 0 '+(r*2)+' 0 a '+r+' '+r+' 0 1 0 -'+(r*2)+' 0';
+  }
+
+  function getStampLayout(w, h) {
+    var hostRatio = w / Math.max(1, h);
+    var aspect = Math.max(0.82, Math.min(1.22, Math.sqrt(hostRatio)));
+    var stampSize = Math.max(190, Math.min(w, h) * 0.44);
+    var stampW = stampSize * aspect;
+    var stampH = (stampSize / aspect) * (159.36 / 160.91);
+    var ox = (w - stampW) * 0.5;
+    var oy = (h - stampH) * 0.5;
+    var border = Math.max(8, stampW * 0.055);
+    var image = {
+      x: ox + stampW * (10.35 / 160.91),
+      y: oy + stampH * (26.14 / 159.36),
+      w: stampW * (140.22 / 160.91),
+      h: stampH * (79.73 / 159.36)
+    };
+    var top = {
+      x: ox + stampW * (10.87 / 160.91),
+      y: oy + stampH * (7.2 / 159.36),
+      w: stampW * ((150.56 - 10.87) / 160.91),
+      h: stampH * (15.2 / 159.36)
+    };
+    var bottom = {
+      x: ox + stampW * (10.35 / 160.91),
+      y: oy + stampH * (112.2 / 159.36),
+      w: stampW * (140.22 / 160.91),
+      h: stampH * (34.8 / 159.36)
+    };
+    return {
+      x:ox,
+      y:oy,
+      w:stampW,
+      h:stampH,
+      hostW:w,
+      hostH:h,
+      border:border,
+      top:top,
+      image:image,
+      bottom:bottom,
+      holeR:Math.min(stampW, stampH) * (3.43 / 160.91),
+      holePitchX:stampW * ((3.43 * 2 + 6.08) / 160.91),
+      holePitchY:stampH * ((3.43 * 2 + 6.08) / 159.36)
+    };
+  }
+
+  function buildStampEdgeCutoutPath(layout) {
+    var p = '';
+    var r = layout.holeR;
+    var pitchX = layout.holePitchX;
+    var pitchY = layout.holePitchY;
+    var countX = Math.max(2, Math.round((layout.w - pitchX * 1.15) / pitchX));
+    var startX = layout.x + (layout.w - (countX - 1) * pitchX) * 0.5;
+    for (var i = 0; i < countX; i++) {
+      var x = startX + i * pitchX;
+      p += circlePathD(x, layout.y, r);
+      p += circlePathD(x, layout.y + layout.h, r);
+    }
+    var countY = Math.max(2, Math.round((layout.h - pitchY * 1.15) / pitchY));
+    var startY = layout.y + (layout.h - (countY - 1) * pitchY) * 0.5;
+    for (var j = 0; j < countY; j++) {
+      var y = startY + j * pitchY;
+      p += circlePathD(layout.x, y, r);
+      p += circlePathD(layout.x + layout.w, y, r);
+    }
+    return p;
+  }
+
+  function buildStampCutoutPath(layout) {
+    return buildStampEdgeCutoutPath(layout);
+  }
+
+  function stampTextFont(weight) {
+    return '"' + 'Noto Sans SC' + '", Outfit, sans-serif';
+  }
+
+  function getStampSeasonInfo() {
+    var now = new Date();
+    var month = now.getMonth();
+    if (month <= 1 || month === 11) return {year:String(now.getFullYear()), en:'WINTER', zh:'冬'};
+    if (month <= 3) return {year:String(now.getFullYear()), en:'SPRING', zh:'春'};
+    if (month <= 7) return {year:String(now.getFullYear()), en:'SUMMER', zh:'夏'};
+    return {year:String(now.getFullYear()), en:'AUTUMN', zh:'秋'};
+  }
+
+  var STAMP_COUNTRY_ZH = {
+    'united states':'美国',
+    'united states of america':'美国',
+    'usa':'美国',
+    'u.s.a':'美国',
+    'japan':'日本',
+    'china':'中国',
+    'france':'法国',
+    'united kingdom':'英国',
+    'england':'英国',
+    'italy':'意大利',
+    'germany':'德国',
+    'spain':'西班牙',
+    'canada':'加拿大',
+    'australia':'澳大利亚',
+    'korea':'韩国',
+    'south korea':'韩国',
+    'thailand':'泰国',
+    'singapore':'新加坡'
+  };
+
+  var STAMP_CITY_ZH = {
+    'new york':'纽约',
+    'tokyo':'东京',
+    'kyoto':'京都',
+    'shanghai':'上海',
+    'beijing':'北京',
+    'paris':'巴黎',
+    'london':'伦敦',
+    'rome':'罗马',
+    'berlin':'柏林',
+    'los angeles':'洛杉矶',
+    'san francisco':'旧金山',
+    'singapore':'新加坡',
+    'seoul':'首尔',
+    'bangkok':'曼谷',
+    'sydney':'悉尼',
+    'melbourne':'墨尔本'
+  };
+
+  function normalizeStampPlaceText(text) {
+    return String(text || '').replace(/\s+/g, ' ').replace(/[;；/|]+/g, ' ').trim();
+  }
+
+  function dedupeStampPlaceText(text) {
+    var value = normalizeStampPlaceText(text);
+    var parts = value.split(' ').filter(Boolean);
+    if (parts.length > 1 && parts.every(function(part){ return part === parts[0]; })) return parts[0];
+    return value.replace(/(.{2,8})\s+\1/g, '$1');
+  }
+
+  function lookupStampAlias(text, aliases) {
+    var value = normalizeStampPlaceText(text);
+    var lower = value.toLowerCase();
+    if (aliases[value]) return aliases[value];
+    if (aliases[lower]) return aliases[lower];
+    var keys = Object.keys(aliases).sort(function(a,b){ return b.length - a.length; });
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (key && lower.indexOf(key.toLowerCase()) >= 0) return aliases[key];
+    }
+    return '';
+  }
+
+  function titleCasePlace(text) {
+    return normalizeStampPlaceText(text).toLowerCase().replace(/\b[a-z]/g, function(ch) { return ch.toUpperCase(); });
+  }
+
+  function getStampPlaceParts() {
+    var input = dedupeStampPlaceText(searchInput && searchInput.value ? searchInput.value : '');
+    var display = normalizeStampPlaceText(lastPlaceDisplayName || input || '');
+    var rawParts = display ? display.split(',').map(function(p){return normalizeStampPlaceText(p);}).filter(Boolean) : [];
+    var city = dedupeStampPlaceText(input || rawParts[0] || getTicketCityText());
+    var countryAliases = {
+      'france':'FRANCE',
+      '法国':'FRANCE',
+      '法國':'FRANCE',
+      'république française':'FRANCE',
+      'japan':'JAPAN',
+      '日本':'JAPAN',
+      'united states':'U.S.A',
+      'united states of america':'U.S.A',
+      'usa':'U.S.A',
+      'u.s.a':'U.S.A',
+      '美国':'U.S.A',
+      '美國':'U.S.A',
+      'china':'CHINA',
+      '中国':'CHINA',
+      '中國':'CHINA',
+      'united kingdom':'U.K',
+      'uk':'U.K',
+      'england':'U.K',
+      'great britain':'U.K',
+      'britain':'U.K',
+      '英国':'U.K',
+      '英國':'U.K',
+      '联合王国':'U.K',
+      '聯合王國':'U.K',
+      '英格兰':'U.K',
+      '英格蘭':'U.K',
+      'deutschland':'GERMANY',
+      'germany':'GERMANY',
+      'allemagne':'GERMANY',
+      '德国':'GERMANY',
+      '德國':'GERMANY',
+      'italia':'ITALY',
+      'italy':'ITALY',
+      '意大利':'ITALY',
+      '義大利':'ITALY',
+      'spain':'SPAIN',
+      'españa':'SPAIN',
+      '西班牙':'SPAIN',
+      'canada':'CANADA',
+      '加拿大':'CANADA',
+      'australia':'AUSTRALIA',
+      '澳大利亚':'AUSTRALIA',
+      '澳大利亞':'AUSTRALIA',
+      'korea':'KOREA',
+      'south korea':'KOREA',
+      'republic of korea':'KOREA',
+      '韩国':'KOREA',
+      '韓國':'KOREA'
+    };
+    var countryEn = '';
+    for (var i = rawParts.length - 1; i >= 0; i--) {
+      var foundCountry = lookupStampAlias(rawParts[i], countryAliases);
+      if (foundCountry) {
+        countryEn = foundCountry;
+        break;
+      }
+    }
+    var cityAliases = {
+      '巴黎':'Paris',
+      '东京':'Tokyo',
+      '東京':'Tokyo',
+      '东京铁塔':'Tokyo Tower',
+      '東京鐵塔':'Tokyo Tower',
+      '纽约':'New York',
+      '紐約':'New York',
+      '伦敦':'London',
+      '倫敦':'London',
+      '京都':'Kyoto',
+      '上海':'Shanghai',
+      '北京':'Beijing',
+      '伦敦':'London',
+      '倫敦':'London',
+      '大伦敦':'London',
+      '大倫敦':'London',
+      '圣保罗座堂':'St Pauls Cathedral',
+      '聖保羅座堂':'St Pauls Cathedral',
+      '圣保罗大教堂':'St Pauls Cathedral',
+      '聖保羅大教堂':'St Pauls Cathedral',
+      '巴黎':'Paris',
+      '东京塔':'Tokyo Tower',
+      '東京塔':'Tokyo Tower'
+    };
+    var cityEn = lookupStampAlias(city, cityAliases);
+    if (!cityEn) {
+      for (var j = 0; j < rawParts.length; j++) {
+        var part = rawParts[j];
+        if (!part || lookupStampAlias(part, countryAliases)) continue;
+        if (!/[^\x00-\x7F]/.test(part)) {
+          cityEn = titleCasePlace(part);
+          break;
+        }
+      }
+    }
+    if (!cityEn) cityEn = titleCasePlace(city).replace(/[^\x00-\x7F]/g, '').trim();
+    if (!cityEn) cityEn = countryEn || titleCasePlace(city);
+    var cityKey = city.toLowerCase();
+    var hasCjk = /[^\x00-\x7F]/.test(city);
+    var zh = hasCjk ? dedupeStampPlaceText(city) : (STAMP_CITY_ZH[cityKey] || city);
+    var en = countryEn && countryEn.toLowerCase() !== cityEn.toLowerCase() ? countryEn + ' ' + cityEn : cityEn;
+    return {zh:zh, en:en.toUpperCase()};
+  }
+
+  function getStampImageSourceRect(layout, sourceW, sourceH) {
+    var zoomOut = 1.62;
+    var sw = layout.image.w * zoomOut;
+    var sh = layout.image.h * zoomOut;
+    var sx = layout.image.x + layout.image.w * 0.5 - sw * 0.5;
+    var sy = layout.image.y + layout.image.h * 0.5 - sh * 0.5;
+    sx = Math.max(0, Math.min(sourceW - sw, sx));
+    sy = Math.max(0, Math.min(sourceH - sh, sy));
+    sw = Math.min(sw, sourceW - sx);
+    sh = Math.min(sh, sourceH - sy);
+    return {x:sx, y:sy, w:sw, h:sh};
+  }
+
+  function fitCanvasFont(ctx, text, maxWidth, startSize, minSize, weight) {
+    var size = startSize;
+    var family = stampTextFont(weight);
+    do {
+      ctx.font = weight + ' ' + size + 'px ' + family;
+      if (ctx.measureText(text).width <= maxWidth || size <= minSize) break;
+      size -= 1;
+    } while (size > minSize);
+    return size;
+  }
+
+  function fitDomText(el, maxWidth, minSize) {
+    var size = parseFloat(el.style.fontSize) || 12;
+    while (el.scrollWidth > maxWidth && size > minSize) {
+      size -= 1;
+      el.style.fontSize = size + 'px';
+    }
   }
 
   function getTicketLayout(frameW, frameH, offsetX, offsetY) {
@@ -1409,10 +1992,10 @@ hello this is my txt design</textarea>
 
   function getTicketDateParts() {
     var now = new Date();
-    var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
     return {
       yearLine: String(now.getFullYear()),
-      dateLine: now.getDate() + " " + months[now.getMonth()].toUpperCase()
+      dateLine: String(now.getDate()).padStart(2, "0") + " " + months[now.getMonth()]
     };
   }
 
@@ -1993,8 +2576,8 @@ function getTicketCopyLines() {
     frameOverlay.style.borderRadius = '';
     frameOverlay.style.overflow = 'visible';
     var badgeImgLive = captionLayer.querySelector('img.city-badge-img');
-    if (badgeImgLive) badgeImgLive.style.display = (frameStyle==='ticket' || frameStyle==='postcard') ? 'none' : 'block';
-    document.getElementById('coord-stamp-options').style.display = (frameStyle==='none' || frameStyle==='ticket' || frameStyle==='postcard') ? 'none' : 'block';
+    if (badgeImgLive) badgeImgLive.style.display = (frameStyle==='ticket' || frameStyle==='postcard' || frameStyle==='stamp') ? 'none' : 'block';
+    document.getElementById('coord-stamp-options').style.display = (frameStyle==='none' || frameStyle==='ticket' || frameStyle==='postcard' || frameStyle==='stamp') ? 'none' : 'block';
     if (frameStyle === 'none') { frameOverlay.style.display='none'; return; }
     frameOverlay.style.display = 'block';
     if (frameStyle === 'polaroid') {
@@ -2015,7 +2598,7 @@ function getTicketCopyLines() {
       bottom.style.cssText='position:absolute;bottom:0;left:0;width:100%;height:'+bottomH+'px;background:'+fc+';display:flex;align-items:center;justify-content:center';
       if (capText) {
         var span = document.createElement('span');
-        span.style.cssText='font-family:Outfit,sans-serif;font-size:'+Math.round(bottomH*0.32)+'px;color:'+textColor+';letter-spacing:.05em;font-weight:300';
+        span.style.cssText='font-family:'+getPolaroidCaptionFont()+';font-size:'+getPolaroidCaptionSize(bottomH)+'px;color:'+textColor+';letter-spacing:.03em;font-weight:500;max-width:'+(r.width-sideW*2-24)+'px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
         span.textContent = capText;
         bottom.appendChild(span);
       }
@@ -2031,14 +2614,93 @@ function getTicketCopyLines() {
       renderTicketFrameDOM(r, overlayRect.width, overlayRect.height);
     } else if (frameStyle === 'postcard') {
       renderPostcardFrameDOM(r, overlayRect.width, overlayRect.height);
+    } else if (frameStyle === 'stamp') {
+      renderStampFrameDOM(r);
     }
     renderCoordStampDOM(r);
+  }
+
+  function renderStampFrameDOM(r) {
+    var paper = document.getElementById('stamp-paper').value;
+    var ink = document.getElementById('stamp-ink').value || '#111111';
+    var layout = getStampLayout(r.width, r.height);
+    var season = getStampSeasonInfo();
+    var place = getStampPlaceParts();
+    var svgNS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", "0 0 "+r.width+" "+r.height);
+    svg.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden";
+    var defs = document.createElementNS(svgNS, "defs");
+    var maskId = "stamp-mask-live";
+    var mask = document.createElementNS(svgNS, "mask");
+    mask.setAttribute("id", maskId);
+    mask.setAttribute("maskUnits", "userSpaceOnUse");
+    var base = document.createElementNS(svgNS, "rect");
+    base.setAttribute("x", 0);
+    base.setAttribute("y", 0);
+    base.setAttribute("width", r.width);
+    base.setAttribute("height", r.height);
+    base.setAttribute("fill", "black");
+    mask.appendChild(base);
+    var stampBase = document.createElementNS(svgNS, "rect");
+    stampBase.setAttribute("x", layout.x);
+    stampBase.setAttribute("y", layout.y);
+    stampBase.setAttribute("width", layout.w);
+    stampBase.setAttribute("height", layout.h);
+    stampBase.setAttribute("fill", "white");
+    mask.appendChild(stampBase);
+    var cuts = document.createElementNS(svgNS, "path");
+    cuts.setAttribute("d", buildStampEdgeCutoutPath(layout));
+    cuts.setAttribute("fill", "black");
+    mask.appendChild(cuts);
+    var imageHole = document.createElementNS(svgNS, "rect");
+    imageHole.setAttribute("x", layout.image.x);
+    imageHole.setAttribute("y", layout.image.y);
+    imageHole.setAttribute("width", layout.image.w);
+    imageHole.setAttribute("height", layout.image.h);
+    imageHole.setAttribute("fill", "black");
+    mask.appendChild(imageHole);
+    defs.appendChild(mask);
+    svg.appendChild(defs);
+    var paperRect = document.createElementNS(svgNS, "rect");
+    paperRect.setAttribute("x", layout.x);
+    paperRect.setAttribute("y", layout.y);
+    paperRect.setAttribute("width", layout.w);
+    paperRect.setAttribute("height", layout.h);
+    paperRect.setAttribute("fill", paper);
+    paperRect.setAttribute("mask", "url(#"+maskId+")");
+    svg.appendChild(paperRect);
+    frameOverlay.appendChild(svg);
+
+    var topSize = Math.max(11, Math.round(layout.h * (15 / 159.36)));
+    var topEl = document.createElement('div');
+    topEl.style.cssText = 'position:absolute;left:'+Math.round(layout.top.x)+'px;top:'+Math.round(layout.top.y)+'px;width:'+Math.round(layout.top.w)+'px;height:'+Math.round(layout.top.h*1.25)+'px;color:'+ink+';font-family:"Noto Sans SC",Outfit,sans-serif;font-weight:500;font-size:'+topSize+'px;line-height:1;display:flex;align-items:center;justify-content:space-between;gap:'+Math.round(layout.border*.65)+'px;pointer-events:none;white-space:nowrap;overflow:hidden;';
+    topEl.innerHTML = '<span style="font-family:Outfit,&quot;Noto Sans SC&quot;,sans-serif;font-size:'+topSize+'px;flex:0 0 auto">'+svgEscape(season.year)+'</span><span style="font-family:Outfit,&quot;Noto Sans SC&quot;,sans-serif;font-size:'+topSize+'px;flex:0 0 auto">'+svgEscape(season.en)+'</span><span style="font-size:'+Math.round(topSize*.9)+'px;flex:0 0 auto">'+svgEscape(season.zh)+'</span>';
+    frameOverlay.appendChild(topEl);
+    var topTighten = 0;
+    while (topEl.scrollWidth > topEl.clientWidth && topTighten < 8) {
+      Array.prototype.forEach.call(topEl.children, function(child) {
+        var nextSize = Math.max(9, (parseFloat(child.style.fontSize) || topSize) - 1);
+        child.style.fontSize = nextSize + 'px';
+      });
+      topTighten += 1;
+    }
+
+    var zhSize = Math.max(12, Math.round(layout.h * (15.91 / 159.36)));
+    var enSize = Math.max(11, Math.round(layout.h * (15 / 159.36)));
+    var bottomEl = document.createElement('div');
+    bottomEl.style.cssText = 'position:absolute;left:'+Math.round(layout.bottom.x)+'px;top:'+Math.round(layout.bottom.y)+'px;width:'+Math.round(layout.bottom.w)+'px;height:'+Math.round(layout.bottom.h)+'px;color:'+ink+';font-family:"Noto Sans SC",Outfit,sans-serif;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:'+Math.round(layout.border*.28)+'px;pointer-events:none;overflow:hidden;';
+    bottomEl.innerHTML = '<div style="font-weight:800;font-size:'+zhSize+'px;line-height:1.02;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+svgEscape(place.zh)+'</div><div style="font-family:Outfit,&quot;Noto Sans SC&quot;,sans-serif;font-weight:800;font-size:'+enSize+'px;line-height:1.02;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+svgEscape(place.en)+'</div>';
+    frameOverlay.appendChild(bottomEl);
+    Array.prototype.forEach.call(bottomEl.children, function(child) {
+      fitDomText(child, bottomEl.clientWidth, 9);
+    });
   }
 
   function renderCoordStampDOM(r) {
     var old = frameOverlay.querySelector('.coord-stamp');
     if (old) old.parentNode.removeChild(old);
-    if (frameStyle === 'ticket' || frameStyle === 'postcard') return;
+    if (frameStyle === 'ticket' || frameStyle === 'postcard' || frameStyle === 'stamp') return;
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
@@ -2071,20 +2733,30 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   });
   map.addControl(new mapboxgl.NavigationControl(),'bottom-right');
   map.on('load',function(){
-    map.addLayer({id:'satellite-layer',type:'raster',source:'satellite',layout:{visibility:'none'},paint:{'raster-opacity':0.85}});
+    ensureSatelliteLayer();
     
     
   // Satellite toggle
   var isSatellite = false;
   document.getElementById('btn-satellite').addEventListener('click', function() {
+    if (standard3dMode) return;
     isSatellite = !isSatellite;
-    map.setLayoutProperty('satellite-layer', 'visibility', isSatellite ? 'visible' : 'none');
+    satelliteLayerVisible = isSatellite;
+    if (map.getLayer('satellite-layer')) map.setLayoutProperty('satellite-layer', 'visibility', isSatellite ? 'visible' : 'none');
     this.style.borderColor = isSatellite ? '#c8a060' : '#333';
   });
   updateCropOverlay();applyLayerVis();
   });
-  map.on('style.load',function(){applyLayerVis();updateRoute();});
-  map.on('render',function(){ if(exportStyle!=='normal') schedulePreview(true); });
+  map.on('style.load',function(){
+    ensureSatelliteLayer();
+    applyLayerVis();
+    update3dBuildingStyle();
+    updateRoute();
+    scheduleStandardLabelSync();
+  });
+  map.on('styledata',function(){ scheduleStandardLabelSync(); });
+  map.on('idle',function(){ scheduleStandardLabelSync(); });
+  map.on('render',function(){ if(exportStyle!=='normal' || miniatureMode || frameStyle === 'stamp') schedulePreview(true); });
 
   // Mobile drawer
   (function(){
@@ -2153,8 +2825,14 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.querySelectorAll('.style-card').forEach(function(c){
       c.classList.toggle('active', c.dataset.presetName === preset.name);
     });
+    if (standard3dMode) {
+      standard3dMode = false;
+      document.getElementById('tog-standard-3d').checked = false;
+      document.getElementById('standard-3d-options').style.display = 'none';
+      document.getElementById('building-3d-color').closest('.color-row').style.display = '';
+    }
     currentColors = Object.assign({}, preset.colors);
-    map.setStyle(buildStyle(currentColors));
+    setMapToCustomStyle();
     syncColorPickers();
     document.getElementById('vig-color').value = preset.colors.land;
     updateGradientOverlay();
@@ -2165,23 +2843,50 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.querySelectorAll('[data-ratio]').forEach(function(btn){
       btn.classList.toggle('active', btn.dataset.ratio === ratio);
     });
+    if (frameStyle === 'stamp') {
+      frameStyle = 'none';
+      document.querySelectorAll('[data-frame]').forEach(function(b){ b.classList.toggle('active', b.dataset.frame === frameStyle); });
+      ['polaroid','border','ticket','postcard','stamp'].forEach(function(t){
+        document.getElementById('frame-options-'+t).style.display = 'none';
+      });
+      previewCanvas.style.display = 'none';
+    }
     updateCropOverlay();
+    updateFrameOverlay();
   }
 
   function setFrameStyle(frame) {
+    var wasStamp = frameStyle === 'stamp';
     frameStyle = frame;
     document.querySelectorAll('[data-frame]').forEach(function(b){b.classList.toggle('active', b.dataset.frame === frameStyle);});
-    ['polaroid','border','ticket','postcard'].forEach(function(t){
+    ['polaroid','border','ticket','postcard','stamp'].forEach(function(t){
       document.getElementById('frame-options-'+t).style.display = frameStyle===t ? 'block' : 'none';
     });
     updateCropOverlay();
     updateFrameOverlay();
+    if (wasStamp && frameStyle !== 'stamp' && exportStyle === 'normal' && !miniatureMode) previewCanvas.style.display = 'none';
+    if (frameStyle === 'stamp') schedulePreview();
     if (frameStyle === 'postcard') syncPostcardWeather();
   }
 
+  function isExportStyleSafeInStandard3d(style) {
+    return STANDARD_3D_SAFE_EXPORT_STYLES.indexOf(style) >= 0;
+  }
+
+  function syncStandard3dExportStyleButtons() {
+    document.querySelectorAll('[data-export-style]').forEach(function(b){
+      var blocked = standard3dMode && !isExportStyleSafeInStandard3d(b.dataset.exportStyle);
+      b.disabled = blocked;
+      b.style.opacity = blocked ? '0.38' : '';
+      b.title = blocked ? 'Disabled in Mapbox Standard 3D for stability' : '';
+    });
+  }
+
   function setExportStyle(nextStyle) {
+    if (standard3dMode && !isExportStyleSafeInStandard3d(nextStyle)) nextStyle = 'normal';
     exportStyle = nextStyle;
     document.querySelectorAll('[data-export-style]').forEach(function(b){b.classList.toggle('active', b.dataset.exportStyle === exportStyle);});
+    syncStandard3dExportStyleButtons();
     document.getElementById('dither-options').style.display = exportStyle==='dither' ? 'block' : 'none';
     document.getElementById('halftone-options').style.display = exportStyle==='halftone' ? 'flex' : 'none';
     document.getElementById('duotone-options').style.display = exportStyle==='duotone' ? 'block' : 'none';
@@ -2189,7 +2894,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     document.getElementById('watercolor-note').style.display = exportStyle==='watercolor' ? 'block' : 'none';
     document.getElementById('watercolor-options').style.display = exportStyle==='watercolor' ? 'flex' : 'none';
     document.getElementById('blob-options').style.display = exportStyle==='blob' ? 'flex' : 'none';
-    if (exportStyle==='normal') previewCanvas.style.display='none';
+    if (exportStyle==='normal' && !miniatureMode && frameStyle !== 'stamp') previewCanvas.style.display='none';
     else schedulePreview();
   }
 
@@ -2222,9 +2927,25 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (example.style) setStylePresetByName(example.style);
     if (example.exportStyle) setExportStyle(example.exportStyle);
     if (example.ratio) setRatioPreset(example.ratio);
+    if (example.stampTitle && document.getElementById('stamp-title')) document.getElementById('stamp-title').value = example.stampTitle;
+    if (example.stampValue && document.getElementById('stamp-value')) document.getElementById('stamp-value').value = example.stampValue;
+    if (example.stampPaper) document.getElementById('stamp-paper').value = example.stampPaper;
+    if (example.stampInk) document.getElementById('stamp-ink').value = example.stampInk;
+    if (example.stampBorder) {
+      if (document.getElementById('stamp-border')) document.getElementById('stamp-border').value = example.stampBorder;
+      if (document.getElementById('stamp-border-val')) document.getElementById('stamp-border-val').textContent = example.stampBorder;
+    }
+    if (example.htPalette) document.getElementById('ht-palette').value = example.htPalette;
+    if (example.htSize) {
+      document.getElementById('ht-size').value = example.htSize;
+      document.getElementById('ht-size-val').textContent = example.htSize;
+    }
+    if (example.htDensity) {
+      document.getElementById('ht-density').value = example.htDensity;
+      document.getElementById('ht-density-val').textContent = example.htDensity;
+    }
     if (example.frame) setFrameStyle(example.frame);
     map.flyTo({center: example.center, zoom: example.zoom, essential: true});
-    fetchWiki(example.place);
     completeStartHere();
   }
 
@@ -2243,7 +2964,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     currentColors.land=document.getElementById('color-land').value;
     currentColors.road=document.getElementById('color-road').value;
     currentColors.label=document.getElementById('color-label-pick').value;
-    map.setStyle(buildStyle(currentColors));
+    if (standard3dMode) return;
+    setMapToCustomStyle();
   }
   ['color-water','color-land','color-road','color-label-pick'].forEach(function(id){
     document.getElementById(id).addEventListener('input',onColorChange);
@@ -2282,11 +3004,19 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   });
 
   // Layer toggles
+  function syncLayerVisibilityFromControls() {
+    layerVis.labels = document.getElementById('tog-labels').checked;
+    layerVis.roadLabels = document.getElementById('tog-road-labels').checked;
+    layerVis.boundary = document.getElementById('tog-boundary').checked;
+    layerVis.buildings = document.getElementById('tog-buildings').checked;
+  }
+
   document.getElementById('tog-labels').addEventListener('change',function(){layerVis.labels=this.checked;applyLayerVis();});
   document.getElementById('tog-road-labels').addEventListener('change',function(){layerVis.roadLabels=this.checked;applyLayerVis();});
   document.getElementById('tog-boundary').addEventListener('change',function(){layerVis.boundary=this.checked;applyLayerVis();});
   document.getElementById('tog-buildings').addEventListener('change',function(){
     layerVis.buildings=this.checked;
+    if (standard3dMode) layerVis.buildings3d = this.checked;
     applyLayerVis();
   });
   // 3D building helpers
@@ -2358,6 +3088,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   document.getElementById('tog-buildings-3d').addEventListener('change',function(){
+    syncLayerVisibilityFromControls();
     layerVis.buildings3d=this.checked;
     if (this.checked) layerVis.buildings=false;
     else layerVis.buildings=document.getElementById('tog-buildings').checked;
@@ -2365,6 +3096,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     applyLayerVis();
     document.getElementById('building-3d-options').style.display = this.checked ? 'flex' : 'none';
     if (this.checked) {
+      if (standard3dMode) applyStandard3dConfig();
       // Axonometric-ish: 45° pitch + 45° bearing
       map.easeTo({pitch:70,bearing:45,duration:700});
       document.getElementById('map-pitch').value=70;
@@ -2379,6 +3111,56 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       document.getElementById('map-bearing').value=0;
       document.getElementById('map-bearing-val').textContent='0°';
     }
+  });
+
+  function setStandard3dMode(on) {
+    syncLayerVisibilityFromControls();
+    standard3dMode = on;
+    if (standard3dMode && !isExportStyleSafeInStandard3d(exportStyle)) setExportStyle('normal');
+    else syncStandard3dExportStyleButtons();
+    layerVis.buildings3d = on || document.getElementById('tog-buildings-3d').checked;
+    document.getElementById('tog-buildings-3d').checked = layerVis.buildings3d;
+    document.getElementById('tog-buildings').disabled = on || layerVis.buildings3d;
+    document.getElementById('building-3d-options').style.display = layerVis.buildings3d ? 'flex' : 'none';
+    document.getElementById('standard-3d-options').style.display = on ? 'flex' : 'none';
+    document.getElementById('building-3d-color').closest('.color-row').style.display = on ? 'none' : '';
+    document.getElementById('tog-sunset').closest('.layer-toggle').style.display = on ? 'none' : '';
+    document.getElementById('sun-time-row').style.display = on ? 'none' : (document.getElementById('tog-sunset').checked ? 'flex' : 'none');
+    document.getElementById('btn-satellite').style.opacity = on ? '0.4' : '1';
+    if (on) {
+      satelliteLayerVisible = false;
+      applyStandardPreset('mono-poster', {instant:true});
+      setMapToStandard3d();
+    } else {
+      setMapToCustomStyle();
+      update3dBuildingStyle();
+    }
+  }
+
+  document.getElementById('tog-standard-3d').addEventListener('change',function(){
+    setStandard3dMode(this.checked);
+  });
+
+  ['standard-light','standard-theme','standard-color-mood'].forEach(function(id){
+    document.getElementById(id).addEventListener('change',function(){
+      setActivePresetButton('[data-standard-preset]', 'data-standard-preset', '');
+      if (standard3dMode) applyStandard3dConfig();
+    });
+  });
+
+  document.querySelectorAll('[data-standard-preset]').forEach(function(btn){
+    btn.addEventListener('click',function(){applyStandardPreset(btn.dataset.standardPreset)});
+  });
+
+  document.querySelectorAll('[data-camera-preset]').forEach(function(btn){
+    btn.addEventListener('click',function(){applyCameraPreset(btn.dataset.cameraPreset)});
+  });
+
+  document.getElementById('tog-miniature').addEventListener('change', function() {
+    miniatureMode = this.checked;
+    if (miniatureMode) schedulePreview(false);
+    else if (exportStyle === 'normal') previewCanvas.style.display = 'none';
+    else schedulePreview(false);
   });
 
   document.getElementById('building-3d-color').addEventListener('input', update3dBuildingStyle);
@@ -2447,6 +3229,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   var searchResults=document.getElementById('search-results');
   var searchInput=document.getElementById('search-input');
   var searchDebounce=null;
+  var lastPlaceDisplayName = '';
 
   function renderSearchResults(items) {
     searchResults.innerHTML='';
@@ -2460,8 +3243,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         map.flyTo({center:[parseFloat(item.lon),parseFloat(item.lat)],zoom:13});
         searchResults.style.display='none';
         var placeName = item.display_name.split(',')[0];
+        lastPlaceDisplayName = item.display_name || placeName;
         searchInput.value = placeName;
-        fetchWiki(placeName);
         completeStartHere();
       });
       searchResults.appendChild(el);
@@ -2540,37 +3323,6 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     updateOnboardingVisibility(true);
   });
 
-  // Wikipedia summary
-  var wikiBox = document.getElementById('wiki-box');
-  var wikiText = document.getElementById('wiki-text');
-  var lastWikiText = '';
-
-  function fetchWiki(placeName) {
-    wikiBox.style.display = 'none';
-    var url = 'https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(placeName);
-    fetch(url)
-      .then(function(r){ return r.json(); })
-      .then(function(data){
-        if (data.extract) {
-          var text = data.extract;
-          // Trim to ~120 chars at sentence boundary
-          if (text.length > 130) {
-            var cut = text.indexOf('. ', 60);
-            text = cut > 0 ? text.slice(0, cut+1) : text.slice(0,120)+'...';
-          }
-          lastWikiText = text;
-          wikiText.textContent = text;
-          wikiBox.style.display = 'block';
-        }
-      })
-      .catch(function(){});
-  }
-
-  document.getElementById('btn-wiki-insert').addEventListener('click', function() {
-    if (!lastWikiText) return;
-    document.getElementById('caption-text').value = lastWikiText;
-  });
-
   // Coord helper 锟?used by bakeFrame
   // getCoordStr inlined in bakeCoordOnMap / renderCoordStampDOM
 
@@ -2626,14 +3378,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     map.getCanvas().style.cursor='';
   });
 
-  document.getElementById('popup-confirm').addEventListener('click',function(){
-    if(!pendingMarkerLngLat){hideMarkerPopup();return;}
-    var name=popupName.value.trim();
-    var iconId=selectedMarkerIcon;
-    var iconColor=popupMarkerColor.value || selectedMarkerColor;
-    selectedMarkerColor=iconColor;
-    var lnglat=pendingMarkerLngLat;
-
+  function addMapMarker(lnglat, name, iconId, iconColor) {
     var el=document.createElement('div');
     el.style.cssText='display:flex;flex-direction:column;align-items:center;cursor:pointer;pointer-events:all;transform:translateX(-50%)';
     var iconEl=document.createElement('div');
@@ -2656,7 +3401,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     });
     renderMarkerList();
     hideMarkerPopup();
-  });
+  }
 
   document.getElementById('popup-cancel').addEventListener('click',hideMarkerPopup);
   popupName.addEventListener('keydown',function(e){
@@ -2678,7 +3423,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         markers.splice(idx,1);
         renderMarkerList();
       });
-      markerList.appendChild(row);
+    markerList.appendChild(row);
     });
     // Show route options only when 2+ markers
     document.getElementById('route-options').style.display = markers.length >= 2 ? 'flex' : 'none';
@@ -2870,19 +3615,60 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if(capObj)capObj.el.classList.add('selected');
   }
 
-  document.getElementById('btn-add-caption').addEventListener('click',function(){
-    var text=document.getElementById('caption-text').value.trim();
-    if(!text)return;
-    var size=parseInt(document.getElementById('cap-size').value)||24;
-    var color=document.getElementById('cap-color').value;
-    var align=document.getElementById('cap-align').value;
+  document.getElementById('popup-confirm').addEventListener('click',function(){
+    if(!pendingMarkerLngLat){hideMarkerPopup();return;}
+    var name=popupName.value.trim();
+    var iconId=selectedMarkerIcon;
+    var iconColor=popupMarkerColor.value || selectedMarkerColor;
+    selectedMarkerColor=iconColor;
+    addMapMarker(pendingMarkerLngLat, name, iconId, iconColor);
+    hideMarkerPopup();
+  });
+
+  function getCaptionFont() {
+    var el = document.getElementById('cap-font');
+    return CAPTION_FONTS[(el && el.value) || 'outfit'] || CAPTION_FONTS.outfit;
+  }
+
+  function getPolaroidCaptionFont() {
+    var el = document.getElementById('frame-caption-font');
+    return CAPTION_FONTS[(el && el.value) || 'outfit'] || CAPTION_FONTS.outfit;
+  }
+
+  function getPolaroidCaptionSize(baseSize) {
+    var el = document.getElementById('frame-caption-size');
+    var userSize = el ? parseInt(el.value, 10) : 36;
+    return Math.max(10, Math.round((baseSize || 48) * (userSize / 100)));
+  }
+
+  async function ensurePolaroidCaptionFontReady() {
+    if (!document.fonts || frameStyle !== 'polaroid') return;
+    var capText = document.getElementById('frame-caption').value;
+    if (!capText) return;
+    try {
+      await document.fonts.load('500 32px ' + getPolaroidCaptionFont(), capText);
+      await document.fonts.ready;
+    } catch (e) {}
+  }
+
+  function getSvgFontFamily(font) {
+    return String(font || CAPTION_FONTS.outfit).replace(/'/g, '');
+  }
+
+  function addCaptionObject(options) {
+    options = options || {};
+    var text=String(options.text || '').trim();
+    if(!text)return null;
+    var size=parseInt(options.size, 10)||24;
+    var color=options.color || '#333333';
+    var align=options.align || 'center';
+    var font=options.font || getCaptionFont();
     var r=getCropRect();
-    // Default position: center of crop
     var el=document.createElement('div');
     el.className='caption-el';
     el.style.fontSize=size+'px';
     el.style.color=color;
-    el.style.fontFamily="'Outfit','Noto Sans SC',sans-serif";
+    el.style.fontFamily=font;
     el.style.fontWeight='500';
     el.style.textAlign=align;
     el.style.textShadow='0 1px 4px rgba(255,255,255,.55)';
@@ -2890,17 +3676,129 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     el.style.left='0px';
     el.style.top='0px';
     captionLayer.appendChild(el);
-    // Position centered on crop
     var elW=el.offsetWidth,elH=el.offsetHeight;
-    var cx=r.left+r.width/2-elW/2;
-    var cy=r.top+r.height/2-elH/2;
+    var cx=Number.isFinite(options.x) ? options.x : r.left+r.width/2-elW/2;
+    var cy=Number.isFinite(options.y) ? options.y : r.top+r.height/2-elH/2;
     el.style.left=cx+'px';
     el.style.top=cy+'px';
-    var capObj={el:el,text:text,x:cx,y:cy,size:size,color:color,align:align};
+    var capObj={el:el,text:text,x:cx,y:cy,size:size,color:color,align:align,font:font};
     captions.push(capObj);
     makeDraggable(el,capObj);
     selectCaption(capObj);
-  });
+    return capObj;
+  }
+
+  var addCaptionBtn = document.getElementById('btn-add-caption');
+  if (addCaptionBtn) {
+    addCaptionBtn.addEventListener('click',function(){
+      addCaptionObject({
+        text: document.getElementById('caption-text').value.trim(),
+        size: document.getElementById('cap-size').value,
+        color: document.getElementById('cap-color').value,
+        align: document.getElementById('cap-align').value,
+        font: getCaptionFont()
+      });
+    });
+  }
+
+  function collectPanelControls() {
+    var controls = {};
+    document.querySelectorAll('#panel input[id], #panel select[id], #panel textarea[id]').forEach(function(el){
+      controls[el.id] = el.type === 'checkbox' ? { checked: !!el.checked } : { value: el.value };
+    });
+    return controls;
+  }
+
+  function applyPanelControls(controls) {
+    Object.keys(controls || {}).forEach(function(id){
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'checkbox') el.checked = !!controls[id].checked;
+      else if (controls[id].value != null) el.value = controls[id].value;
+      if (id.indexOf('val') < 0) {
+        el.dispatchEvent(new Event('input', { bubbles:true }));
+        el.dispatchEvent(new Event('change', { bubbles:true }));
+      }
+    });
+  }
+
+  function collectProjectState() {
+    return {
+      version: 1,
+      app: 'mapit-pro',
+      savedAt: new Date().toISOString(),
+      map: {
+        center: [map.getCenter().lng, map.getCenter().lat],
+        zoom: map.getZoom(),
+        bearing: map.getBearing(),
+        pitch: map.getPitch()
+      },
+      currentColors: Object.assign({}, currentColors),
+      currentRatio: currentRatio,
+      exportStyle: exportStyle,
+      frameStyle: frameStyle,
+      layerVis: Object.assign({}, layerVis),
+      standard3dMode: !!standard3dMode,
+      miniatureMode: !!miniatureMode,
+      controls: collectPanelControls(),
+      markers: markers.map(function(m){
+        return { lnglat:m.lnglat, name:m.name || '', icon:m.icon || 'map-pin', color:m.color || '#111111' };
+      }),
+      captions: []
+    };
+  }
+
+  function clearProjectDecorations() {
+    markers.forEach(function(m){ if (m.mapMarker) m.mapMarker.remove(); });
+    markers = [];
+    renderMarkerList();
+    captions.slice().forEach(function(c){ if (c.el && c.el.parentNode) c.el.parentNode.removeChild(c.el); });
+    captions = [];
+    selectedCaption = null;
+  }
+
+  function applyProjectState(project) {
+    if (!project || project.app !== 'mapit-pro') throw new Error('This is not a MapIt Pro project.');
+    clearProjectDecorations();
+    applyPanelControls(project.controls || {});
+    currentColors = Object.assign({}, project.currentColors || currentColors);
+    syncColorPickers();
+    layerVis = Object.assign(layerVis, project.layerVis || {});
+    ['labels','roadLabels','boundary','buildings','buildings3d'].forEach(function(key){
+      var idMap = {labels:'tog-labels', roadLabels:'tog-road-labels', boundary:'tog-boundary', buildings:'tog-buildings', buildings3d:'tog-buildings-3d'};
+      var el = document.getElementById(idMap[key]);
+      if (el) el.checked = !!layerVis[key];
+    });
+    setRatioPreset(project.currentRatio || currentRatio);
+    setFrameStyle(project.frameStyle || 'none');
+    setExportStyle(project.exportStyle || 'normal');
+    miniatureMode = !!project.miniatureMode;
+    document.getElementById('tog-miniature').checked = miniatureMode;
+    setStandard3dMode(!!project.standard3dMode);
+    if (project.standard3dMode) {
+      ['standard-light','standard-theme','standard-color-mood'].forEach(function(id){
+        if (project.controls && project.controls[id] && project.controls[id].value != null) {
+          document.getElementById(id).value = project.controls[id].value;
+        }
+      });
+      applyStandard3dConfig();
+    }
+    if (project.map && project.map.center) {
+      map.jumpTo({
+        center: project.map.center,
+        zoom: project.map.zoom,
+        bearing: project.map.bearing || 0,
+        pitch: project.map.pitch || 0
+      });
+      document.getElementById('map-pitch').value = Math.round(project.map.pitch || 0);
+      document.getElementById('map-pitch-val').textContent = Math.round(project.map.pitch || 0) + '°';
+      document.getElementById('map-bearing').value = Math.round(project.map.bearing || 0);
+      document.getElementById('map-bearing-val').textContent = Math.round(project.map.bearing || 0) + '°';
+    }
+    (project.markers || []).forEach(function(m){ addMapMarker(m.lnglat, m.name, m.icon, m.color); });
+    updateCropOverlay();
+    updateFrameOverlay();
+  }
 
   // Export style
   var exportStyle = 'normal';
@@ -2919,7 +3817,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (!previewRaf) {
       previewRaf = requestAnimationFrame(function() {
         previewRaf = null;
-        if (previewDirty && exportStyle !== 'normal') renderPreview();
+        if (previewDirty && (exportStyle !== 'normal' || miniatureMode || frameStyle === 'stamp')) renderPreview();
       });
     }
     // Schedule a 1x re-render after map stops moving
@@ -2932,23 +3830,32 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   function renderPreview() {
     previewDirty = false;
-    if (exportStyle === 'normal') { previewCanvas.style.display='none'; return; }
+    if (exportStyle === 'normal' && !miniatureMode && frameStyle !== 'stamp') { previewCanvas.style.display='none'; return; }
     var mapCanvas = map.getCanvas();
     var r = getCropRect();
     var scale = previewScale;
     if (exportStyle === 'watercolor') scale = Math.min(scale, 0.7);
     if (exportStyle === 'blob') scale = Math.min(scale, 0.8);
+    var stampPreview = frameStyle === 'stamp';
+    var stampLayout = stampPreview ? getStampLayout(r.width, r.height) : null;
     var isFullFramePreview = frameStyle === 'ticket' || frameStyle === 'postcard';
-    var hostLeft = isFullFramePreview ? 0 : r.left;
-    var hostTop = isFullFramePreview ? 0 : r.top;
-    var hostWidth = isFullFramePreview ? mapArea.clientWidth : r.width;
-    var hostHeight = isFullFramePreview ? mapArea.clientHeight : r.height;
+    var hostLeft = isFullFramePreview ? 0 : (stampPreview ? r.left + stampLayout.image.x : r.left);
+    var hostTop = isFullFramePreview ? 0 : (stampPreview ? r.top + stampLayout.image.y : r.top);
+    var hostWidth = isFullFramePreview ? mapArea.clientWidth : (stampPreview ? stampLayout.image.w : r.width);
+    var hostHeight = isFullFramePreview ? mapArea.clientHeight : (stampPreview ? stampLayout.image.h : r.height);
     var sw = Math.max(1, Math.round(hostWidth * scale));
     var sh = Math.max(1, Math.round(hostHeight * scale));
-    var srcX = isFullFramePreview ? 0 : Math.round(r.left * mapCanvas.width / mapArea.clientWidth);
-    var srcY = isFullFramePreview ? 0 : Math.round(r.top * mapCanvas.height / mapArea.clientHeight);
-    var srcW = isFullFramePreview ? mapCanvas.width : Math.round(r.width * mapCanvas.width / mapArea.clientWidth);
-    var srcH = isFullFramePreview ? mapCanvas.height : Math.round(r.height * mapCanvas.height / mapArea.clientHeight);
+    var srcX = isFullFramePreview ? 0 : Math.round(hostLeft * mapCanvas.width / mapArea.clientWidth);
+    var srcY = isFullFramePreview ? 0 : Math.round(hostTop * mapCanvas.height / mapArea.clientHeight);
+    var srcW = isFullFramePreview ? mapCanvas.width : Math.round(hostWidth * mapCanvas.width / mapArea.clientWidth);
+    var srcH = isFullFramePreview ? mapCanvas.height : Math.round(hostHeight * mapCanvas.height / mapArea.clientHeight);
+    if (stampPreview) {
+      var stampSrc = getStampImageSourceRect(stampLayout, r.width, r.height);
+      srcX = Math.round((r.left + stampSrc.x) * mapCanvas.width / mapArea.clientWidth);
+      srcY = Math.round((r.top + stampSrc.y) * mapCanvas.height / mapArea.clientHeight);
+      srcW = Math.round(stampSrc.w * mapCanvas.width / mapArea.clientWidth);
+      srcH = Math.round(stampSrc.h * mapCanvas.height / mapArea.clientHeight);
+    }
 
     previewCanvas.style.left = hostLeft + 'px';
     previewCanvas.style.top = hostTop + 'px';
@@ -2960,7 +3867,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     previewCtx.clearRect(0,0,sw,sh);
     previewCtx.drawImage(mapCanvas, srcX, srcY, srcW, srcH, 0, 0, sw, sh);
     var dir=document.getElementById('vig-dir').value;
-    if(dir!=='none' && frameStyle !== 'ticket' && frameStyle !== 'postcard'){
+    if(dir!=='none' && frameStyle !== 'ticket' && frameStyle !== 'postcard' && frameStyle !== 'stamp'){
       var vigColor=document.getElementById('vig-color').value;
       var vigOp=parseInt(document.getElementById('vig-opacity').value)/100;
       var hr=parseInt(vigColor.slice(1,3),16),hg=parseInt(vigColor.slice(3,5),16),hb=parseInt(vigColor.slice(5,7),16);
@@ -2996,6 +3903,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     } else if (exportStyle === 'blob') {
       applyBlob(previewCtx, sw, sh);
     }
+    if (miniatureMode) applyMiniature(previewCtx, sw, sh);
   }
 
   document.querySelectorAll('[data-export-style]').forEach(function(btn) {
@@ -3144,6 +4052,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
   function hexToRgb(h) {
     return [parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  }
+
+  function hexToRgba(h, a) {
+    var rgb = hexToRgb(h || '#000000');
+    return 'rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+','+a+')';
   }
 
   function applyDither(imageData, algo, palette, density) {
@@ -4109,11 +5022,122 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return imageData;
   }
 
+  function saturateImageData(imageData, sat, contrast) {
+    var d = imageData.data;
+    for (var i=0; i<d.length; i+=4) {
+      var r=d[i], g=d[i+1], b=d[i+2];
+      var gray = 0.299*r + 0.587*g + 0.114*b;
+      r = gray + (r-gray) * sat;
+      g = gray + (g-gray) * sat;
+      b = gray + (b-gray) * sat;
+      d[i] = Math.max(0, Math.min(255, (r - 128) * contrast + 128));
+      d[i+1] = Math.max(0, Math.min(255, (g - 128) * contrast + 128));
+      d[i+2] = Math.max(0, Math.min(255, (b - 128) * contrast + 128));
+    }
+    return imageData;
+  }
+
+  function stackBlurCanvas(source, radius, passes) {
+    var out = document.createElement('canvas');
+    out.width = source.width;
+    out.height = source.height;
+    var octx = out.getContext('2d');
+    octx.drawImage(source, 0, 0);
+    var tmp = document.createElement('canvas');
+    tmp.width = source.width;
+    tmp.height = source.height;
+    var tctx = tmp.getContext('2d');
+    for (var i=0; i<passes; i++) {
+      tctx.clearRect(0,0,tmp.width,tmp.height);
+      tctx.filter = 'blur('+radius+'px)';
+      tctx.drawImage(out, 0, 0);
+      octx.clearRect(0,0,out.width,out.height);
+      octx.drawImage(tmp, 0, 0);
+    }
+    return out;
+  }
+
+  function applyMiniature(ctx, w, h) {
+    var img = ctx.getImageData(0,0,w,h);
+    saturateImageData(img, 1.18, 1.04);
+    ctx.putImageData(img,0,0);
+
+    var sharp = document.createElement('canvas');
+    sharp.width = w;
+    sharp.height = h;
+    sharp.getContext('2d').drawImage(ctx.canvas, 0, 0);
+
+    var baseRadius = Math.max(5, Math.round(Math.min(w,h)*0.014));
+    var blurSoft = stackBlurCanvas(sharp, baseRadius, 1);
+    var blurMid = stackBlurCanvas(sharp, Math.round(baseRadius * 1.8), 2);
+    var blurFar = stackBlurCanvas(sharp, Math.round(baseRadius * 3.1), 2);
+    var pitch = map && map.getPitch ? map.getPitch() : 60;
+    var focus = Math.max(0.42, Math.min(0.64, 0.58 - (pitch - 45) / 300));
+    var sharpBand = Math.max(0.18, Math.min(0.28, 0.29 - pitch / 560));
+    var softBand = sharpBand + 0.18;
+
+    function bandMask(center, inner, outer, alpha) {
+      var grad = ctx.createLinearGradient(0, 0, 0, h);
+      var a = Math.max(0, center - outer);
+      var b = Math.max(0, center - inner);
+      var c = Math.min(1, center + inner);
+      var d = Math.min(1, center + outer);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(a, 'rgba(0,0,0,0)');
+      grad.addColorStop(b, 'rgba(0,0,0,'+alpha+')');
+      grad.addColorStop(c, 'rgba(0,0,0,'+alpha+')');
+      grad.addColorStop(d, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      return grad;
+    }
+
+    function drawLayerMasked(source, mask) {
+      var layer = document.createElement('canvas');
+      layer.width = w;
+      layer.height = h;
+      var lctx = layer.getContext('2d');
+      lctx.drawImage(source, 0, 0);
+      lctx.globalCompositeOperation = 'destination-in';
+      lctx.fillStyle = mask;
+      lctx.fillRect(0, 0, w, h);
+      ctx.drawImage(layer, 0, 0);
+    }
+
+    ctx.save();
+    ctx.clearRect(0,0,w,h);
+    ctx.drawImage(blurFar, 0, 0);
+    drawLayerMasked(blurMid, bandMask(focus, softBand, softBand + 0.30, 0.82));
+    drawLayerMasked(blurSoft, bandMask(focus, sharpBand, softBand + 0.16, 0.94));
+    drawLayerMasked(sharp, bandMask(focus, sharpBand * 0.58, sharpBand + 0.12, 1));
+    ctx.restore();
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    var vign = ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.22,w/2,h/2,Math.max(w,h)*0.72);
+    vign.addColorStop(0,'rgba(255,255,255,0)');
+    vign.addColorStop(1,'rgba(0,0,0,0.08)');
+    ctx.fillStyle = vign;
+    ctx.fillRect(0,0,w,h);
+    ctx.restore();
+  }
+
   // Export 锟?bakes map + gradient + captions
   function getExportScale() {
     var el = document.getElementById('export-scale');
     var scale = el ? parseInt(el.value, 10) : 1;
-    return Math.max(1, Math.min(scale || 1, 4));
+    return Math.max(1, Math.min(scale || 1, 8));
+  }
+
+  function getSafeExportScale(requestedScale) {
+    var requested = Math.max(1, Math.min(requestedScale || 1, 8));
+    var areaRect = mapArea.getBoundingClientRect();
+    var areaPixels = Math.max(1, areaRect.width * areaRect.height);
+    var sideLimit = frameStyle === 'stamp' ? 14000 : 11000;
+    var areaLimit = frameStyle === 'stamp' ? 120000000 : 90000000;
+    var maxBySide = sideLimit / Math.max(areaRect.width, areaRect.height, 1);
+    var maxByArea = Math.sqrt(areaLimit / areaPixels);
+    var safe = Math.min(requested, maxBySide, maxByArea);
+    return Math.max(1, Math.floor(safe * 100) / 100);
   }
 
   function drawExportIcon(ctx, id, x, y, size, color) {
@@ -4223,9 +5247,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   function buildExportCanvas(exportScale, sourceMap) {
-    exportScale = Math.max(1, Math.min(exportScale || 1, 4));
+    exportScale = Math.max(1, Math.min(exportScale || 1, 8));
     sourceMap = sourceMap || map;
-    var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
+    var ratioMap={'1:1':1,'3:4':0.75,'2:3':2/3,'3:2':1.5,'9:16':9/16,'16:9':16/9,'21:9':21/9};
     var ratio=ratioMap[currentRatio]||1;
     var mapCanvas=sourceMap.getCanvas();
     var mw=mapCanvas.width,mh=mapCanvas.height;
@@ -4234,7 +5258,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     var cx=(mw-cw)/2,cy=(mh-ch)/2;
     var mapCrop = {x:cx, y:cy, w:cw, h:ch};
     var out=document.createElement('canvas');
-    out.width=Math.round(cw);out.height=Math.round(ch);
+    out.width=Math.max(1, Math.round(cw * exportScale));
+    out.height=Math.max(1, Math.round(ch * exportScale));
     var ctx=out.getContext('2d');
     // 1. Map
     ctx.drawImage(mapCanvas,cx,cy,cw,ch,0,0,out.width,out.height);
@@ -4260,30 +5285,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         ctx.fillRect(0,0,out.width,out.height);
       }
     }
-    // 3. Captions
+    // 3. Markers
     var r=getCropRect();
     var scaleX=out.width/r.width;
     var scaleY=out.height/r.height;
     drawExportMarkers(ctx, sourceMap, mapCrop, out.width/cw, out.height/ch, scaleX, scaleY);
-    captions.forEach(function(cap){
-      var relX=(cap.x-r.left)*scaleX;
-      var relY=(cap.y-r.top)*scaleY;
-      ctx.save();
-      var fs=cap.size*scaleX;
-      ctx.font='500 '+fs+'px Outfit,sans-serif';
-      ctx.fillStyle=cap.color;
-      ctx.textAlign=cap.align||'left';
-      ctx.shadowColor='rgba(255,255,255,0.55)';
-      ctx.shadowBlur=fs*0.18;
-      var lines=cap.text.split('\n');
-      lines.forEach(function(line,li){
-        var tx=relX;
-        if(cap.align==='center')tx=relX+(cap.el.offsetWidth*scaleX/2);
-        else if(cap.align==='right')tx=relX+(cap.el.offsetWidth*scaleX);
-        ctx.fillText(line,tx,relY+(li+1)*fs*1.35);
-      });
-      ctx.restore();
-    });
     // Apply dither / halftone / duotone post-processing
     if (exportStyle==='dither') {
       var algo = document.getElementById('dither-algo').value;
@@ -4307,11 +5313,12 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     } else if (exportStyle==='blob') {
       applyBlob(ctx, out.width, out.height);
     }
+    if (miniatureMode) applyMiniature(ctx, out.width, out.height);
     // Bake frame
     bakeFrame(ctx, out.width, out.height);
     // Draw city badge if present
     var badgeImg = captionLayer.querySelector('img.city-badge-img');
-    if (badgeImg && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
+    if (badgeImg && frameStyle !== 'ticket' && frameStyle !== 'postcard' && frameStyle !== 'stamp') {
       var bLeft = parseFloat(badgeImg.style.left) || 0;
       var bTop  = parseFloat(badgeImg.style.top)  || 0;
       var bW    = parseFloat(badgeImg.style.width) || badgeImg.naturalWidth;
@@ -4342,12 +5349,13 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       if (capText) {
         var frameIsLight = isLightColor(fc);
         var textColor = frameIsLight ? '#444' : '#ddd';
-        var fs2 = Math.round(bottomH*0.32);
-        ctx.font = '300 '+fs2+'px Outfit,sans-serif';
+        var fs2 = getPolaroidCaptionSize(bottomH);
+        ctx.font = '500 '+fs2+'px '+getPolaroidCaptionFont();
         ctx.fillStyle = textColor;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(capText, fw/2, fh - bottomH/2);
+        var maxW = fw - sideW * 2 - 24;
+        ctx.fillText(capText, fw/2, fh - bottomH/2, maxW);
       }
     } else if (frameStyle==='border') {
       var bc = document.getElementById('border-color').value;
@@ -4360,13 +5368,15 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       bakeTicketFrame(ctx, fw, fh);
     } else if (frameStyle==='postcard') {
       bakePostcardFrame(ctx, fw, fh);
+    } else if (frameStyle==='stamp') {
+      bakeStampFrame(ctx, fw, fh);
     }
     // Coord stamp 锟?baked onto map image at bottom edge
     bakeCoordOnMap(ctx, fw, fh);
   }
 
   function bakeCoordOnMap(ctx, fw, fh) {
-    if (frameStyle==='ticket' || frameStyle==='postcard') return;
+    if (frameStyle==='ticket' || frameStyle==='postcard' || frameStyle==='stamp') return;
     var pos = document.getElementById('coord-pos').value;
     if (pos === 'none') return;
     var c = map.getCenter();
@@ -4389,6 +5399,71 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     if (pos === 'left') { ctx.textAlign='left'; ctx.fillText(coordStr, sideInset, y); }
     else if (pos === 'right') { ctx.textAlign='right'; ctx.fillText(coordStr, fw-sideInset, y); }
     else { ctx.textAlign='center'; ctx.fillText(coordStr, fw/2, y); }
+    ctx.restore();
+  }
+
+  function bakeStampFrame(ctx, fw, fh) {
+    var paper = document.getElementById('stamp-paper').value;
+    var ink = document.getElementById('stamp-ink').value || '#111111';
+    var layout = getStampLayout(fw, fh);
+    var season = getStampSeasonInfo();
+    var place = getStampPlaceParts();
+    var mapCopy = document.createElement('canvas');
+    mapCopy.width = fw;
+    mapCopy.height = fh;
+    mapCopy.getContext('2d').drawImage(ctx.canvas, 0, 0);
+    ctx.save();
+    ctx.clearRect(0, 0, fw, fh);
+    var overlay = document.createElement('canvas');
+    overlay.width = fw;
+    overlay.height = fh;
+    var overlayCtx = overlay.getContext('2d');
+    overlayCtx.fillStyle = paper;
+    overlayCtx.fillRect(layout.x, layout.y, layout.w, layout.h);
+    overlayCtx.globalCompositeOperation = 'destination-out';
+    overlayCtx.fill(new Path2D(buildStampEdgeCutoutPath(layout)));
+    overlayCtx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(overlay, 0, 0);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(layout.image.x, layout.image.y, layout.image.w, layout.image.h);
+    ctx.clip();
+    var stampSrc = getStampImageSourceRect(layout, fw, fh);
+    ctx.drawImage(mapCopy, stampSrc.x, stampSrc.y, stampSrc.w, stampSrc.h, layout.image.x, layout.image.y, layout.image.w, layout.image.h);
+    ctx.restore();
+    ctx.fillStyle = ink;
+    ctx.textBaseline = 'alphabetic';
+    var topSize = Math.max(11, Math.round(layout.h * (15 / 159.36)));
+    var topBaseline = layout.y + layout.h * (20.76 / 159.36);
+    var topYear = season.year;
+    var topSeason = season.en;
+    var topZh = season.zh;
+    var topSizeFit = topSize;
+    do {
+      ctx.font = '500 ' + topSizeFit + 'px Outfit, "Noto Sans SC", sans-serif';
+      var topWidth = ctx.measureText(topYear).width + ctx.measureText(topSeason).width + ctx.measureText(topZh).width + layout.border * 1.3;
+      if (topWidth <= layout.top.w || topSizeFit <= 9) break;
+      topSizeFit -= 1;
+    } while (topSizeFit > 9);
+    ctx.font = '500 ' + topSizeFit + 'px Outfit, "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(topYear, layout.x + layout.w * (10.87 / 160.91), topBaseline);
+    ctx.font = '500 ' + topSizeFit + 'px Outfit, "Noto Sans SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(topSeason, layout.x + layout.w * (90.2 / 160.91), topBaseline);
+    ctx.font = '500 ' + Math.round(topSizeFit * 0.9) + 'px ' + stampTextFont(500);
+    ctx.textAlign = 'right';
+    ctx.fillText(topZh, layout.x + layout.w * (149.8 / 160.91), topBaseline);
+
+    ctx.textBaseline = 'alphabetic';
+    ctx.textAlign = 'center';
+    var bottomMax = layout.bottom.w * 0.96;
+    var zhSize = fitCanvasFont(ctx, place.zh, bottomMax, Math.max(12, Math.round(layout.h * (15.91 / 159.36))), 8, '800');
+    ctx.font = '800 ' + zhSize + 'px ' + stampTextFont(800);
+    ctx.fillText(place.zh, layout.x + layout.w * 0.5, layout.y + layout.h * (125.41 / 159.36), bottomMax);
+    var enSize = fitCanvasFont(ctx, place.en, bottomMax, Math.max(11, Math.round(layout.h * (15 / 159.36))), 7, '800');
+    ctx.font = '800 ' + enSize + 'px Outfit, "Noto Sans SC", sans-serif';
+    ctx.fillText(place.en, layout.x + layout.w * 0.5, layout.y + layout.h * (143.2 / 159.36), bottomMax);
     ctx.restore();
   }
 
@@ -4814,9 +5889,22 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return out;
   }
 
+  function buildStampExportCanvas(exportScale, sourceMap) {
+    var base = buildExportCanvas(exportScale, sourceMap);
+    var g = getStampLayout(base.width, base.height);
+    var pad = Math.ceil(g.holeR * 1.15);
+    var out = document.createElement('canvas');
+    out.width = Math.max(1, Math.round(g.w + pad * 2));
+    out.height = Math.max(1, Math.round(g.h + pad * 2));
+    var ctx = out.getContext('2d');
+    ctx.drawImage(base, Math.round(-g.x + pad), Math.round(-g.y + pad));
+    return out;
+  }
+
   function buildFramedExportCanvas(exportScale, sourceMap) {
     if (frameStyle === 'ticket') return buildTicketExportCanvas(exportScale, sourceMap);
     if (frameStyle === 'postcard') return buildPostcardExportCanvas(exportScale, sourceMap);
+    if (frameStyle === 'stamp') return buildStampExportCanvas(exportScale, sourceMap);
     return buildExportCanvas(exportScale, sourceMap);
   }
 
@@ -4852,8 +5940,9 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   async function buildHiResFramedExportCanvas(scale) {
-    scale = Math.max(1, Math.min(scale || 1, 4));
+    scale = getSafeExportScale(scale);
     if (scale <= 1) return buildFramedExportCanvas(1, map);
+    if (standard3dMode) return buildFramedExportCanvas(scale, map);
 
     var areaRect = mapArea.getBoundingClientRect();
     var offscreen = document.createElement('div');
@@ -4875,6 +5964,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       });
       await waitForSpecificMapIdle(hiMap);
       await new Promise(function(resolve){ requestAnimationFrame(function(){ requestAnimationFrame(resolve); }); });
+      var hiCanvas = hiMap.getCanvas();
+      if (!hiCanvas || hiCanvas.width < 2 || hiCanvas.height < 2) throw new Error('High resolution map canvas is empty');
       return buildFramedExportCanvas(1, hiMap);
     } finally {
       if (hiMap) hiMap.remove();
@@ -4915,29 +6006,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     return true;
   }
 
-  function hideSupportPrompt() {
-    var prompt = byId('support-prompt');
-    if (prompt) prompt.classList.add('hidden');
-    pendingDownload = null;
-  }
-
-  async function continuePendingDownload() {
-    if (!pendingDownload) return;
-    var task = pendingDownload;
-    pendingDownload = null;
-    var prompt = byId('support-prompt');
-    if (prompt) prompt.classList.add('hidden');
-    await saveBlobAs(task.blob, task.filename, task.mimeType);
-  }
-
-  function maybeShowSupportPrompt(blob, filename, mimeType) {
-    if (supportPromptDismissed || supportPromptShownThisSession) {
-      return saveBlobAs(blob, filename, mimeType);
-    }
-    pendingDownload = { blob: blob, filename: filename, mimeType: mimeType };
-    supportPromptShownThisSession = true;
-    byId('support-prompt').classList.remove('hidden');
-    return Promise.resolve(true);
+  function saveExportBlob(blob, filename, mimeType) {
+    return saveBlobAs(blob, filename, mimeType);
   }
 
   async function doExportPng() {
@@ -4951,10 +6021,27 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       if (document.fonts && document.fonts.ready) {
         try { await document.fonts.ready; } catch(e) {}
       }
-      var scale = getExportScale();
-      var out = await buildHiResFramedExportCanvas(scale);
+      await ensurePolaroidCaptionFontReady();
+      var requestedScale = getExportScale();
+      if (requestedScale >= 6) {
+        var ok = confirm('High resolution export may take a while and use more memory. Continue with '+requestedScale+'x Pro?');
+        if (!ok) return;
+      }
+      var scale = getSafeExportScale(requestedScale);
+      if (scale < requestedScale) {
+        alert('This layout is too large for '+requestedScale+'x on this machine. MapIt Pro will export at '+scale+'x instead.');
+      }
+      var out;
+      try {
+        out = await buildHiResFramedExportCanvas(scale);
+      } catch (hiErr) {
+        console.warn('High resolution export failed, falling back to 1x', hiErr);
+        scale = 1;
+        out = buildFramedExportCanvas(1, map);
+      }
       var blob = await canvasToBlob(out, 'image/png');
-      await maybeShowSupportPrompt(blob, 'mapit-export-'+scale+'x.png', 'image/png');
+      if (!blob) throw new Error('PNG renderer returned an empty file');
+      await saveExportBlob(blob, 'mapit-export-'+scale+'x.png', 'image/png');
     } catch (err) {
       console.error('PNG export failed', err);
       alert('Export failed: ' + ((err && err.message) || err));
@@ -5201,7 +6288,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   }
 
   function buildMapBaseExportCanvas() {
-    var ratioMap={'1:1':1,'3:4':0.75,'9:16':9/16,'16:9':16/9};
+    var ratioMap={'1:1':1,'3:4':0.75,'2:3':2/3,'3:2':1.5,'9:16':9/16,'16:9':16/9,'21:9':21/9};
     var ratio=ratioMap[currentRatio]||1;
     var mapCanvas=map.getCanvas();
     var mw=mapCanvas.width,mh=mapCanvas.height;
@@ -5256,6 +6343,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
     } else if (exportStyle==='blob') {
       applyBlob(ctx, out.width, out.height);
     }
+    if (miniatureMode) applyMiniature(ctx, out.width, out.height);
     return out;
   }
 
@@ -5435,23 +6523,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
 
     if (clipId) parts.push('</g>');
 
-    if (!options.skipCaptions) captions.forEach(function(cap) {
-      var x = metrics.x(cap.x);
-      var y = metrics.y(cap.y);
-      var fs = cap.size * metrics.scaleX;
-      var anchor = cap.align === 'center' ? 'middle' : (cap.align === 'right' ? 'end' : 'start');
-      var textX = x;
-      if (cap.align === 'center') textX = x + (cap.el.offsetWidth * metrics.scaleX / 2);
-      else if (cap.align === 'right') textX = x + cap.el.offsetWidth * metrics.scaleX;
-      parts.push('<text'+svgAttrs({x:svgNumber(textX), y:svgNumber(y + fs), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(fs), 'font-weight':500, fill:cap.color, 'text-anchor':anchor})+'>');
-      cap.text.split('\n').forEach(function(line, i) {
-        parts.push('<tspan'+svgAttrs({x:svgNumber(textX), dy:i ? svgNumber(fs*1.35) : 0})+'>'+svgEscape(line)+'</tspan>');
-      });
-      parts.push('</text>');
-    });
-
     var badgeImg = captionLayer.querySelector('img.city-badge-img');
-    if (!options.skipCaptions && badgeImg && badgeImg.src && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
+    if (!options.skipCaptions && badgeImg && badgeImg.src && frameStyle !== 'ticket' && frameStyle !== 'postcard' && frameStyle !== 'stamp') {
       var bLeft = parseFloat(badgeImg.style.left) || 0;
       var bTop  = parseFloat(badgeImg.style.top)  || 0;
       var bW    = parseFloat(badgeImg.style.width) || badgeImg.naturalWidth;
@@ -5471,11 +6544,27 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       parts.push('<path'+svgAttrs({d:'M0 0H'+svgNumber(canvas.width)+'V'+svgNumber(canvas.height)+'H0ZM'+svgNumber(sideW)+' '+svgNumber(topH)+'H'+svgNumber(canvas.width-sideW)+'V'+svgNumber(canvas.height-bottomH)+'H'+svgNumber(sideW)+'Z', fill:fc, 'fill-rule':'evenodd'})+' />');
       var capText = document.getElementById('frame-caption').value;
       if (capText) {
-        parts.push('<text'+svgAttrs({x:svgNumber(canvas.width/2), y:svgNumber(canvas.height-bottomH/2), 'font-family':'Outfit, sans-serif', 'font-size':svgNumber(Math.round(bottomH*0.32)), 'font-weight':300, fill:isLightColor(fc)?'#444':'#ddd', 'text-anchor':'middle', 'dominant-baseline':'middle'})+'>'+svgEscape(capText)+'</text>');
+        parts.push('<text'+svgAttrs({x:svgNumber(canvas.width/2), y:svgNumber(canvas.height-bottomH/2), 'font-family':getSvgFontFamily(getPolaroidCaptionFont()), 'font-size':svgNumber(getPolaroidCaptionSize(bottomH)), 'font-weight':500, fill:isLightColor(fc)?'#444':'#ddd', 'text-anchor':'middle', 'dominant-baseline':'middle'})+'>'+svgEscape(capText)+'</text>');
       }
+    } else if (!options.skipFrame && frameStyle === 'stamp') {
+      var stampPaper = document.getElementById('stamp-paper').value;
+      var stampInk = document.getElementById('stamp-ink').value || '#111111';
+      var stampLayout = getStampLayout(canvas.width, canvas.height);
+      var stampSeason = getStampSeasonInfo();
+      var stampPlace = getStampPlaceParts();
+      var stampMask = 'mapit-stamp-mask';
+      parts.push('<defs><mask'+svgAttrs({id:stampMask, maskUnits:'userSpaceOnUse'})+'><rect'+svgAttrs({x:0, y:0, width:svgNumber(canvas.width), height:svgNumber(canvas.height), fill:'#000'})+' /><rect'+svgAttrs({x:svgNumber(stampLayout.x), y:svgNumber(stampLayout.y), width:svgNumber(stampLayout.w), height:svgNumber(stampLayout.h), fill:'#fff'})+' /><path'+svgAttrs({d:buildStampEdgeCutoutPath(stampLayout), fill:'#000'})+' /><rect'+svgAttrs({x:svgNumber(stampLayout.image.x), y:svgNumber(stampLayout.image.y), width:svgNumber(stampLayout.image.w), height:svgNumber(stampLayout.image.h), fill:'#000'})+' /></mask></defs>');
+      parts.push('<rect'+svgAttrs({x:svgNumber(stampLayout.x), y:svgNumber(stampLayout.y), width:svgNumber(stampLayout.w), height:svgNumber(stampLayout.h), fill:stampPaper, mask:'url(#'+stampMask+')'})+' />');
+      var stampTopSize = Math.max(11, Math.round(stampLayout.h * (15 / 159.36)));
+      var stampTopY = stampLayout.y + stampLayout.h * (20.76 / 159.36);
+      parts.push('<text'+svgAttrs({x:svgNumber(stampLayout.x + stampLayout.w * (10.87 / 160.91)), y:svgNumber(stampTopY), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(stampTopSize), 'font-weight':500, fill:stampInk})+'>'+svgEscape(stampSeason.year)+'</text>');
+      parts.push('<text'+svgAttrs({x:svgNumber(stampLayout.x + stampLayout.w * (90.2 / 160.91)), y:svgNumber(stampTopY), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(stampTopSize), 'font-weight':500, fill:stampInk, 'text-anchor':'middle'})+'>'+svgEscape(stampSeason.en)+'</text>');
+      parts.push('<text'+svgAttrs({x:svgNumber(stampLayout.x + stampLayout.w * (149.8 / 160.91)), y:svgNumber(stampTopY), 'font-family':'Noto Sans SC, Outfit, sans-serif', 'font-size':svgNumber(stampTopSize * 0.9), 'font-weight':500, fill:stampInk, 'text-anchor':'end'})+'>'+svgEscape(stampSeason.zh)+'</text>');
+      parts.push('<text'+svgAttrs({x:svgNumber(stampLayout.x + stampLayout.w * 0.5), y:svgNumber(stampLayout.y + stampLayout.h * (125.41 / 159.36)), 'font-family':'Noto Sans SC, Outfit, sans-serif', 'font-size':svgNumber(Math.max(12, Math.round(stampLayout.h * (15.91 / 159.36)))), 'font-weight':800, fill:stampInk, 'text-anchor':'middle'})+'>'+svgEscape(stampPlace.zh)+'</text>');
+      parts.push('<text'+svgAttrs({x:svgNumber(stampLayout.x + stampLayout.w * 0.5), y:svgNumber(stampLayout.y + stampLayout.h * (143.2 / 159.36)), 'font-family':'Outfit, Noto Sans SC, sans-serif', 'font-size':svgNumber(Math.max(11, Math.round(stampLayout.h * (15 / 159.36)))), 'font-weight':800, fill:stampInk, 'text-anchor':'middle'})+'>'+svgEscape(stampPlace.en)+'</text>');
     }
 
-    if (!options.skipFrame && frameStyle !== 'ticket' && frameStyle !== 'postcard') {
+    if (!options.skipFrame && frameStyle !== 'ticket' && frameStyle !== 'postcard' && frameStyle !== 'stamp') {
       var pos = document.getElementById('coord-pos').value;
       if (pos !== 'none') {
         var c = map.getCenter();
@@ -5535,7 +6624,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         + vectorOverlay + '\n'
         +'</svg>';
       var blob = new Blob([svg], {type:'image/svg+xml'});
-      await maybeShowSupportPrompt(blob, 'mapit-export.svg', 'image/svg+xml');
+      await saveExportBlob(blob, 'mapit-export.svg', 'image/svg+xml');
     } catch(exportError) {
       var message = 'Mapit SVG export failed: '+((exportError && exportError.message) || exportError);
       console.error(message, exportError);
@@ -5545,51 +6634,229 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         +'<text x="40" y="80" font-family="monospace" font-size="24" fill="#c00">'+svgEscape(message)+'</text>\n'
         +'</svg>';
       var errorBlob = new Blob([errorSvg], {type:'image/svg+xml'});
-      await maybeShowSupportPrompt(errorBlob, 'mapit-export.svg', 'image/svg+xml');
+      await saveExportBlob(errorBlob, 'mapit-export.svg', 'image/svg+xml');
     }
   }
 
-  // Export / support
+  // Export
   document.getElementById('btn-export').addEventListener('click',function(){
     doExportPng();
   });
   function byId(id){ return document.getElementById(id); }
-  var btnSkip = byId('btn-export-skip');
-  if (btnSkip) btnSkip.addEventListener('click',async function(){
-    byId('coffee-modal').style.display='none';
-    if (pendingDownload) await continuePendingDownload();
-  });
-  var coffeeClose = byId('coffee-close');
-  if (coffeeClose) coffeeClose.addEventListener('click',function(){
-    byId('coffee-modal').style.display='none';
-  });
-  var coffeeModal = byId('coffee-modal');
-  if (coffeeModal) coffeeModal.addEventListener('click',function(e){
-    if(e.target===coffeeModal){
-      coffeeModal.style.display='none';
+  async function saveProjectFromHeader() {
+    if (!window.projectApi) {
+      alert('Project saving is available in the desktop version.');
+      return;
     }
+    var btn = byId('btn-save-project');
+    var prev = btn ? btn.textContent : '';
+    try {
+      if (btn) btn.textContent = 'Saving...';
+      var result = await window.projectApi.save(collectProjectState());
+      if (result && !result.canceled && btn) btn.textContent = 'Saved';
+      setTimeout(function(){ if (btn) btn.textContent = prev || 'Save'; }, 1200);
+    } catch (err) {
+      alert('Save failed: ' + ((err && err.message) || err));
+      if (btn) btn.textContent = prev || 'Save';
+    }
+  }
+  async function openProjectFromHeader() {
+    if (!window.projectApi) {
+      alert('Project opening is available in the desktop version.');
+      return;
+    }
+    try {
+      var result = await window.projectApi.open();
+      if (!result || result.canceled) return;
+      applyProjectState(result.project);
+    } catch (err) {
+      alert('Open failed: ' + ((err && err.message) || err));
+    }
+  }
+  var btnSaveProject = byId('btn-save-project');
+  if (btnSaveProject) btnSaveProject.addEventListener('click', saveProjectFromHeader);
+  var btnOpenProject = byId('btn-open-project');
+  if (btnOpenProject) btnOpenProject.addEventListener('click', openProjectFromHeader);
+  var btnHelp = byId('btn-help');
+  if (btnHelp) btnHelp.addEventListener('click',function(){ var m=byId('help-modal'); if(m) m.style.display='flex'; });
+  var helpClose = byId('help-close');
+  if (helpClose) helpClose.addEventListener('click',function(){ var m=byId('help-modal'); if(m) m.style.display='none'; });
+  var helpModal = byId('help-modal');
+  if (helpModal) helpModal.addEventListener('click',function(e){if(e.target===helpModal) helpModal.style.display='none';});
+
+  function initLicense() {
+    if (!window.licenseApi) return;
+    var modal = byId('license-modal');
+    var email = byId('license-email');
+    var code = byId('license-code');
+    var status = byId('license-status');
+    function showStatus(message) { if (status) status.textContent = message || ''; }
+    function showLicense() { if (modal) modal.style.display = 'flex'; }
+    function hideLicense() { if (modal && licenseUnlocked) modal.style.display = 'none'; }
+    window.licenseApi.getStatus().then(function(result){
+      if (result && result.valid) {
+        licenseUnlocked = true;
+        hideLicense();
+        showStatus('Activated: ' + result.email);
+      } else {
+        licenseUnlocked = false;
+        showLicense();
+      }
+    }).catch(function(){
+      licenseUnlocked = false;
+      showLicense();
+    });
+    byId('license-activate').addEventListener('click', function(){
+      showStatus('Checking license...');
+      code.value = code.value.replace(/\s+/g, '');
+      window.licenseApi.activate(email.value, code.value).then(function(result){
+        if (result && result.valid) {
+          licenseUnlocked = true;
+          showStatus('Activated: ' + result.email);
+          hideLicense();
+        } else {
+          showStatus((result && result.message) || 'License is invalid.');
+        }
+      }).catch(function(error){
+        showStatus((error && error.message) || 'Could not activate.');
+      });
+    });
+    byId('license-clear').addEventListener('click', function(){
+      window.licenseApi.clear().then(function(){
+        licenseUnlocked = false;
+        code.value = '';
+        showStatus('License cleared.');
+        showLicense();
+      });
+    });
+  }
+
+  var UI_TEXT = {
+    en: {
+      docTitle:'MapIt Pro - Make Map Posters',
+      langButton:'中文',
+      openProject:'Open',
+      saveProject:'Save',
+      helpButton:'Help',
+      searchPlaceholder:'City, address, place...',
+      captionPlaceholder:'Add text to your map...',
+      exportButton:'export png',
+      addMarker:'+ add marker',
+      generateBadge:'Generate Badge',
+      newColor:'new color',
+      remove:'remove',
+      addCaption:'+ add',
+      sectionTitles:['Search','Style','Colors','Layers','Size','Gradient Vignette','Markers','Export Style','Frame','City Badge'],
+      labels:['Place labels','Road names','Boundaries','Buildings','3D Buildings','3D Pro','Standard light','Theme','Color mood','Wide angle','Miniature','Tilt','Rotation','Direction','Color','Opacity','Export size','Paper color','Ink color','Frame color','Caption','Font size'],
+      helpTitle:'MapIt Pro Help',
+      helpIntro:'Search a place, choose a style, adjust camera/framing, then export PNG artwork.',
+      helpStartTitle:'Quick Start',
+      helpStartBody:'Search a city or landmark, choose a palette, set the camera, then pick a frame or export style.',
+      help3dTitle:'3D Pro',
+      help3dBody:'Enable 3D Pro for Mapbox Standard 3D, then choose light, theme, color mood, and camera presets. Place labels and road names stay controlled by the layer switches.',
+      helpFrameTitle:'Frames',
+      helpFrameBody:'Use Poster, Ticket, Postcard, or Stamp for different publishing formats. Stamp automatically uses the current place and season text.',
+      helpProjectTitle:'Projects',
+      helpProjectBody:'Save a .mapit file to keep the place, camera, style, layers, markers, Polaroid caption, frame, and export settings for later editing.',
+      helpExportTitle:'Export',
+      helpExportBody:'Use 2x or 4x for most work. 6x and 8x Pro create larger poster files and may take longer, especially with 3D Pro or heavy effects.',
+      helpLicenseTitle:'License',
+      helpLicenseBody:'Activate once with your purchase email and license code. The app stores activation locally and verifies it offline.',
+      licenseTitle:'Activate MapIt Pro',
+      licenseText:'Enter your purchase email and license code to unlock the desktop version.',
+      licenseEmail:'Email',
+      licenseCode:'License Code',
+      licenseActivate:'Activate',
+      licenseClear:'Clear License'
+    },
+    zh: {
+      docTitle:'MapIt Pro - 地图海报工具',
+      langButton:'EN',
+      openProject:'打开',
+      saveProject:'保存',
+      helpButton:'帮助',
+      searchPlaceholder:'城市、地址、地点...',
+      captionPlaceholder:'添加地图文字...',
+      exportButton:'导出 PNG',
+      addMarker:'+ 添加标记',
+      generateBadge:'生成城市徽章',
+      newColor:'换色',
+      remove:'移除',
+      addCaption:'+ 添加',
+      sectionTitles:['搜索','风格','颜色','图层','尺寸','渐变暗角','标记','导出效果','画框','城市徽章'],
+      labels:['地点标签','道路名称','边界','建筑','3D 建筑','3D Pro','标准光照','主题','色彩倾向','广角','微缩景观','俯仰','旋转','方向','颜色','不透明度','导出尺寸','纸张颜色','墨色','相框颜色','宝丽来标题','字号'],
+      helpTitle:'MapIt Pro 帮助',
+      helpIntro:'搜索地点，选择地图风格，调整相机和画框，然后导出 PNG 作品。',
+      helpStartTitle:'快速开始',
+      helpStartBody:'搜索城市或地标，选择配色，调整相机，然后选择画框或导出效果。',
+      help3dTitle:'3D Pro',
+      help3dBody:'开启 3D Pro 后可使用 Mapbox Standard 3D，并调整光照、主题、色彩倾向和相机预设。地点标签和道路名称仍由图层开关控制。',
+      helpFrameTitle:'画框',
+      helpFrameBody:'Poster、Ticket、Postcard、Stamp 分别适合不同发布版式。邮票模式会自动使用当前地点和季节文字。',
+      helpProjectTitle:'项目保存',
+      helpProjectBody:'保存 .mapit 项目文件后，可以保留地点、镜头、风格、图层、标记、宝丽来标题、画框和导出设置，之后继续编辑。',
+      helpExportTitle:'导出',
+      helpExportBody:'常规发布建议使用 2x 或 4x。6x 和 8x Pro 会生成更大的海报文件，3D Pro 或复杂效果下耗时更久。',
+      helpLicenseTitle:'授权',
+      helpLicenseBody:'使用购买邮箱和授权码激活一次即可。软件会在本地保存激活状态，并离线校验授权。',
+      licenseTitle:'激活 MapIt Pro',
+      licenseText:'请输入购买邮箱和授权码，激活后即可使用桌面版。',
+      licenseEmail:'邮箱',
+      licenseCode:'授权码',
+      licenseActivate:'激活',
+      licenseClear:'清除授权'
+    }
+  };
+
+  function applyLanguage(lang) {
+    currentLang = lang === 'zh' ? 'zh' : 'en';
+    localStorage.setItem('mapit.pro.lang', currentLang);
+    document.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+    document.title = UI_TEXT[currentLang].docTitle;
+    var t = UI_TEXT[currentLang];
+    function text(selector, value) {
+      var el = document.querySelector(selector);
+      if (el) el.textContent = value;
+    }
+    function placeholder(selector, value) {
+      var el = document.querySelector(selector);
+      if (el) el.placeholder = value;
+    }
+    text('#btn-open-project', t.openProject);
+    text('#btn-save-project', t.saveProject);
+    text('#btn-lang', t.langButton);
+    text('#btn-help', t.helpButton);
+    placeholder('#search-input', t.searchPlaceholder);
+    placeholder('#caption-text', t.captionPlaceholder);
+    text('#btn-export', t.exportButton);
+    text('#marker-panel button, #btn-add-marker', t.addMarker);
+    text('#btn-city-badge', t.generateBadge);
+    text('#btn-badge-regen', t.newColor);
+    text('#btn-badge-remove', t.remove);
+    text('#caption-panel-add, #btn-add-caption', t.addCaption);
+    document.querySelectorAll('[data-i18n]').forEach(function(el){
+      var key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+    document.querySelectorAll('#panel .section-title').forEach(function(el, i){
+      if (t.sectionTitles[i]) el.textContent = t.sectionTitles[i];
+    });
+    document.querySelectorAll('.layer-toggle span, .vignette-row span, .color-label').forEach(function(el){
+      var raw = el.textContent.trim();
+      var en = UI_TEXT.en.labels;
+      var zh = UI_TEXT.zh.labels;
+      var idx = en.indexOf(raw);
+      if (idx < 0) idx = zh.indexOf(raw);
+      if (idx >= 0) el.textContent = t.labels[idx];
+    });
+  }
+
+  var btnLang = byId('btn-lang');
+  if (btnLang) btnLang.addEventListener('click', function(){
+    applyLanguage(currentLang === 'zh' ? 'en' : 'zh');
   });
-  var btnCoffee = byId('btn-coffee');
-  if (btnCoffee) btnCoffee.addEventListener('click',function(){byId('coffee-modal').style.display='flex';});
-  var supportSkip = byId('support-prompt-skip');
-  if (supportSkip) supportSkip.addEventListener('click', function(){
-    supportPromptDismissed = true;
-    localStorage.setItem('mapit.supportPromptDismissed', '1');
-    continuePendingDownload();
-  });
-  var supportDownload = byId('support-prompt-download');
-  if (supportDownload) supportDownload.addEventListener('click', function(){ continuePendingDownload(); });
-  var supportCoffee = byId('support-prompt-coffee');
-  if (supportCoffee) supportCoffee.addEventListener('click', function(){
-    byId('support-prompt').classList.add('hidden');
-    byId('coffee-modal').style.display='flex';
-  });
-  var btnAbout = byId('btn-about');
-  if (btnAbout) btnAbout.addEventListener('click',function(){ var m=byId('about-modal'); if(m) m.style.display='flex'; });
-  var aboutClose = byId('about-close');
-  if (aboutClose) aboutClose.addEventListener('click',function(){ var m=byId('about-modal'); if(m) m.style.display='none'; });
-  var aboutModal = byId('about-modal');
-  if (aboutModal) aboutModal.addEventListener('click',function(e){if(e.target===aboutModal) aboutModal.style.display='none';});
+  applyLanguage(currentLang);
+  initLicense();
 
   // Dark mode
   var darkMode=false;
@@ -6120,16 +7387,6 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
         img.style.width = badgeW + 'px';
         var bx = r.left + r.width - badgeW - 16;
         var by = r.top + r.height - badgeH - 16;
-        // Caption avoidance
-        captions.forEach(function(cap) {
-          if (!cap.el) return;
-          var cL = parseFloat(cap.el.style.left) || 0;
-          var cT = parseFloat(cap.el.style.top) || 0;
-          var cR = cL + (cap.el.offsetWidth || 80);
-          var cB = cT + (cap.el.offsetHeight || 30);
-          var overlap = cL < bx + badgeW && cR > bx && cT < by + badgeH && cB > by;
-          if (overlap) by = Math.min(by, cT - badgeH - 8);
-        });
         img.style.left = bx + 'px';
         img.style.top = by + 'px';
       }
@@ -6201,12 +7458,6 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
       img.style.width = bW + 'px';
       var bx = cr.left + cr.width - bW - 16;
       var by = cr.top + cr.height - bH - 16;
-      captions.forEach(function(cap) {
-        if (!cap.el) return;
-        var cL = parseFloat(cap.el.style.left)||0, cT = parseFloat(cap.el.style.top)||0;
-        var cR = cL+(cap.el.offsetWidth||80), cB = cT+(cap.el.offsetHeight||30);
-        if (cL < bx+bW && cR > bx && cT < by+bH && cB > by) by = Math.min(by, cT-bH-8);
-      });
       img.style.left = bx+'px'; img.style.top = by+'px';
     }
     if (img.complete) reposRegen(); else img.onload = reposRegen;
@@ -6220,11 +7471,10 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGFmdGxhbWIiLCJhIjoiY2txeDN6ano5MGlybTJxbnZrN
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){
       hideMarkerPopup();
-      document.getElementById('about-modal').style.display='none';
-      var sp=document.getElementById('support-prompt');
-      if(sp)sp.classList.add('hidden');
-      var cm=document.getElementById('coffee-modal');
-      if(cm.style.display==='flex'){cm.style.display='none';}
+      var hm=document.getElementById('help-modal');
+      if(hm)hm.style.display='none';
+      var lm=document.getElementById('license-modal');
+      if(lm && licenseUnlocked)lm.style.display='none';
       if(selectedCaption)selectCaption(null);
     }
     if((e.key==='Delete'||e.key==='Backspace')&&selectedCaption&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
