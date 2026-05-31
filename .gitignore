@@ -1,6 +1,0 @@
-node_modules/
-dist/
-*.log
-*.psd
-index.backup-*.html
-license/private-key.pem
